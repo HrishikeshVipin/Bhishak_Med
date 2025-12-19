@@ -63,12 +63,12 @@ PORT=5000
 
 # JWT Authentication
 # Use the strong key generated earlier:
-JWT_SECRET=P8wmHxAlnBgjHcjwkEpjNcY1eflgK4otkpU15pyCFiaNZtO0TR5MnmCiYTd1r2R5GZ4OBbDo63VOGuCUogm8gA==
+JWT_SECRET=GENERATE_YOUR_OWN_SECRET_HERE
 JWT_EXPIRES_IN=7d
 
 # Field Encryption
 # Use the strong key generated earlier:
-ENCRYPTION_KEY=VgEDuC6YvSaruygSZMrGVzZdtezjDZBv34fCaXg+2j0=
+ENCRYPTION_KEY=GENERATE_YOUR_OWN_KEY_HERE
 
 # Razorpay - LIVE CREDENTIALS ONLY!
 RAZORPAY_KEY_ID=rzp_live_YOUR_LIVE_KEY

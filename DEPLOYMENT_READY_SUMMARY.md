@@ -238,10 +238,10 @@ const decryptedPatient = decryptPatientData(patient, false); // full data
 **Generated Keys** (already created for you):
 ```bash
 # JWT Secret (512-bit) - Use this!
-JWT_SECRET=P8wmHxAlnBgjHcjwkEpjNcY1eflgK4otkpU15pyCFiaNZtO0TR5MnmCiYTd1r2R5GZ4OBbDo63VOGuCUogm8gA==
+JWT_SECRET=GENERATE_YOUR_OWN_SECRET_HERE
 
 # Encryption Key (256-bit) - Use this!
-ENCRYPTION_KEY=VgEDuC6YvSaruygSZMrGVzZdtezjDZBv34fCaXg+2j0=
+ENCRYPTION_KEY=GENERATE_YOUR_OWN_KEY_HERE
 ```
 
 **Keys You Need to Get:**

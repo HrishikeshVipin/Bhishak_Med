@@ -57,8 +57,8 @@ railway variables
 
 Then set the remaining variables:
 ```bash
-railway variables set JWT_SECRET="Ri/bf2rS5qfR5FbrpuR8veFyUaq/WLoMGGbAwu1YxPdXoklCr1tZNTRq/cuTS1Z/ULAkKyvex/0kQPfLD/zNrQ=="
-railway variables set ENCRYPTION_KEY="nST6Y9AhEIk+VOqdzOzOJWD3WmpDhKDVtwLZq2Tgp/M="
+railway variables set JWT_SECRET="GENERATE_YOUR_OWN_SECRET"
+railway variables set ENCRYPTION_KEY="GENERATE_YOUR_OWN_KEY"
 railway variables set JWT_EXPIRES_IN="7d"
 railway variables set NODE_ENV="production"
 railway variables set PORT="5000"

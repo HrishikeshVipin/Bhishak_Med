@@ -34,3 +34,11 @@ logs/
 # Temporary files
 /tmp/
 backend/.env
+
+# Environment variables - NEVER COMMIT
+backend/.env
+frontend/.env
+frontend/.env.local
+**/.env
+**/.env.local
+**/.env.production

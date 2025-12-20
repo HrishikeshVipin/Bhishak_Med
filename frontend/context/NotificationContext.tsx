@@ -44,12 +44,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const fetchNotifications = async () => {
       try {
         const response = await notificationApi.getNotifications(20);
-        if (response.success) {
+        if (response.success && response.data) {
           setNotifications(response.data.notifications);
         }
 
         const countResponse = await notificationApi.getUnreadCount();
-        if (countResponse.success) {
+        if (countResponse.success && countResponse.data) {
           setUnreadCount(countResponse.data.unreadCount);
         }
       } catch (error) {

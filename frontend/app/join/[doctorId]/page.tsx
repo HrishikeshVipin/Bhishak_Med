@@ -26,7 +26,7 @@ export default function PatientSelfRegisterPage() {
     const fetchDoctorInfo = async () => {
       try {
         const response = await patientApi.getDoctorInfo(doctorId);
-        if (response.success) {
+        if (response.success && response.data) {
           setDoctor(response.data.doctor);
         } else {
           setError('Doctor not found');
@@ -55,7 +55,7 @@ export default function PatientSelfRegisterPage() {
         gender: formData.gender || undefined,
       });
 
-      if (response.success) {
+      if (response.success && response.data) {
         // Show success message with patient access link
         alert(
           `Successfully registered!\n\nYour access link:\n${response.data.patientAccessLink}\n\nPlease save this link to access your consultation portal.`

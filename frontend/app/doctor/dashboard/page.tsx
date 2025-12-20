@@ -56,7 +56,7 @@ export default function DoctorDashboard() {
     const fetchUnreadChats = async () => {
       try {
         const response = await consultationApi.getUnreadConsultations();
-        if (response.success) {
+        if (response.success && response.data) {
           setUnreadChats(response.data.unreadChats);
           setTotalUnread(response.data.totalUnread);
         }

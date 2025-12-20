@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/authStore';
 import type { Doctor, PaginationData } from '../../../types';
 
-export default function AllDoctorsPage() {
+function DoctorsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, role, initAuth } = useAuthStore();
@@ -334,5 +334,13 @@ export default function AllDoctorsPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function AllDoctorsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <DoctorsContent />
+    </Suspense>
   );
 }

@@ -86,7 +86,7 @@ export default function AdminSubscriptionPlansPage() {
       }
       // Refresh plans
       const response = await adminPlanApi.getAllPlans();
-      if (response.success) {
+      if (response.success && response.data) {
         // Parse features JSON string to array
         const parsedPlans = response.data.plans.map((plan: any) => ({
           ...plan,
@@ -158,7 +158,7 @@ export default function AdminSubscriptionPlansPage() {
 
       // Refresh plans
       const response = await adminPlanApi.getAllPlans();
-      if (response.success) {
+      if (response.success && response.data) {
         const parsedPlans = response.data.plans.map((plan: any) => ({
           ...plan,
           features: typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features,

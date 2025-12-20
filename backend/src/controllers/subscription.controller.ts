@@ -228,11 +228,16 @@ export const upgradeSubscription = async (req: Request, res: Response): Promise<
 
     console.log('💳 Creating Razorpay order...');
 
+    // Create short receipt (max 40 chars for Razorpay)
+    // Format: sub_<first8charsOfId>_<timestamp>
+    const shortId = doctorId.substring(0, 8);
+    const receipt = `sub_${shortId}_${Date.now()}`;
+
     // Create Razorpay order
     const razorpayOrder = await razorpay.orders.create({
       amount: plan.price, // amount in paise
       currency: 'INR',
-      receipt: `sub_${doctorId}_${Date.now()}`,
+      receipt,
       notes: {
         doctorId,
         planTier: tier,
@@ -360,11 +365,16 @@ export const purchaseMinutes = async (req: Request, res: Response): Promise<void
       }
     });
 
+    // Create short receipt (max 40 chars for Razorpay)
+    // Format: min_<first8charsOfId>_<timestamp>
+    const shortPurchaseId = purchase.id.substring(0, 8);
+    const receipt = `min_${shortPurchaseId}_${Date.now()}`;
+
     // Create Razorpay order
     const razorpayOrder = await razorpay.orders.create({
       amount: price, // amount in paise
       currency: 'INR',
-      receipt: `min_${purchase.id}_${Date.now()}`,
+      receipt,
       notes: {
         doctorId,
         purchaseId: purchase.id,

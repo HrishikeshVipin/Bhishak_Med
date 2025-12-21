@@ -9,6 +9,7 @@ import {
   confirmSubscriptionUpgrade,
   handleRazorpayWebhook,
   testRazorpayConfig,
+  getDebugSubscription,
 } from '../controllers/subscription.controller';
 import { auth } from '../middleware/auth';
 
@@ -20,6 +21,13 @@ const router = express.Router();
  * @access  Public (for debugging)
  */
 router.get('/test-razorpay', testRazorpayConfig);
+
+/**
+ * @route   GET /api/subscription/debug
+ * @desc    Get doctor's raw subscription data (for debugging)
+ * @access  Doctor
+ */
+router.get('/debug', auth, getDebugSubscription);
 
 /**
  * @route   GET /api/subscription/plans

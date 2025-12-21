@@ -41,6 +41,47 @@ export const testRazorpayConfig = async (req: Request, res: Response): Promise<v
 };
 
 /**
+ * Get doctor's raw subscription data (for debugging)
+ */
+export const getDebugSubscription = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const doctorId = (req as any).user.id;
+
+    const doctor = await prisma.doctor.findUnique({
+      where: { id: doctorId },
+      select: {
+        id: true,
+        email: true,
+        subscriptionTier: true,
+        subscriptionStatus: true,
+        subscriptionEndsAt: true,
+        trialEndsAt: true,
+        patientLimit: true,
+        patientsCreated: true,
+        monthlyVideoMinutes: true,
+        purchasedMinutes: true,
+        totalMinutesUsed: true,
+        lastResetDate: true,
+        currentSubscriptionHistoryId: true,
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Debug subscription data',
+      data: { doctor }
+    });
+  } catch (error: any) {
+    console.error('Get debug subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching debug data',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Get all available subscription plans
  */
 export const getSubscriptionPlans = async (req: Request, res: Response): Promise<void> => {
@@ -641,6 +682,13 @@ export const confirmSubscriptionUpgrade = async (req: Request, res: Response): P
     const doctorId = (req as any).user.id;
     const { razorpayPaymentId, razorpayOrderId, razorpaySignature, tier } = req.body;
 
+    console.log('🔐 Confirm subscription upgrade request:', {
+      doctorId,
+      tier,
+      razorpayPaymentId,
+      razorpayOrderId
+    });
+
     // Verify payment signature
     const body = razorpayOrderId + '|' + razorpayPaymentId;
     const expectedSignature = crypto
@@ -648,7 +696,14 @@ export const confirmSubscriptionUpgrade = async (req: Request, res: Response): P
       .update(body.toString())
       .digest('hex');
 
+    console.log('🔍 Signature verification:', {
+      expected: expectedSignature.substring(0, 10) + '...',
+      received: razorpaySignature.substring(0, 10) + '...',
+      match: expectedSignature === razorpaySignature
+    });
+
     if (expectedSignature !== razorpaySignature) {
+      console.error('❌ Signature verification failed');
       res.status(400).json({
         success: false,
         message: 'Invalid payment signature'
@@ -718,6 +773,15 @@ export const confirmSubscriptionUpgrade = async (req: Request, res: Response): P
 
     const updatedDoctor = result.doctor;
 
+    console.log('✅ Subscription upgrade confirmed successfully:', {
+      doctorId,
+      tier: updatedDoctor.subscriptionTier,
+      status: updatedDoctor.subscriptionStatus,
+      patientLimit: updatedDoctor.patientLimit,
+      videoMinutes: updatedDoctor.monthlyVideoMinutes,
+      endsAt: updatedDoctor.subscriptionEndsAt
+    });
+
     res.status(200).json({
       success: true,
       message: `Successfully upgraded to ${plan.name}!`,
@@ -727,7 +791,7 @@ export const confirmSubscriptionUpgrade = async (req: Request, res: Response): P
       }
     });
   } catch (error: any) {
-    console.error('Confirm subscription upgrade error:', error);
+    console.error('❌ Confirm subscription upgrade error:', error);
     res.status(500).json({
       success: false,
       message: 'Error confirming subscription upgrade',

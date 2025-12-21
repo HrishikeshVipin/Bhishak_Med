@@ -315,7 +315,8 @@ export default function DoctorDashboard() {
                     </p>
                   </div>
                 </div>
-                {subscriptionInfo && !subscriptionInfo.status.canCreatePatients && (
+                {subscriptionInfo && !subscriptionInfo.usage.patients.unlimited &&
+                 subscriptionInfo.usage.patients.used >= subscriptionInfo.usage.patients.limit && (
                   <p className="text-xs text-red-600">Limit reached</p>
                 )}
               </div>

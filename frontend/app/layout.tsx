@@ -5,6 +5,18 @@ import ScrollToTop from "@/components/ScrollToTop";
 export const metadata: Metadata = {
   title: "Bhishak Med - Doctor Teleconsultation",
   description: "Professional telemedicine platform for doctors and patients",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
+  themeColor: '#3B82F6',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Bhishak Med',
+  },
 };
 
 export default function RootLayout({

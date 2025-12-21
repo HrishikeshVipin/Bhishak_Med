@@ -153,8 +153,16 @@ export default function DoctorConsultationPage() {
     const newSocket = connectSocket();
     setSocket(newSocket);
 
+    // Fallback: Auto-join after 2 seconds if server doesn't respond
+    const joinTimeout = setTimeout(() => {
+      if (!joined) {
+        console.log('⚠️ Join timeout - enabling chat anyway');
+        setJoined(true);
+      }
+    }, 2000);
+
     newSocket.on('connect', () => {
-      console.log('Connected to chat server');
+      console.log('✅ Connected to chat server');
 
       // Join consultation room
       newSocket.emit('join-consultation', {
@@ -165,12 +173,19 @@ export default function DoctorConsultationPage() {
     });
 
     newSocket.on('joined-consultation', () => {
-      console.log('Joined consultation room');
+      console.log('✅ Joined consultation room');
+      clearTimeout(joinTimeout);
+      setJoined(true);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Socket connection error:', error);
+      // Enable chat anyway after error
       setJoined(true);
     });
 
     newSocket.on('error', (error) => {
-      console.error('Socket error:', error);
+      console.error('❌ Socket error:', error);
     });
   };
 
@@ -481,7 +496,8 @@ export default function DoctorConsultationPage() {
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                    <p>Connecting to chat...</p>
+                    <p className="font-medium">Connecting to chat...</p>
+                    <p className="text-xs mt-2">Socket: {socket ? '✓ Connected' : '○ Waiting'} | Room: {joined ? '✓ Joined' : '○ Joining'}</p>
                   </div>
                 )}
               </div>

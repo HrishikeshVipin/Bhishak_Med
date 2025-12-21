@@ -140,64 +140,54 @@
 
 ## 🚀 Deployment Steps
 
-### **Step 1: Choose SMS Provider**
+### **Step 1: MSG91 SMS Setup** ✅
 
-**Free Options for India:**
+**You're using MSG91** - Perfect choice for India! 🇮🇳
 
-1. **MSG91** (Recommended)
-   - Free: 100 SMS/day on trial
-   - Signup: https://msg91.com/
-   - India-focused, reliable
+**Your MSG91 Auth Key:** `464493AUM9Edsoo689d2f61P1`
 
-2. **2Factor.in**
-   - Free: 10 SMS/day forever
-   - Signup: https://2factor.in/
-   - India OTP specialist
+**What MSG91 Provides:**
+- ✅ Free: 100 SMS/day on trial (no credit card required)
+- ✅ India-focused, excellent deliverability
+- ✅ No watermarks like "trial account"
+- ✅ Simple REST API
 
-3. **Firebase Phone Auth** (Best for production)
-   - Free: 10,000 verifications/month
-   - Signup: https://console.firebase.google.com/
-   - Most reliable, Google infrastructure
+**Quick MSG91 Setup:**
+1. Go to your MSG91 dashboard: https://msg91.com/dashboard
+2. Navigate to **Settings → API Settings**
+3. Copy your **Sender ID** (default: 6-character code like "BHISHK")
+4. Optional: Create an SMS template for better deliverability
 
-4. **Twilio** (Paid but trial available)
-   - Trial: $15 credit
-   - Get phone number: https://console.twilio.com/
-   - Works, but expensive for India
-
-**Setup Your Credentials:**
-```env
-TWILIO_ACCOUNT_SID=<Your Twilio Account SID>
-TWILIO_AUTH_TOKEN=<Your Twilio Auth Token>
-```
-
-**Action Required:**
-- If using Twilio: Get a phone number from https://console.twilio.com/us1/develop/phone-numbers/manage/search
-- **Or** switch to MSG91/2Factor for free India SMS
+**Alternative Free Options (if needed):**
+- 2Factor.in: 10 SMS/day forever (https://2factor.in/)
+- Firebase Phone Auth: 10K/month (https://console.firebase.google.com/)
 
 ---
 
 ### **Step 2: Add Environment Variables to Railway**
 
-In your Railway backend service, add:
+In your Railway backend service, add these variables:
 
 ```env
-# SMS Service (choose one)
-# Option A: Twilio
-TWILIO_ACCOUNT_SID=<Your Twilio Account SID>
-TWILIO_AUTH_TOKEN=<Your Twilio Auth Token>
-TWILIO_PHONE_NUMBER=<Your Twilio +1 number>
+# MSG91 SMS Service (Active)
+MSG91_AUTH_KEY=464493AUM9Edsoo689d2f61P1
+MSG91_SENDER_ID=BHISHK
 
-# Option B: MSG91 (free tier)
-# MSG91_AUTH_KEY=<your auth key>
-
-# JWT Refresh Token Secret
-JWT_REFRESH_SECRET=<generate-secure-random-string>
+# JWT Refresh Token Secret (Generate below)
+JWT_REFRESH_SECRET=<paste-generated-secret-here>
 ```
 
 **Generate JWT_REFRESH_SECRET:**
+Run this command in your terminal:
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
+
+**Important Notes:**
+- `MSG91_SENDER_ID`: Get from MSG91 dashboard → Settings → Sender IDs
+  - Default is usually a 6-character code (e.g., "BHISHK")
+  - Must be approved by MSG91 for production use
+- `JWT_REFRESH_SECRET`: Must be a long random string (64+ characters)
 
 ---
 
@@ -277,49 +267,38 @@ Or add to `package.json` scripts if not already there:
 
 ---
 
-## 📱 For Testing with Twilio Free Tier
+## 📱 MSG91 Testing & Verification ✅
 
-**Important:** Twilio trial can only send SMS to verified numbers.
+**Great news:** MSG91 free tier has no number verification requirements!
 
-**Steps:**
-1. Go to https://console.twilio.com/us1/develop/phone-numbers/manage/verified
-2. Click "Add a new Caller ID"
-3. Enter your test phone number (with +91)
-4. Verify via SMS code
-5. Now you can test signup with that number
+**Testing Features:**
+- ✅ Send to any Indian mobile number (no verification needed)
+- ✅ 100 free SMS per day on trial
+- ✅ No "trial account" watermark in SMS
+- ✅ Clean professional messages
 
-**Limitation:** Trial mode adds "Sent from your Twilio trial account" to every SMS.
-
----
-
-## 🆓 Recommended: Switch to MSG91 (Free Tier)
-
-**Why MSG91?**
-- ✅ Free 100 SMS/day (no credit card required)
-- ✅ India-focused, better deliverability
-- ✅ No "trial account" watermark
-- ✅ Simple API integration
-
-**Migration Steps:**
-1. Signup: https://msg91.com/in/signup
-2. Get AUTH_KEY from dashboard
-3. Replace Twilio code in `backend/src/services/sms.service.ts`:
-
-```typescript
-// MSG91 Example
-import axios from 'axios';
-
-const MSG91_AUTH_KEY = process.env.MSG91_AUTH_KEY;
-const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID;
-
-await axios.get(`https://api.msg91.com/api/v5/otp`, {
-  params: {
-    authkey: MSG91_AUTH_KEY,
-    mobile: phone,
-    otp: otp,
-  },
-});
+**SMS Format You'll Receive:**
 ```
+Your Bhishak Med OTP is: 123456. Valid for 10 minutes. Do not share this code.
+```
+
+**Production Checklist (Before Going Live):**
+1. **Get Sender ID Approved:**
+   - Go to MSG91 Dashboard → Settings → Sender IDs
+   - Request approval for your custom Sender ID (e.g., "BHISHK")
+   - Approval takes 1-2 business days
+
+2. **Create SMS Template (Optional but Recommended):**
+   - MSG91 Dashboard → Templates
+   - Create a template for OTP messages
+   - Improves deliverability and reduces spam filtering
+
+3. **Upgrade Plan (When Needed):**
+   - Free: 100 SMS/day
+   - Paid: ₹0.10-0.15 per SMS (very affordable)
+   - No monthly fees, pay-as-you-go
+
+**MSG91 Dashboard:** https://msg91.com/dashboard
 
 ---
 

@@ -49,10 +49,9 @@ Add these to your Railway backend service:
 ### New Variables to Add:
 
 ```env
-# Twilio SMS (for OTP)
-TWILIO_ACCOUNT_SID=<Your Twilio Account SID>
-TWILIO_AUTH_TOKEN=<Your Twilio Auth Token>
-TWILIO_PHONE_NUMBER=<Your Twilio US Number with +1 prefix>
+# MSG91 SMS Service (Active - India Focused)
+MSG91_AUTH_KEY=464493AUM9Edsoo689d2f61P1
+MSG91_SENDER_ID=BHISHK
 
 # JWT Refresh Token Secret (generate a random string)
 JWT_REFRESH_SECRET=<generate-secure-random-string-here>
@@ -66,24 +65,35 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 ---
 
-## 📱 Twilio Setup (Free Tier)
+## 📱 MSG91 Setup ✅ (Active Provider)
 
-1. **Get a Phone Number**:
-   - Go to https://console.twilio.com/
-   - Navigate to Phone Numbers → Buy a Number
-   - Select a US number (free on trial)
-   - Copy the number with +1 prefix (e.g., +15551234567)
+**Already configured!** Your MSG91 Auth Key: `464493AUM9Edsoo689d2f61P1`
 
-2. **Verify Test Numbers** (Free Tier Limitation):
-   - Go to Phone Numbers → Verified Caller IDs
-   - Add your test phone numbers (including +91 Indian numbers)
-   - Twilio will send a verification code to each number
-   - You can only send SMS to verified numbers in trial mode
+### Quick Setup Checklist:
 
-3. **Production Mode** (When ready):
-   - Upgrade to paid account
-   - Can send to any phone number worldwide
-   - ~$0.0075 per SMS
+1. **Get Sender ID** (Required):
+   - Login to https://msg91.com/dashboard
+   - Go to **Settings → Sender IDs**
+   - Note your default 6-character Sender ID (e.g., "BHISHK")
+   - Add this to Railway environment variables as `MSG91_SENDER_ID`
+
+2. **No Phone Verification Needed** ✅:
+   - Unlike Twilio, MSG91 doesn't require test number verification
+   - Works with any Indian mobile number immediately
+   - 100 free SMS per day on trial
+
+3. **Optional: Create SMS Template** (Better Deliverability):
+   - Go to **Dashboard → Templates**
+   - Create a template: "Your Bhishak Med OTP is: {#var#}. Valid for 10 minutes."
+   - Get Template ID and add to Railway as `MSG91_TEMPLATE_ID` (optional)
+
+4. **Production Mode** (When ready):
+   - Request Sender ID approval (1-2 business days)
+   - Upgrade to paid: ₹0.10-0.15 per SMS
+   - No monthly fees, pay-as-you-go
+   - Very affordable for India
+
+**MSG91 Dashboard:** https://msg91.com/dashboard
 
 ---
 

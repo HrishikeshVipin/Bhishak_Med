@@ -150,9 +150,9 @@ export default function DoctorDashboard() {
     }
   };
 
-  const trialDaysLeft = Math.ceil(
-    (new Date(doctor.trialEndsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const trialDaysLeft = doctor?.trialEndsAt
+    ? Math.ceil((new Date(doctor.trialEndsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   const getWarningBannerConfig = () => {
     if (!subscriptionInfo) return null;

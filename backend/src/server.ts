@@ -9,6 +9,8 @@ import prisma from './config/database';
 import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
 import patientRoutes from './routes/patient.routes';
+import patientAuthRoutes from './routes/patient-auth.routes';
+import doctorDiscoveryRoutes from './routes/doctor-discovery.routes';
 import consultationRoutes from './routes/consultation.routes';
 import vitalsRoutes from './routes/vitals.routes';
 import prescriptionRoutes from './routes/prescription.routes';
@@ -114,6 +116,8 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/patients', patientRoutes);
+app.use('/api/patient-auth', patientAuthRoutes);
+app.use('/api/doctors', doctorDiscoveryRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api', vitalsRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);

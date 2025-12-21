@@ -112,6 +112,11 @@ export default function DoctorConsultationPage() {
 
       if (response.success && response.data) {
         const consult = response.data.consultation;
+        console.log('📋 Loaded consultation:', {
+          id: consult.id,
+          messageCount: consult.chatMessages?.length || 0,
+          messages: consult.chatMessages
+        });
         setConsultation(consult);
         setNotes({
           chiefComplaint: consult.chiefComplaint || '',

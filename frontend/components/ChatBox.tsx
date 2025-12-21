@@ -33,6 +33,19 @@ export default function ChatBox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Debug: Log initial messages
+  useEffect(() => {
+    console.log('💬 ChatBox initialized with', initialMessages.length, 'messages:', initialMessages);
+  }, []);
+
+  // Update messages when initialMessages changes
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      console.log('🔄 Updating messages from initialMessages:', initialMessages.length);
+      setMessages(initialMessages);
+    }
+  }, [initialMessages]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };

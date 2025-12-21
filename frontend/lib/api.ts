@@ -536,6 +536,124 @@ export const notificationApi = {
     const { data } = await api.put<ApiResponse<null>>('/notifications/mark-all-read');
     return data;
   },
+
+  // Patient Authentication
+  patientAuth: {
+    sendOtp: async (phone: string) => {
+      const { data } = await api.post<ApiResponse<null>>('/patient-auth/send-otp', { phone });
+      return data;
+    },
+
+    verifyOtp: async (phone: string, otp: string) => {
+      const { data } = await api.post<ApiResponse<null>>('/patient-auth/verify-otp', { phone, otp });
+      return data;
+    },
+
+    signup: async (phone: string, otp: string, fullName: string, age: number, gender: string, pin: string) => {
+      const { data } = await api.post<ApiResponse<{
+        patient: any;
+        accessToken: string;
+        refreshToken: string;
+      }>>('/patient-auth/signup', { phone, otp, fullName, age, gender, pin });
+      return data;
+    },
+
+    login: async (phone: string, pin: string) => {
+      const { data } = await api.post<ApiResponse<{
+        patient: any;
+        accessToken: string;
+        refreshToken: string;
+      }>>('/patient-auth/login', { phone, pin });
+      return data;
+    },
+
+    refreshToken: async (refreshToken: string) => {
+      const { data } = await api.post<ApiResponse<{
+        accessToken: string;
+        refreshToken: string;
+      }>>('/patient-auth/refresh', { refreshToken });
+      return data;
+    },
+
+    getProfile: async (token: string) => {
+      const { data } = await api.get<ApiResponse<{ patient: any }>>('/patient-auth/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return data;
+    },
+
+    updateProfile: async (token: string, updates: any) => {
+      const { data } = await api.put<ApiResponse<{ patient: any }>>('/patient-auth/profile', updates, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return data;
+    },
+
+    changePin: async (token: string, currentPin: string, newPin: string) => {
+      const { data } = await api.post<ApiResponse<null>>('/patient-auth/change-pin',
+        { currentPin, newPin },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return data;
+    },
+  },
+
+  // Doctor Discovery
+  doctorDiscovery: {
+    search: async (params: {
+      search?: string;
+      doctorType?: string;
+      specialization?: string;
+      isOnline?: boolean;
+      minFee?: number;
+      maxFee?: number;
+      minRating?: number;
+      sortBy?: string;
+      page?: number;
+      limit?: number;
+    }) => {
+      const { data } = await api.get<ApiResponse<{
+        doctors: any[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+        };
+      }>>('/doctors/search', { params });
+      return data;
+    },
+
+    getPublicProfile: async (doctorId: string) => {
+      const { data } = await api.get<ApiResponse<{
+        doctor: any;
+        reviews: any[];
+        ratingDistribution: {
+          5: number;
+          4: number;
+          3: number;
+          2: number;
+          1: number;
+        };
+      }>>(`/doctors/${doctorId}/public`);
+      return data;
+    },
+
+    getSpecializations: async () => {
+      const { data } = await api.get<ApiResponse<{ specializations: string[] }>>('/doctors/specializations');
+      return data;
+    },
+
+    updateOnlineStatus: async (isOnline: boolean) => {
+      const { data } = await api.post<ApiResponse<{ doctor: any }>>('/doctors/online-status', { isOnline });
+      return data;
+    },
+
+    updateProfile: async (updates: any) => {
+      const { data } = await api.put<ApiResponse<{ doctor: any }>>('/doctors/profile', updates);
+      return data;
+    },
+  },
 };
 
 export default api;

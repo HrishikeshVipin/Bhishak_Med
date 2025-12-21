@@ -99,12 +99,40 @@ model Doctor {
   emailNotifications Boolean @default(true)
   chatNotifications  Boolean @default(true)
 
-  patients            Patient[]
-  consultations       Consultation[]
-  prescriptions       Prescription[]
-  minutePurchases     MinutePurchase[]
-  doctorMedicines     DoctorMedicine[]
-  subscriptionHistory DoctorSubscriptionHistory[]
+  // Phase 2: Doctor Discovery & Profile
+  doctorType      String   @default("ALLOPATHY") // "ALLOPATHY" | "AYURVEDA" | "HOMEOPATHY"
+  subspecialty    String[] // Array of sub-specializations
+  languagesSpoken String[] // ["English", "Hindi", "Malayalam"]
+  yearsExperience Int?
+  consultationFee Int?     // In paise
+  bio             String?  @db.Text
+  profileComplete Boolean  @default(false)
+
+  // Phase 2: Online Status Tracking
+  isOnline     Boolean   @default(false)
+  lastSeen     DateTime?
+  availability Json?     // Weekly schedule: { "monday": { "start": "09:00", "end": "17:00" }, ... }
+
+  // Phase 2: Aggregated Ratings (denormalized for performance)
+  totalReviews  Int      @default(0)
+  averageRating Decimal? @default(0) @db.Decimal(3, 2)
+
+  // Phase 2: Appointment Scheduling
+  appointmentBuffer Int @default(5) // Minutes between appointments
+
+  // Phase 2: Referral Credits
+  referralCredits Int @default(0) // Total credits earned from referrals
+
+  patients              Patient[]
+  consultations         Consultation[]
+  prescriptions         Prescription[]
+  minutePurchases       MinutePurchase[]
+  doctorMedicines       DoctorMedicine[]
+  subscriptionHistory   DoctorSubscriptionHistory[]
+  appointments          Appointment[]
+  referralsGiven        Referral[]                 @relation("ReferralsGiven")
+  referralsReceived     Referral[]                 @relation("ReferralsReceived")
+  referralIncentives    ReferralIncentive[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,8 +141,8 @@ model Doctor {
 // Patient model (created by doctor, accessed via unique link)
 model Patient {
   id       String  @id @default(uuid())
-  doctorId String
-  doctor   Doctor  @relation(fields: [doctorId], references: [id])
+  doctorId String? // Optional for self-registered patients (APP_ACCOUNT)
+  doctor   Doctor? @relation(fields: [doctorId], references: [id])
 
   fullName String
   phone    String?
@@ -134,9 +162,22 @@ model Patient {
   status      String    @default("ACTIVE") // "ACTIVE" | "WAITLISTED"
   activatedAt DateTime? // When patient was moved from waitlist to active
 
+  // Phase 2: Patient Authentication (OTP + PIN/Password)
+  phoneVerified   Boolean   @default(false)
+  password        String?   // 6-digit PIN or password (bcrypt hashed)
+  lastOtpSent     DateTime?
+  otpAttempts     Int       @default(0)
+  otpLockedUntil  DateTime?
+  refreshToken    String?   // For JWT refresh
+  lastLoginAt     DateTime?
+  accountType     String    @default("LINK_BASED") // "LINK_BASED" | "APP_ACCOUNT"
+
   consultations  Consultation[]
   vitals         Vitals[]
   medicalUploads MedicalUpload[]
+  appointments   Appointment[]
+  reminders      MedicineReminder[]
+  referrals      Referral[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -178,6 +219,8 @@ model Consultation {
   prescription        Prescription?
   paymentConfirmation PaymentConfirmation?
   review              ConsultationReview?
+  referrals           Referral[]     // Phase 2: Referrals originating from this consultation
+  appointment         Appointment?   // Phase 2: Link to appointment if started from scheduled appointment
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -253,6 +296,8 @@ model Prescription {
   instructions String?
 
   pdfPath String? // Local file path of generated PDF
+
+  reminders MedicineReminder[] // Phase 2: Medicine reminders for this prescription
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -445,4 +490,119 @@ model Notification {
 
   @@index([recipientType, recipientId, isRead])
   @@index([recipientType, recipientId, createdAt])
+}
+
+// Phase 2: Patient OTP storage
+model PatientOtp {
+  id        String   @id @default(uuid())
+  phone     String
+  otp       String   // Hashed OTP (bcrypt)
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+// Phase 2: Appointment Scheduling
+model Appointment {
+  id                 String   @id @default(uuid())
+  doctorId           String
+  patientId          String
+  scheduledTime      DateTime
+  duration           Int      @default(30) // Minutes
+  status             String   @default("SCHEDULED") // "SCHEDULED" | "CONFIRMED" | "CANCELLED" | "COMPLETED"
+  consultationType   String   @default("VIDEO") // "VIDEO" | "CHAT" | "BOTH"
+  notes              String?  @db.Text
+  cancellationReason String?
+  consultationId     String?  @unique // Link to actual consultation when started
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  doctor       Doctor         @relation(fields: [doctorId], references: [id])
+  patient      Patient        @relation(fields: [patientId], references: [id])
+  consultation Consultation?  @relation(fields: [consultationId], references: [id])
+
+  @@index([doctorId, scheduledTime])
+  @@index([patientId, scheduledTime])
+}
+
+// Phase 2: Medicine Reminders
+model MedicineReminder {
+  id                  String                 @id @default(uuid())
+  patientId           String
+  prescriptionId      String
+  medicineName        String
+  dosage              String
+  frequency           String                 // "ONCE_DAILY" | "TWICE_DAILY" | "THRICE_DAILY" | "CUSTOM"
+  customSchedule      Json?                  // For custom timings: ["08:00", "14:00", "20:00"]
+  startDate           DateTime
+  endDate             DateTime
+  isActive            Boolean                @default(true)
+  notificationEnabled Boolean                @default(true)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  patient       Patient                @relation(fields: [patientId], references: [id])
+  prescription  Prescription           @relation(fields: [prescriptionId], references: [id])
+  adherenceLogs MedicineAdherenceLog[]
+
+  @@index([patientId, isActive])
+}
+
+model MedicineAdherenceLog {
+  id            String           @id @default(uuid())
+  reminderId    String
+  scheduledTime DateTime
+  takenAt       DateTime?
+  status        String           @default("PENDING") // "PENDING" | "TAKEN" | "MISSED" | "SKIPPED"
+  createdAt     DateTime         @default(now())
+
+  reminder MedicineReminder @relation(fields: [reminderId], references: [id])
+
+  @@index([reminderId, scheduledTime])
+}
+
+// Phase 2: Referral System
+model Referral {
+  id                   String        @id @default(uuid())
+  fromDoctorId         String
+  toDoctorId           String?       // Specific doctor or null for patient to choose
+  patientId            String
+  consultationId       String        // Original consultation
+  specialty            String?       // If toDoctorId null, suggest specialty
+  reason               String        @db.Text
+  urgency              String        @default("ROUTINE") // "URGENT" | "ROUTINE" | "FOLLOWUP"
+  status               String        @default("PENDING") // "PENDING" | "ACCEPTED" | "COMPLETED" | "DECLINED"
+  referralNotes        String?       @db.Text
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  fromDoctor           Doctor              @relation("ReferralsGiven", fields: [fromDoctorId], references: [id])
+  toDoctor             Doctor?             @relation("ReferralsReceived", fields: [toDoctorId], references: [id])
+  patient              Patient             @relation(fields: [patientId], references: [id])
+  originalConsultation Consultation        @relation(fields: [consultationId], references: [id])
+  incentive            ReferralIncentive?
+
+  @@index([fromDoctorId])
+  @@index([toDoctorId])
+  @@index([patientId])
+}
+
+model ReferralIncentive {
+  id                String   @id @default(uuid())
+  referralId        String   @unique
+  referringDoctorId String
+  creditType        String   // "DISCOUNT" | "FREE_MINUTES" | "CASH"
+  creditAmount      Int      // In paise or minutes
+  status            String   @default("PENDING") // "PENDING" | "ISSUED" | "USED"
+  issuedAt          DateTime?
+  usedAt            DateTime?
+  createdAt         DateTime @default(now())
+
+  referral Referral @relation(fields: [referralId], references: [id])
+  doctor   Doctor   @relation(fields: [referringDoctorId], references: [id])
+
+  @@index([referringDoctorId, status])
 }

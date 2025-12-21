@@ -37,6 +37,7 @@ const allowedOrigins = [
   'http://192.168.0.241:3000', // Actual WiFi network IP for mobile access
   'http://192.168.0.1:3000', // Router IP range
   'http://192.168.1.1:3000', // Alternative router range
+  'https://unique-fulfillment-production.up.railway.app', // Production frontend
 ];
 
 // Add production frontend URL if set
@@ -44,19 +45,27 @@ if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
-// Initialize Socket.io
+console.log('✅ Allowed CORS origins:', allowedOrigins);
+
+// Initialize Socket.io with Railway-compatible settings
 const io = new SocketIOServer(httpServer, {
   cors: {
     origin: (origin, callback) => {
+      console.log('🔍 Socket.io CORS check for origin:', origin);
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn('❌ Socket.io CORS rejected:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  transports: ['websocket', 'polling'], // Enable both transports for Railway
+  allowEIO3: true, // Compatibility with older clients
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
 // Middleware

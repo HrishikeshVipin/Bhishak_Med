@@ -20,6 +20,8 @@ export const authLimiter = rateLimit({
   handler: rateLimitHandler,
   // Skip successful requests (only count failures)
   skipSuccessfulRequests: true,
+  // Trust Railway proxy
+  validate: { trustProxy: false },
 });
 
 // Moderate rate limiter for registration/signup
@@ -30,6 +32,7 @@ export const registrationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
+  validate: { trustProxy: false },
 });
 
 // General API rate limiter (for all API endpoints)
@@ -45,6 +48,7 @@ export const apiLimiter = rateLimit({
     // If user is authenticated and verified, give them more leeway
     return req.user?.role === 'ADMIN';
   },
+  validate: { trustProxy: false },
 });
 
 // Strict rate limiter for file uploads
@@ -55,6 +59,7 @@ export const uploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
+  validate: { trustProxy: false },
 });
 
 // Rate limiter for patient self-registration links
@@ -65,7 +70,7 @@ export const patientRegistrationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  // Standard IP-based rate limiting
+  validate: { trustProxy: false },
 });
 
 // Very strict rate limiter for password reset
@@ -76,6 +81,7 @@ export const passwordResetLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
+  validate: { trustProxy: false },
 });
 
 // Moderate rate limiter for creating patients (doctors only)
@@ -86,6 +92,7 @@ export const createPatientLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
+  validate: { trustProxy: false },
 });
 
 // Rate limiter for prescription generation
@@ -96,4 +103,5 @@ export const prescriptionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
+  validate: { trustProxy: false },
 });

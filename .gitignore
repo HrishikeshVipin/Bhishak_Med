@@ -42,3 +42,4 @@ frontend/.env.local
 **/.env
 **/.env.local
 **/.env.production
+.claude/settings.local.json

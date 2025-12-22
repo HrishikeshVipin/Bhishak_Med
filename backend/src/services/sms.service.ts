@@ -78,9 +78,13 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; messag
 
       try {
         // Using MSG91 OTP Service with Token Authentication
-        // This service is optimized for OTP delivery with better success rates
+        // Build URL based on whether template_id is provided
+        const otpUrl = MSG91_TEMPLATE_ID
+          ? `https://control.msg91.com/api/v5/otp?template_id=${MSG91_TEMPLATE_ID}&mobile=${formattedPhone}&authkey=${MSG91_OTP_TOKEN}&otp=${otp}`
+          : `https://control.msg91.com/api/v5/otp?mobile=${formattedPhone}&authkey=${MSG91_OTP_TOKEN}&otp=${otp}`;
+
         const otpResponse = await axios.post(
-          `https://control.msg91.com/api/v5/otp?template_id=${MSG91_TEMPLATE_ID || 'default'}&mobile=${formattedPhone}&authkey=${MSG91_OTP_TOKEN}&otp=${otp}`,
+          otpUrl,
           {},
           {
             headers: {
@@ -93,22 +97,13 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; messag
       } catch (otpError: any) {
         console.error('❌ MSG91 OTP Service Error:', otpError.response?.data || otpError.message);
 
-        // Fallback: Try alternate method with POST body
+        // Fallback: Try using MSG91 Flow API (simpler, no template required)
         try {
-          const fallbackResponse = await axios.post(
-            'https://control.msg91.com/api/v5/otp',
-            {
-              mobile: formattedPhone,
-              otp: otp,
-            },
-            {
-              headers: {
-                'authkey': MSG91_OTP_TOKEN,
-                'Content-Type': 'application/json',
-              },
-            }
+          const smsMessage = `Your Bhishak Med OTP is: ${otp}. Valid for 10 minutes. Do not share with anyone.`;
+          const fallbackResponse = await axios.get(
+            `https://api.msg91.com/api/sendhttp.php?authkey=${MSG91_OTP_TOKEN}&mobiles=${formattedPhone}&message=${encodeURIComponent(smsMessage)}&sender=BHSHAK&route=4&country=91`
           );
-          console.log('✅ MSG91 OTP sent via fallback method:', fallbackResponse.data);
+          console.log('✅ MSG91 SMS sent via fallback method:', fallbackResponse.data);
         } catch (fallbackError: any) {
           console.error('❌ MSG91 Fallback Error:', fallbackError.response?.data || fallbackError.message);
           throw new Error('Failed to send OTP via MSG91. Please check your token and configuration.');

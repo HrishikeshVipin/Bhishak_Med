@@ -211,7 +211,7 @@ export const validatePatientToken = async (
     // Attach patient info to request
     req.user = {
       id: patient.id,
-      email: patient.doctor.id, // Store doctor ID for consultation
+      email: patient.doctor?.id || patient.id, // Store doctor ID if linked, otherwise patient ID
       role: 'DOCTOR', // Using existing role type
       status: 'PATIENT', // Custom status to identify as patient
     };
@@ -311,3 +311,4 @@ export const checkTrialStatus = async (
 
 // Combined middleware for doctor authentication (verify token + check is doctor)
 export const auth = [verifyToken, isDoctor];
+export const authenticateDoctor = auth; // Alias for clarity in routes

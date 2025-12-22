@@ -39,4 +39,5 @@ logs/
 *.log
 
 # Prisma
-prisma/migrations/
+# Note: Migrations should be tracked in git for proper deployment
+# prisma/migrations/ - DO NOT IGNORE (needed for Railway deployment)

@@ -2,10 +2,9 @@ import axios from 'axios';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/database';
 
-// MSG91 Configuration
-const MSG91_AUTH_KEY = process.env.MSG91_AUTH_KEY;
-const MSG91_SENDER_ID = process.env.MSG91_SENDER_ID || 'BHISHK'; // Default sender ID
-const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID; // Optional: for SMS template
+// MSG91 OTP Service Configuration
+const MSG91_OTP_TOKEN = process.env.MSG91_OTP_TOKEN; // OTP Service Token
+const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID; // Optional: OTP Template ID
 
 // Rate limiting: max 3 OTPs per hour per phone
 const OTP_RATE_LIMIT = 3;
@@ -68,7 +67,7 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; messag
       },
     });
 
-    // Send SMS via MSG91
+    // Send OTP via MSG91 OTP Service
     if (process.env.NODE_ENV === 'production') {
       // Format phone number for MSG91 (needs country code without +)
       const formattedPhone = phone.startsWith('+')
@@ -78,47 +77,41 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; messag
         : `91${phone}`;
 
       try {
-        // Method 1: Using MSG91 OTP Service API (recommended for OTP messages)
-        // This endpoint is optimized for OTP delivery with better success rates
+        // Using MSG91 OTP Service with Token Authentication
+        // This service is optimized for OTP delivery with better success rates
         const otpResponse = await axios.post(
-          'https://control.msg91.com/api/v5/otp',
-          {
-            mobile: formattedPhone,
-            otp: otp,
-            sender: MSG91_SENDER_ID,
-          },
+          `https://control.msg91.com/api/v5/otp?template_id=${MSG91_TEMPLATE_ID || 'default'}&mobile=${formattedPhone}&authkey=${MSG91_OTP_TOKEN}&otp=${otp}`,
+          {},
           {
             headers: {
-              'authkey': MSG91_AUTH_KEY,
               'Content-Type': 'application/json',
             },
           }
         );
 
-        console.log('✅ MSG91 OTP sent:', otpResponse.data);
+        console.log('✅ MSG91 OTP Service sent:', otpResponse.data);
       } catch (otpError: any) {
-        console.error('❌ MSG91 OTP Error:', otpError.response?.data || otpError.message);
+        console.error('❌ MSG91 OTP Service Error:', otpError.response?.data || otpError.message);
 
-        // Fallback: Try alternate MSG91 SMS endpoint if OTP service fails
+        // Fallback: Try alternate method with POST body
         try {
-          await axios.post(
-            'https://control.msg91.com/api/v5/flow/',
+          const fallbackResponse = await axios.post(
+            'https://control.msg91.com/api/v5/otp',
             {
-              sender: MSG91_SENDER_ID,
-              mobiles: formattedPhone,
-              message: `Your Bhishak Med OTP is: ${otp}. Valid for 10 minutes. Do not share this code.`,
+              mobile: formattedPhone,
+              otp: otp,
             },
             {
               headers: {
-                'authkey': MSG91_AUTH_KEY,
+                'authkey': MSG91_OTP_TOKEN,
                 'Content-Type': 'application/json',
               },
             }
           );
-          console.log('✅ MSG91 SMS sent via fallback endpoint');
+          console.log('✅ MSG91 OTP sent via fallback method:', fallbackResponse.data);
         } catch (fallbackError: any) {
           console.error('❌ MSG91 Fallback Error:', fallbackError.response?.data || fallbackError.message);
-          throw new Error('Failed to send OTP via MSG91');
+          throw new Error('Failed to send OTP via MSG91. Please check your token and configuration.');
         }
       }
     } else {

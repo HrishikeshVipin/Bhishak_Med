@@ -49,12 +49,14 @@ Add these to your Railway backend service:
 ### New Variables to Add:
 
 ```env
-# MSG91 SMS Service (Active - India Focused)
-MSG91_AUTH_KEY=464493AUM9Edsoo689d2f61P1
-MSG91_SENDER_ID=BHISHK
+# MSG91 OTP Service (Token-based authentication)
+MSG91_OTP_TOKEN=464493TGBGt4v8JA6948494eP1
 
 # JWT Refresh Token Secret (generate a random string)
 JWT_REFRESH_SECRET=<generate-secure-random-string-here>
+
+# Optional: MSG91 Template ID (if using custom template)
+# MSG91_TEMPLATE_ID=<your-template-id>
 ```
 
 ### Generate JWT_REFRESH_SECRET:
@@ -65,35 +67,36 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 ---
 
-## 📱 MSG91 Setup ✅ (Active Provider)
+## 📱 MSG91 OTP Service Setup ✅ (Active Provider)
 
-**Already configured!** Your MSG91 Auth Key: `464493AUM9Edsoo689d2f61P1`
+**Already configured!** Your MSG91 OTP Token: `464493TGBGt4v8JA6948494eP1`
 
 ### Quick Setup Checklist:
 
-1. **Get Sender ID** (Required):
-   - Login to https://msg91.com/dashboard
-   - Go to **Settings → Sender IDs**
-   - Note your default 6-character Sender ID (e.g., "BHISHK")
-   - Add this to Railway environment variables as `MSG91_SENDER_ID`
+1. **Token Authentication** ✅:
+   - You're using MSG91 OTP Service (better than regular SMS!)
+   - No separate Sender ID needed - it's configured in your OTP Service dashboard
+   - Token-based authentication is simpler and more secure
 
 2. **No Phone Verification Needed** ✅:
-   - Unlike Twilio, MSG91 doesn't require test number verification
+   - MSG91 doesn't require test number verification
    - Works with any Indian mobile number immediately
-   - 100 free SMS per day on trial
+   - 100 free OTP messages per day on trial
 
-3. **Optional: Create SMS Template** (Better Deliverability):
-   - Go to **Dashboard → Templates**
-   - Create a template: "Your Bhishak Med OTP is: {#var#}. Valid for 10 minutes."
-   - Get Template ID and add to Railway as `MSG91_TEMPLATE_ID` (optional)
+3. **OTP Template** (Already Configured):
+   - Your OTP Service likely has a default template configured
+   - Check: **OTP** section in MSG91 dashboard to see your template
+   - Template format: "Your OTP is {#var#}. Valid for {#var#} minutes."
+   - If you want custom template, create one and add `MSG91_TEMPLATE_ID` to Railway
 
 4. **Production Mode** (When ready):
-   - Request Sender ID approval (1-2 business days)
-   - Upgrade to paid: ₹0.10-0.15 per SMS
+   - OTP Service automatically handles DLT compliance
+   - Upgrade to paid: ₹0.10-0.15 per OTP
    - No monthly fees, pay-as-you-go
    - Very affordable for India
+   - Better deliverability than regular SMS
 
-**MSG91 Dashboard:** https://msg91.com/dashboard
+**MSG91 Dashboard:** https://msg91.com/dashboard → OTP Section
 
 ---
 

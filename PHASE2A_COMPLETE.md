@@ -169,9 +169,8 @@
 In your Railway backend service, add these variables:
 
 ```env
-# MSG91 SMS Service (Active)
-MSG91_AUTH_KEY=464493AUM9Edsoo689d2f61P1
-MSG91_SENDER_ID=BHISHK
+# MSG91 OTP Service (Token-based authentication)
+MSG91_OTP_TOKEN=464493TGBGt4v8JA6948494eP1
 
 # JWT Refresh Token Secret (Generate below)
 JWT_REFRESH_SECRET=<paste-generated-secret-here>
@@ -184,10 +183,11 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
 **Important Notes:**
-- `MSG91_SENDER_ID`: Get from MSG91 dashboard → Settings → Sender IDs
-  - Default is usually a 6-character code (e.g., "BHISHK")
-  - Must be approved by MSG91 for production use
+- `MSG91_OTP_TOKEN`: Your OTP Service token (already configured!)
+  - No need for Sender ID with OTP Service - it's configured in MSG91 dashboard
+  - Sender ID is managed automatically by MSG91 OTP Service
 - `JWT_REFRESH_SECRET`: Must be a long random string (64+ characters)
+- Optional: `MSG91_TEMPLATE_ID` if you created a custom OTP template in MSG91
 
 ---
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { patientAuth } from '@/lib/api';
 import { usePatientAuth } from '@/store/patientAuthStore';
 import Link from 'next/link';
 
@@ -39,7 +39,7 @@ export default function PatientSignup() {
 
     setLoading(true);
     try {
-      await api.patientAuth.sendOtp(phone);
+      await patientAuth.sendOtp(phone);
       setOtpSent(true);
       setStep(2);
 
@@ -73,7 +73,7 @@ export default function PatientSignup() {
 
     setLoading(true);
     try {
-      await api.patientAuth.verifyOtp(phone, otp);
+      await patientAuth.verifyOtp(phone, otp);
       setStep(3);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
@@ -105,7 +105,7 @@ export default function PatientSignup() {
 
     setLoading(true);
     try {
-      const response = await api.patientAuth.signup(
+      const response = await patientAuth.signup(
         phone,
         otp,
         fullName,
@@ -138,7 +138,7 @@ export default function PatientSignup() {
     setError('');
     setLoading(true);
     try {
-      await api.patientAuth.sendOtp(phone);
+      await patientAuth.sendOtp(phone);
 
       // Restart timer
       setResendTimer(60);

@@ -533,12 +533,13 @@ export const notificationApi = {
   },
 
   markAllAsRead: async () => {
-    const { data } = await api.put<ApiResponse<null>>('/notifications/mark-all-read');
+    const { data} = await api.put<ApiResponse<null>>('/notifications/mark-all-read');
     return data;
   },
+};
 
-  // Patient Authentication
-  patientAuth: {
+// Patient Authentication API
+export const patientAuth = {
     sendOtp: async (phone: string) => {
       const { data } = await api.post<ApiResponse<null>>('/patient-auth/send-otp', { phone });
       return data;
@@ -596,10 +597,10 @@ export const notificationApi = {
       );
       return data;
     },
-  },
+};
 
-  // Doctor Discovery
-  doctorDiscovery: {
+// Doctor Discovery API
+export const doctorDiscovery = {
     search: async (params: {
       search?: string;
       doctorType?: string;
@@ -653,7 +654,6 @@ export const notificationApi = {
       const { data } = await api.put<ApiResponse<{ doctor: any }>>('/doctors/profile', updates);
       return data;
     },
-  },
 };
 
 export default api;

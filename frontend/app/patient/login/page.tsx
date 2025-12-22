@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { patientAuth } from '@/lib/api';
 import { usePatientAuth } from '@/store/patientAuthStore';
 import Link from 'next/link';
 
@@ -33,7 +33,7 @@ export default function PatientLogin() {
 
     setLoading(true);
     try {
-      const response = await api.patientAuth.login(phone, pin);
+      const response = await patientAuth.login(phone, pin);
 
       if (response.success && response.data) {
         // Save auth data

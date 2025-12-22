@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePatientAuth } from '@/store/patientAuthStore';
-import api from '@/lib/api';
+import { doctorDiscovery } from '@/lib/api';
 import Link from 'next/link';
 
 interface Review {
@@ -36,7 +36,7 @@ export default function DoctorPublicProfile({ params }: { params: { doctorId: st
   const fetchDoctorProfile = async () => {
     setLoading(true);
     try {
-      const response = await api.doctorDiscovery.getPublicProfile(params.doctorId);
+      const response = await doctorDiscovery.getPublicProfile(params.doctorId);
 
       if (response.success && response.data) {
         setDoctor(response.data.doctor);

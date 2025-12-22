@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePatientAuth } from '@/store/patientAuthStore';
-import api from '@/lib/api';
+import { doctorDiscovery } from '@/lib/api';
 import Link from 'next/link';
 
 interface Doctor {
@@ -48,7 +48,7 @@ export default function DoctorSearchPage() {
   const fetchDoctors = async () => {
     setLoading(true);
     try {
-      const response = await api.doctorDiscovery.search({
+      const response = await doctorDiscovery.search({
         search: searchTerm || undefined,
         doctorType: filters.doctorType || undefined,
         isOnline: filters.isOnline || undefined,

@@ -2,9 +2,16 @@ import axios from 'axios';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/database';
 
-// MSG91 OTP Service Configuration
-const MSG91_OTP_TOKEN = process.env.MSG91_OTP_TOKEN; // OTP Service Token
-const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID; // Optional: OTP Template ID
+// SMS Provider Configuration
+const SMS_PROVIDER = process.env.SMS_PROVIDER || 'FAST2SMS'; // 'FAST2SMS' or 'MSG91'
+
+// Fast2SMS Configuration (for testing without DLT)
+const FAST2SMS_API_KEY = process.env.FAST2SMS_API_KEY;
+
+// MSG91 Configuration (for production with DLT)
+const MSG91_OTP_TOKEN = process.env.MSG91_OTP_TOKEN;
+const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID;
+const MSG91_SENDER_ID = process.env.MSG91_SENDER_ID || 'TXTIND';
 
 // Rate limiting: max 3 OTPs per hour per phone
 const OTP_RATE_LIMIT = 3;
@@ -15,6 +22,80 @@ const OTP_LOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes lock after too many a
 // Generate 6-digit OTP
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Send OTP via Fast2SMS (works without DLT for testing)
+async function sendViaFast2SMS(phone: string, otp: string): Promise<void> {
+  const message = `Your Bhishak Med OTP is ${otp}. Valid for 10 minutes. Do not share with anyone.`;
+
+  const response = await axios.post(
+    'https://www.fast2sms.com/dev/bulkV2',
+    {
+      route: 'dlt',
+      sender_id: 'TXTIND',
+      message: message,
+      variables_values: otp,
+      flash: 0,
+      numbers: phone,
+    },
+    {
+      headers: {
+        authorization: FAST2SMS_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  console.log('✅ Fast2SMS Response:', response.data);
+}
+
+// Send OTP via MSG91 (requires DLT for production)
+async function sendViaMSG91(phone: string, otp: string): Promise<void> {
+  // Format phone number for MSG91 (needs country code without +)
+  const formattedPhone = phone.startsWith('+')
+    ? phone.substring(1)
+    : phone.startsWith('91')
+    ? phone
+    : `91${phone}`;
+
+  // Try Flow API
+  try {
+    const response = await axios.post(
+      'https://api.msg91.com/api/v5/flow/',
+      {
+        flow_id: MSG91_TEMPLATE_ID || '6390c21dd6fc054b7b74a4b0',
+        sender: MSG91_SENDER_ID,
+        mobiles: formattedPhone,
+        VAR1: otp,
+        VAR2: '10',
+      },
+      {
+        headers: {
+          authkey: MSG91_OTP_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('✅ MSG91 Response:', response.data);
+  } catch (error: any) {
+    console.error('❌ MSG91 Error:', error.response?.data || error.message);
+
+    // Fallback to simple SMS API
+    const smsMessage = `Your Bhishak Med OTP is: ${otp}. Valid for 10 minutes. Do not share with anyone.`;
+    const fallbackResponse = await axios.get('https://api.msg91.com/api/sendhttp.php', {
+      params: {
+        authkey: MSG91_OTP_TOKEN,
+        mobiles: formattedPhone,
+        message: smsMessage,
+        sender: MSG91_SENDER_ID,
+        route: '4',
+        country: '91',
+      },
+    });
+
+    console.log('✅ MSG91 Fallback Response:', fallbackResponse.data);
+  }
 }
 
 // Send OTP via MSG91 SMS
@@ -67,74 +148,29 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; messag
       },
     });
 
-    // Send OTP via MSG91 Direct SMS API (no template required)
+    // Send OTP via configured SMS provider
     if (process.env.NODE_ENV === 'production') {
-      // Format phone number for MSG91 (needs country code without +)
-      const formattedPhone = phone.startsWith('+')
-        ? phone.substring(1)
-        : phone.startsWith('91')
-        ? phone
-        : `91${phone}`;
-
       try {
-        // Using MSG91 Direct SMS API - works immediately without template setup
-        const smsMessage = `Your Bhishak Med OTP is: ${otp}. Valid for 10 minutes. Do not share with anyone.`;
-
-        // Method 1: Try POST request (recommended)
-        const smsResponse = await axios.post(
-          'https://api.msg91.com/api/v5/flow/',
-          {
-            flow_id: '6390c21dd6fc054b7b74a4b0', // Default OTP flow
-            sender: 'TXTIND',
-            mobiles: formattedPhone,
-            VAR1: otp,
-            VAR2: '10',
-          },
-          {
-            headers: {
-              'authkey': MSG91_OTP_TOKEN,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        console.log('✅ MSG91 SMS sent:', smsResponse.data);
-
-        // TESTING MODE: Log OTP to console (remove in production with DLT)
-        console.log(`📱 TEST MODE - OTP for ${phone}: ${otp} (DLT registration required for actual SMS delivery)`);
-      } catch (smsError: any) {
-        console.error('❌ MSG91 SMS Error:', smsError.response?.data || smsError.message);
-
-        // Fallback: Try simple GET request method
-        try {
-          const smsMessage = `Your Bhishak Med OTP is: ${otp}. Valid for 10 minutes. Do not share with anyone.`;
-          const fallbackResponse = await axios.get(
-            `https://api.msg91.com/api/sendhttp.php`,
-            {
-              params: {
-                authkey: MSG91_OTP_TOKEN,
-                mobiles: formattedPhone,
-                message: smsMessage,
-                sender: 'TeleMed',
-                route: '4',
-                country: '91',
-              },
-            }
-          );
-          console.log('✅ MSG91 SMS sent via fallback:', fallbackResponse.data);
-
-          // TESTING MODE: Log OTP to console (remove in production with DLT)
-          console.log(`📱 TEST MODE - OTP for ${phone}: ${otp} (DLT registration required for actual SMS delivery)`);
-        } catch (fallbackError: any) {
-          console.error('❌ MSG91 Fallback Error:', fallbackError.response?.data || fallbackError.message);
-
-          // TESTING MODE: Always log OTP for testing without DLT
-          console.log(`📱 TEST MODE - OTP for ${phone}: ${otp} (DLT registration required for SMS delivery)`);
+        if (SMS_PROVIDER === 'FAST2SMS') {
+          console.log('📤 Sending OTP via Fast2SMS...');
+          await sendViaFast2SMS(phone, otp);
+        } else if (SMS_PROVIDER === 'MSG91') {
+          console.log('📤 Sending OTP via MSG91...');
+          await sendViaMSG91(phone, otp);
+        } else {
+          throw new Error(`Unknown SMS provider: ${SMS_PROVIDER}`);
         }
+
+        console.log(`✅ OTP sent successfully via ${SMS_PROVIDER} to ${phone}`);
+      } catch (smsError: any) {
+        console.error(`❌ ${SMS_PROVIDER} Error:`, smsError.response?.data || smsError.message);
+
+        // Log OTP to console for testing/debugging
+        console.log(`📱 FALLBACK - OTP for ${phone}: ${otp} (Check ${SMS_PROVIDER} configuration)`);
       }
     } else {
       // Development mode: log OTP to console
-      console.log(`📱 OTP for ${phone}: ${otp} (dev mode - not sent via SMS)`);
+      console.log(`📱 DEV MODE - OTP for ${phone}: ${otp} (not sent via SMS)`);
     }
 
     return {

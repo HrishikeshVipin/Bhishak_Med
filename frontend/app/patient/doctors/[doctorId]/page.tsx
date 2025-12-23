@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { usePatientAuth } from '@/store/patientAuthStore';
 import { doctorDiscovery } from '@/lib/api';
 import Link from 'next/link';
@@ -14,8 +14,9 @@ interface Review {
   createdAt: string;
 }
 
-export default function DoctorPublicProfile({ params }: { params: { doctorId: string } }) {
+export default function DoctorPublicProfile() {
   const router = useRouter();
+  const params = useParams();
   const { isAuthenticated } = usePatientAuth();
 
   const [doctor, setDoctor] = useState<any>(null);
@@ -24,19 +25,32 @@ export default function DoctorPublicProfile({ params }: { params: { doctorId: st
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Get doctorId from params
+  const doctorId = params?.doctorId as string;
+
   useEffect(() => {
+    console.log('Doctor ID from useParams:', doctorId);
+
     if (!isAuthenticated) {
       router.push('/patient/login');
       return;
     }
 
-    fetchDoctorProfile();
-  }, [isAuthenticated, params.doctorId]);
+    if (doctorId) {
+      fetchDoctorProfile();
+    }
+  }, [isAuthenticated, doctorId]);
 
   const fetchDoctorProfile = async () => {
+    if (!doctorId) {
+      console.error('No doctor ID available');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await doctorDiscovery.getPublicProfile(params.doctorId);
+      console.log('Fetching doctor profile for:', doctorId);
+      const response = await doctorDiscovery.getPublicProfile(doctorId);
 
       if (response.success && response.data) {
         setDoctor(response.data.doctor);

@@ -138,6 +138,8 @@ export const getDoctorPublicProfile = async (req: Request, res: Response): Promi
   try {
     const { doctorId } = req.params;
 
+    console.log(`🔍 Fetching public profile for doctor ID: ${doctorId}`);
+
     // Fetch doctor with reviews
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
@@ -167,6 +169,7 @@ export const getDoctorPublicProfile = async (req: Request, res: Response): Promi
     });
 
     if (!doctor) {
+      console.log(`❌ Doctor not found with ID: ${doctorId}`);
       res.status(404).json({
         success: false,
         message: 'Doctor not found',
@@ -174,19 +177,27 @@ export const getDoctorPublicProfile = async (req: Request, res: Response): Promi
       return;
     }
 
+    console.log(`✅ Doctor found: ${doctor.fullName}`);
+
     // Check if doctor is verified
     const fullDoctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
       select: { status: true },
     });
 
+    console.log(`📋 Doctor status: ${fullDoctor?.status}`);
+
     if (fullDoctor?.status !== 'VERIFIED') {
+      console.log(`❌ Doctor not verified: ${fullDoctor?.status}`);
       res.status(403).json({
         success: false,
         message: 'Doctor profile not available',
       });
       return;
     }
+
+    console.log(`✅ Doctor verified, fetching reviews...`);
+
 
     // Fetch recent reviews (with consultation details)
     const reviews = await prisma.consultationReview.findMany({

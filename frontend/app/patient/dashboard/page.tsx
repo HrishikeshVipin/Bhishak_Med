@@ -148,8 +148,11 @@ export default function PatientDashboard() {
           </Link>
 
           {/* My Consultations */}
-          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl p-6 shadow-lg shadow-cyan-500/10">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-green-500/30">
+          <Link
+            href="/patient/consultations"
+            className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl p-6 hover:bg-white/80 hover:border-cyan-400/60 hover:scale-105 hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-cyan-500/10 hover:shadow-2xl hover:shadow-cyan-500/20 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-green-500/30 group-hover:scale-110 transition-transform">
               <svg
                 className="w-6 h-6 text-white"
                 fill="none"
@@ -166,12 +169,14 @@ export default function PatientDashboard() {
             </div>
             <h3 className="text-lg font-bold text-blue-900 mb-1">My Consultations</h3>
             <p className="text-sm text-gray-600">View past and upcoming appointments</p>
-            <p className="text-xs text-cyan-600 mt-2 italic font-medium">Coming soon...</p>
-          </div>
+          </Link>
 
           {/* Health Records */}
-          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl p-6 shadow-lg shadow-cyan-500/10">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-purple-500/30">
+          <Link
+            href="/patient/records"
+            className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl p-6 hover:bg-white/80 hover:border-cyan-400/60 hover:scale-105 hover:-translate-y-1 transition-all duration-300 shadow-lg shadow-cyan-500/10 hover:shadow-2xl hover:shadow-cyan-500/20 group"
+          >
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
               <svg
                 className="w-6 h-6 text-white"
                 fill="none"
@@ -188,8 +193,7 @@ export default function PatientDashboard() {
             </div>
             <h3 className="text-lg font-bold text-blue-900 mb-1">Health Records</h3>
             <p className="text-sm text-gray-600">Upload and manage your medical reports</p>
-            <p className="text-xs text-cyan-600 mt-2 italic font-medium">Coming soon...</p>
-          </div>
+          </Link>
         </div>
 
         {/* Info Cards */}

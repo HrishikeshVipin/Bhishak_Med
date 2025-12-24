@@ -8,6 +8,8 @@ import {
   getProfile,
   updateProfile,
   changePin,
+  getMyConsultations,
+  getMyMedicalRecords,
 } from '../controllers/patient-auth.controller';
 import { authenticatePatient } from '../middleware/patient-auth';
 
@@ -24,5 +26,7 @@ router.post('/refresh', refreshToken);
 router.get('/profile', authenticatePatient, getProfile);
 router.put('/profile', authenticatePatient, updateProfile);
 router.post('/change-pin', authenticatePatient, changePin);
+router.get('/consultations', authenticatePatient, getMyConsultations);
+router.get('/medical-records', authenticatePatient, getMyMedicalRecords);
 
 export default router;

@@ -597,6 +597,21 @@ export const patientAuth = {
       );
       return data;
     },
+
+    getMyConsultations: async () => {
+      const { data } = await api.get<ApiResponse<{ consultations: any[] }>>('/patient-auth/consultations');
+      return data;
+    },
+
+    getMyMedicalRecords: async () => {
+      const { data } = await api.get<ApiResponse<{
+        patient: any;
+        prescriptions: any[];
+        vitals: any[];
+        medicalUploads: any[];
+      }>>('/patient-auth/medical-records');
+      return data;
+    },
 };
 
 // Doctor Discovery API

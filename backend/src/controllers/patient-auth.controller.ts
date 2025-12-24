@@ -586,3 +586,196 @@ export const changePin = async (req: PatientAuthRequest, res: Response): Promise
     });
   }
 };
+
+/**
+ * Get all consultations for authenticated patient
+ * GET /api/patient-auth/consultations
+ */
+export const getMyConsultations = async (req: PatientAuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.patient) {
+      res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+      });
+      return;
+    }
+
+    const consultations = await prisma.consultation.findMany({
+      where: { patientId: req.patient.id },
+      select: {
+        id: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        chiefComplaint: true,
+        diagnosis: true,
+        doctorNotes: true,
+        doctor: {
+          select: {
+            id: true,
+            fullName: true,
+            specialization: true,
+            profilePhoto: true,
+            email: true,
+            phone: true,
+          },
+        },
+        prescription: {
+          select: {
+            id: true,
+            diagnosis: true,
+            medications: true,
+            instructions: true,
+            pdfPath: true,
+            createdAt: true,
+          },
+        },
+        review: {
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+          },
+        },
+        paymentConfirmation: {
+          select: {
+            id: true,
+            amount: true,
+            confirmedByDoctor: true,
+            confirmedAt: true,
+          },
+        },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: { consultations },
+    });
+  } catch (error: any) {
+    console.error('Get consultations error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get consultations',
+    });
+  }
+};
+
+/**
+ * Get all medical records for authenticated patient
+ * GET /api/patient-auth/medical-records
+ */
+export const getMyMedicalRecords = async (req: PatientAuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.patient) {
+      res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+      });
+      return;
+    }
+
+    // Get patient with all medical data
+    const patient = await prisma.patient.findUnique({
+      where: { id: req.patient.id },
+      select: {
+        id: true,
+        fullName: true,
+        age: true,
+        gender: true,
+        // All prescriptions from consultations
+        consultations: {
+          select: {
+            id: true,
+            startedAt: true,
+            completedAt: true,
+            doctor: {
+              select: {
+                fullName: true,
+                specialization: true,
+              },
+            },
+            prescription: {
+              select: {
+                id: true,
+                diagnosis: true,
+                medications: true,
+                instructions: true,
+                pdfPath: true,
+                createdAt: true,
+              },
+            },
+          },
+          where: {
+            prescription: { isNot: null },
+          },
+          orderBy: { startedAt: 'desc' },
+        },
+        // Vitals
+        vitals: {
+          select: {
+            id: true,
+            weight: true,
+            height: true,
+            bloodPressure: true,
+            temperature: true,
+            heartRate: true,
+            oxygenLevel: true,
+            notes: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        // Medical file uploads
+        medicalUploads: {
+          select: {
+            id: true,
+            fileName: true,
+            fileType: true,
+            description: true,
+            filePath: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!patient) {
+      res.status(404).json({
+        success: false,
+        message: 'Patient not found',
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        patient: {
+          id: patient.id,
+          fullName: patient.fullName,
+          age: patient.age,
+          gender: patient.gender,
+        },
+        prescriptions: patient.consultations.map((c) => ({
+          consultationId: c.id,
+          consultationDate: c.startedAt,
+          doctor: c.doctor,
+          ...c.prescription,
+        })),
+        vitals: patient.vitals,
+        medicalUploads: patient.medicalUploads,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get medical records error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get medical records',
+    });
+  }
+};

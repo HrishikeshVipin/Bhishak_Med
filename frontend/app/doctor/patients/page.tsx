@@ -168,7 +168,7 @@ export default function PatientsListPage() {
     <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
       <AnimatedBackground />
 
-      <header className="relative z-10 bg-white/80 backdrop-blur-lg border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10">
+      <header className="relative z-50 bg-white border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Mediquory Connect" className="w-10 h-10" />

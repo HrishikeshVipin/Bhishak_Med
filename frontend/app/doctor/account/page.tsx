@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '../../../store/authStore';
-import { authApi, appointmentApi } from '../../../lib/api';
+import { authApi, appointmentApi, doctorDiscovery } from '../../../lib/api';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import NotificationBell from '../../../components/NotificationBell';
 import type { Doctor, DoctorAvailability } from '../../../types';
@@ -98,12 +98,29 @@ export default function DoctorAccountPage() {
   const handleBioSave = async () => {
     try {
       setSaving(true);
-      // TODO: Call API to update bio
-      // await doctorApi.updateBio(bio);
-      setBioSaved(true);
-      setTimeout(() => setBioSaved(false), 3000);
-    } catch (error) {
+
+      // Call API to update bio
+      const response = await doctorDiscovery.updateProfile({ bio });
+
+      if (response.success && response.data?.doctor) {
+        // Update user in auth store to persist the bio
+        const token = localStorage.getItem('token');
+        if (token) {
+          useAuthStore.getState().setAuth(token, response.data.doctor, 'DOCTOR');
+        }
+
+        // Update local doctor state
+        setDoctor(response.data.doctor);
+
+        // Show success message
+        setBioSaved(true);
+        setTimeout(() => setBioSaved(false), 3000);
+      } else {
+        alert(response.message || 'Failed to update bio');
+      }
+    } catch (error: any) {
       console.error('Bio save error:', error);
+      alert(error.response?.data?.message || 'Failed to save bio. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -253,7 +270,7 @@ export default function DoctorAccountPage() {
       <AnimatedBackground />
 
       {/* Header */}
-      <header className="relative z-10 bg-white/80 backdrop-blur-lg border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10">
+      <header className="relative z-50 bg-white border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">

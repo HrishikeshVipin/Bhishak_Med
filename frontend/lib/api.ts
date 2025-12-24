@@ -28,7 +28,22 @@ const api = axios.create({
 
 // Add token to requests if available
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  // Check for doctor token
+  let token = localStorage.getItem('token');
+
+  // If no doctor token, check for patient token
+  if (!token) {
+    try {
+      const patientAuthStorage = localStorage.getItem('patient-auth-storage');
+      if (patientAuthStorage) {
+        const patientAuth = JSON.parse(patientAuthStorage);
+        token = patientAuth.state?.accessToken;
+      }
+    } catch (error) {
+      console.error('Failed to parse patient auth storage:', error);
+    }
+  }
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

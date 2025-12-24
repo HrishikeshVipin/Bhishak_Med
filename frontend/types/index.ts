@@ -132,10 +132,16 @@ export interface MinutePackage {
 
 export interface SubscriptionInfo {
   subscription: {
-    tier: SubscriptionTier;
-    status: 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+    subscriptionTier: SubscriptionTier;
+    subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
     trialEndsAt?: string;
     subscriptionEndsAt?: string;
+    patientsCreated: number;
+    patientLimit: number;
+    monthlyVideoMinutes: number;
+    purchasedMinutes: number;
+    totalMinutesUsed: number;
+    lastResetDate: string;
   };
   usage: {
     patients: {
@@ -146,14 +152,15 @@ export interface SubscriptionInfo {
     videoMinutes: {
       subscription: number;
       purchased: number;
+      total: number;
       used: number;
       available: number;
+      usagePercent: number;
     };
   };
   status: {
-    canCreatePatients: boolean;
-    canStartConsultations: boolean;
-    warningLevel: WarningLevel;
+    canStartConsultation: boolean;
+    warningLevel: string;
     message?: string;
   };
 }

@@ -332,7 +332,7 @@ export default function DoctorConsultationPage() {
         if (response.success) {
           alert('Patient activated successfully!');
           // Refresh consultation to get updated patient status
-          startConsultation();
+          startOrGetConsultation();
         }
       } catch (error: any) {
         alert(error.response?.data?.message || 'Failed to activate patient');

@@ -41,13 +41,22 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       const role = localStorage.getItem('role');
+      const currentPath = window.location.pathname;
+
+      // Don't clear storage or redirect on login failures
+      if (currentPath.includes('/login') || currentPath.includes('/signup')) {
+        return Promise.reject(error);
+      }
+
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('role');
 
-      // Redirect to appropriate login page based on role
-      if (role === 'DOCTOR') {
+      // Redirect to appropriate login page based on role or current path
+      if (role === 'DOCTOR' || currentPath.startsWith('/doctor')) {
         window.location.href = '/doctor/login';
+      } else if (role === 'PATIENT' || currentPath.startsWith('/patient')) {
+        window.location.href = '/patient/login';
       } else {
         window.location.href = '/admin/login';
       }

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { useAuthStore } from '../../../store/authStore';
 import { subscriptionApi } from '../../../lib/api';
+import NotificationBell from '../../../components/NotificationBell';
 import type { SubscriptionPlan, SubscriptionInfo, MinutePackage } from '../../../types';
 
 declare global {
@@ -212,11 +213,14 @@ export default function SubscriptionPage() {
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
-                Subscription Management
-              </h1>
-              <p className="text-xs text-navy-600">Manage your plan and video minutes</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                  Subscription Management
+                </h1>
+                <p className="text-xs text-navy-600">Manage your plan and video minutes</p>
+              </div>
+              <NotificationBell />
             </div>
             <Link
               href="/doctor/dashboard"

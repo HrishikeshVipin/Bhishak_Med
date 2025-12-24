@@ -11,6 +11,7 @@ import VideoRoom from '../../../../../components/VideoRoom';
 import PrescriptionForm from '../../../../../components/PrescriptionForm';
 import PaymentConfirmation from '../../../../../components/PaymentConfirmation';
 import AnimatedBackground from '../../../../../components/AnimatedBackground';
+import NotificationBell from '../../../../../components/NotificationBell';
 import type { Socket } from 'socket.io-client';
 
 interface Consultation {
@@ -189,6 +190,17 @@ export default function DoctorConsultationPage() {
       setJoined(true);
     });
 
+    // Listen for new messages and update consultation state
+    newSocket.on('receive-message', (message: any) => {
+      setConsultation((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          chatMessages: [...prev.chatMessages, message],
+        };
+      });
+    });
+
     newSocket.on('connect_error', (error) => {
       console.error('❌ Socket connection error:', error);
       // Enable chat anyway after error
@@ -198,6 +210,11 @@ export default function DoctorConsultationPage() {
     newSocket.on('error', (error) => {
       console.error('❌ Socket error:', error);
     });
+
+    // Cleanup listeners
+    return () => {
+      newSocket.off('receive-message');
+    };
   };
 
   const saveNotes = async () => {
@@ -426,16 +443,19 @@ export default function DoctorConsultationPage() {
       <header className="relative z-10 bg-white/80 backdrop-blur-lg border-b border-cyan-200/50 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center mb-3">
-            <div>
-              <h1 className="text-2xl font-bold text-blue-900">
-                Consultation with {consultation.patient?.fullName || 'Patient'}
-              </h1>
-              <p className="text-sm text-gray-700">
-                {consultation.patient?.age && `${consultation.patient.age}y`}
-                {consultation.patient?.age && consultation.patient?.gender && ' • '}
-                {consultation.patient?.gender}
-                {consultation.patient?.phone && ` • ${consultation.patient.phone}`}
-              </p>
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-blue-900">
+                  Consultation with {consultation.patient?.fullName || 'Patient'}
+                </h1>
+                <p className="text-sm text-gray-700">
+                  {consultation.patient?.age && `${consultation.patient.age}y`}
+                  {consultation.patient?.age && consultation.patient?.gender && ' • '}
+                  {consultation.patient?.gender}
+                  {consultation.patient?.phone && ` • ${consultation.patient.phone}`}
+                </p>
+              </div>
+              <NotificationBell />
             </div>
             <div className="flex items-center gap-4">
               {/* Video Timer Display - Only shows when video is active */}

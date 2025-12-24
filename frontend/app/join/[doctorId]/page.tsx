@@ -113,7 +113,9 @@ export default function PatientSelfRegisterPage() {
               }}
             />
           )}
-          <h1 className="text-2xl font-bold text-gray-900">Dr. {doctor.fullName}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {doctor.fullName.startsWith('Dr.') || doctor.fullName.startsWith('Dr ') ? doctor.fullName : `Dr. ${doctor.fullName}`}
+          </h1>
           <p className="text-gray-600">{doctor.specialization}</p>
           <p className="text-sm text-gray-500 mt-2">{doctor.patientCount} patients</p>
         </div>
@@ -137,7 +139,7 @@ export default function PatientSelfRegisterPage() {
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Register as a Patient</h2>
               <p className="text-sm text-gray-600">
-                Fill in your details to register under Dr. {doctor.fullName}
+                Fill in your details to register under {doctor.fullName.startsWith('Dr.') || doctor.fullName.startsWith('Dr ') ? doctor.fullName : `Dr. ${doctor.fullName}`}
               </p>
             </div>
 

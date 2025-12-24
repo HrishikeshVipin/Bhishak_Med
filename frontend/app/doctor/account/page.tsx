@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '../../../store/authStore';
 import { authApi, appointmentApi } from '../../../lib/api';
 import AnimatedBackground from '../../../components/AnimatedBackground';
+import NotificationBell from '../../../components/NotificationBell';
 import type { Doctor, DoctorAvailability } from '../../../types';
 
 export default function DoctorAccountPage() {
@@ -260,6 +261,7 @@ export default function DoctorAccountPage() {
               <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                 Account Settings
               </h1>
+              <NotificationBell />
             </div>
             <div className="flex items-center gap-3">
               <Link

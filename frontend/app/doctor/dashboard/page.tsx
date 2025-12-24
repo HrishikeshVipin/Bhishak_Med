@@ -210,6 +210,19 @@ export default function DoctorDashboard() {
                 <NotificationBell />
               </div>
               <div className="flex items-center gap-2">
+                {doctor.profilePhoto ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL}${doctor.profilePhoto}`}
+                    alt={doctor.fullName}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-cyan-200 hidden sm:block"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center hidden sm:block">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-semibold text-blue-900">Dr. {doctor.fullName}</p>
                   <p className="text-xs text-gray-700">{doctor.specialization}</p>

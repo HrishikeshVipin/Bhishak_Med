@@ -203,11 +203,19 @@ export default function MyConsultationsPage() {
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
+                    {consultation.doctor.profilePhoto ? (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_API_URL}${consultation.doctor.profilePhoto}`}
+                        alt={consultation.doctor.fullName}
+                        className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-cyan-200"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-bold text-gray-900">{consultation.doctor.fullName}</h3>
                       <p className="text-sm text-gray-600">{consultation.doctor.specialization}</p>

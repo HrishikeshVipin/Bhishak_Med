@@ -128,14 +128,26 @@ export default function DoctorProfilePage() {
   };
 
   const getRatingBreakdown = () => {
-    // Mock data - in real app, this would come from backend
-    return [
-      { stars: 5, count: 85, percentage: 67 },
-      { stars: 4, count: 30, percentage: 24 },
-      { stars: 3, count: 8, percentage: 6 },
-      { stars: 2, count: 3, percentage: 2 },
-      { stars: 1, count: 1, percentage: 1 },
-    ];
+    // Calculate rating distribution from reviews
+    if (!reviews || reviews.length === 0) {
+      return [];
+    }
+
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    reviews.forEach((review) => {
+      const rating = Math.round(review.rating);
+      if (rating >= 1 && rating <= 5) {
+        distribution[rating as keyof typeof distribution]++;
+      }
+    });
+
+    return [5, 4, 3, 2, 1].map((stars) => ({
+      stars,
+      count: distribution[stars as keyof typeof distribution],
+      percentage: reviews.length > 0
+        ? Math.round((distribution[stars as keyof typeof distribution] / reviews.length) * 100)
+        : 0,
+    }));
   };
 
   const handleRequestAppointment = async () => {
@@ -235,11 +247,19 @@ export default function DoctorProfilePage() {
             {/* Doctor Profile Card */}
             <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-6">
               <div className="flex items-start gap-6 mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                  <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
+                {doctor.profilePhoto ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL}${doctor.profilePhoto}`}
+                    alt={doctor.fullName}
+                    className="w-24 h-24 rounded-full object-cover flex-shrink-0 shadow-lg border-2 border-cyan-200"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <div>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '../../../store/authStore';
 import { patientApi } from '@/lib/api';
 import AnimatedBackground from '../../../components/AnimatedBackground';
+import NotificationBell from '../../../components/NotificationBell';
 
 interface Patient {
   id: string;
@@ -175,6 +176,7 @@ export default function PatientsListPage() {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">My Patients</h1>
               <p className="text-sm text-gray-600">Manage your patient list</p>
             </div>
+            <NotificationBell />
           </div>
           <div className="flex gap-3">
             <Link

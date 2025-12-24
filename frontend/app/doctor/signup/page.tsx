@@ -23,6 +23,33 @@ const INDIAN_STATES = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
+// Common medical specializations
+const SPECIALIZATIONS = [
+  'General Physician',
+  'Cardiologist',
+  'Dermatologist',
+  'Pediatrician',
+  'Gynecologist',
+  'Orthopedic Surgeon',
+  'ENT Specialist',
+  'Ophthalmologist',
+  'Psychiatrist',
+  'Neurologist',
+  'Dentist',
+  'Radiologist',
+  'Anesthesiologist',
+  'Urologist',
+  'Gastroenterologist',
+  'Pulmonologist',
+  'Nephrologist',
+  'Endocrinologist',
+  'Oncologist',
+  'Ayurveda Practitioner',
+  'Homeopathy Practitioner',
+  'Unani Practitioner',
+  'Other'
+];
+
 const signupSchema = z.object({
   // Step 1: Basic Info
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -59,11 +86,13 @@ export default function DoctorSignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isOtherSpecialization, setIsOtherSpecialization] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     trigger,
   } = useForm<SignupFormData>({
@@ -72,6 +101,7 @@ export default function DoctorSignupPage() {
   });
 
   const registrationType = watch('registrationType');
+  const specialization = watch('specialization');
 
   const nextStep = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (e) {
@@ -317,13 +347,33 @@ export default function DoctorSignupPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-blue-900 mb-2">Specialization</label>
-                    <input
+                    <select
                       {...register('specialization')}
-                      type="text"
-                      className="w-full px-4 py-3 border border-cyan-200/50 bg-white/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-                      placeholder="e.g., Cardiologist, Dermatologist"
-                    />
+                      onChange={(e) => {
+                        setValue('specialization', e.target.value);
+                        setIsOtherSpecialization(e.target.value === 'Other');
+                      }}
+                      className="w-full px-4 py-3 border border-cyan-200/50 bg-white/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    >
+                      <option value="">Select Specialization</option>
+                      {SPECIALIZATIONS.map((spec) => (
+                        <option key={spec} value={spec === 'Other' ? '' : spec}>{spec}</option>
+                      ))}
+                    </select>
                     {errors.specialization && <p className="mt-2 text-sm text-red-600 font-medium">{errors.specialization.message}</p>}
+
+                    {/* Show text input when "Other" is selected */}
+                    {isOtherSpecialization && (
+                      <div className="mt-3">
+                        <input
+                          {...register('specialization')}
+                          type="text"
+                          className="w-full px-4 py-3 border border-cyan-200/50 bg-white/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+                          placeholder="Please specify your specialization"
+                          autoFocus
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -57,9 +57,8 @@ api.interceptors.response.use(
         window.location.href = '/doctor/login';
       } else if (role === 'PATIENT' || currentPath.startsWith('/patient')) {
         window.location.href = '/patient/login';
-      } else {
-        window.location.href = '/admin/login';
       }
+      // Note: No redirect for admin - they must manually type /admin/login
     }
     return Promise.reject(error);
   }

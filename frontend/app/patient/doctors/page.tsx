@@ -31,11 +31,13 @@ export default function DoctorSearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     doctorType: '',
+    specialization: '',
     isOnline: false,
     sortBy: 'rating',
   });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [specializations, setSpecializations] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -43,8 +45,20 @@ export default function DoctorSearchPage() {
       return;
     }
 
+    fetchSpecializations();
     fetchDoctors();
   }, [isAuthenticated, filters, page]);
+
+  const fetchSpecializations = async () => {
+    try {
+      const response = await doctorDiscovery.getSpecializations();
+      if (response.success && response.data) {
+        setSpecializations(response.data.specializations);
+      }
+    } catch (error) {
+      console.error('Failed to fetch specializations:', error);
+    }
+  };
 
   const fetchDoctors = async () => {
     setLoading(true);
@@ -52,6 +66,7 @@ export default function DoctorSearchPage() {
       const response = await doctorDiscovery.search({
         search: searchTerm || undefined,
         doctorType: filters.doctorType || undefined,
+        specialization: filters.specialization || undefined,
         isOnline: filters.isOnline || undefined,
         sortBy: filters.sortBy,
         page,
@@ -147,7 +162,7 @@ export default function DoctorSearchPage() {
           </div>
 
           {/* Filters */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <select
               value={filters.doctorType}
               onChange={(e) => setFilters({ ...filters, doctorType: e.target.value })}
@@ -157,6 +172,19 @@ export default function DoctorSearchPage() {
               <option value="ALLOPATHY">Allopathy</option>
               <option value="AYURVEDA">Ayurveda</option>
               <option value="HOMEOPATHY">Homeopathy</option>
+            </select>
+
+            <select
+              value={filters.specialization}
+              onChange={(e) => setFilters({ ...filters, specialization: e.target.value })}
+              className="px-4 py-2 border border-cyan-200/50 bg-white/50 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            >
+              <option value="">All Specializations</option>
+              {specializations.map((spec) => (
+                <option key={spec} value={spec}>
+                  {spec}
+                </option>
+              ))}
             </select>
 
             <select

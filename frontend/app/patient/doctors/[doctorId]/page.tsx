@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { usePatientAuth } from '@/store/patientAuthStore';
 import Link from 'next/link';
 import AnimatedBackground from '@/components/AnimatedBackground';
-import { appointmentApi } from '@/lib/api';
+import { appointmentApi, doctorDiscovery } from '@/lib/api';
 import type { DoctorAvailability, TimePreference } from '@/types';
 
 interface Doctor {
@@ -63,58 +63,49 @@ export default function DoctorProfilePage() {
   const fetchDoctorProfile = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call to get doctor public profile
-      // const response = await doctorApi.getPublicProfile(doctorId);
+      // Fetch doctor public profile from API
+      const response = await doctorDiscovery.getPublicProfile(doctorId);
 
-      // For now, using mock data
-      setTimeout(() => {
+      if (response.success && response.data) {
+        const doctorData = response.data.doctor;
+
+        // Set doctor info
         setDoctor({
-          id: doctorId,
-          fullName: 'Dr. Sample Doctor',
-          specialization: 'Cardiology',
-          doctorType: 'ALLOPATHY',
-          yearsExperience: 15,
-          consultationFee: 50000, // in paise
-          bio: 'Experienced cardiologist specializing in preventive cardiology and heart disease management. Committed to providing personalized care to all patients.',
-          isOnline: true,
-          totalReviews: 127,
-          averageRating: 4.8,
-          languagesSpoken: ['English', 'Hindi', 'Malayalam'],
-          email: 'doctor@example.com',
-          phone: '+91 98765 43210',
+          id: doctorData.id,
+          fullName: doctorData.fullName,
+          specialization: doctorData.specialization || 'General Physician',
+          doctorType: doctorData.doctorType || 'ALLOPATHY',
+          yearsExperience: doctorData.yearsExperience,
+          consultationFee: doctorData.consultationFee,
+          bio: doctorData.bio,
+          profilePhoto: doctorData.profilePhoto,
+          isOnline: doctorData.isOnline || false,
+          totalReviews: doctorData.totalReviews || 0,
+          averageRating: doctorData.averageRating ? parseFloat(doctorData.averageRating) : undefined,
+          languagesSpoken: doctorData.languagesSpoken || [],
+          email: doctorData.email,
+          phone: doctorData.phone,
         });
 
-        // Mock availability data
-        setAvailability({
-          monday: { enabled: true, start: '09:00', end: '17:00' },
-          tuesday: { enabled: true, start: '09:00', end: '17:00' },
-          wednesday: { enabled: true, start: '09:00', end: '17:00' },
-          thursday: { enabled: true, start: '09:00', end: '17:00' },
-          friday: { enabled: true, start: '09:00', end: '17:00' },
-          saturday: { enabled: false, start: '09:00', end: '17:00' },
-          sunday: { enabled: false, start: '09:00', end: '17:00' },
-        });
+        // Set availability if exists
+        if (doctorData.availability) {
+          setAvailability(doctorData.availability);
+        }
 
-        setReviews([
-          {
-            id: '1',
-            patientName: 'John D.',
-            rating: 5,
-            comment: 'Excellent doctor! Very thorough and caring.',
-            createdAt: '2025-12-15',
-          },
-          {
-            id: '2',
-            patientName: 'Sarah M.',
-            rating: 4,
-            comment: 'Good consultation, helpful advice.',
-            createdAt: '2025-12-10',
-          },
-        ]);
-        setLoading(false);
-      }, 500);
+        // Set reviews
+        if (response.data.reviews && response.data.reviews.length > 0) {
+          setReviews(response.data.reviews.map((review: any) => ({
+            id: review.id,
+            patientName: review.patient?.fullName || 'Anonymous',
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt,
+          })));
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch doctor profile:', error);
+    } finally {
       setLoading(false);
     }
   };

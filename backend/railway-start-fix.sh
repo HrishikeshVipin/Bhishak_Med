@@ -1,13 +1,16 @@
 #!/bin/bash
 # Railway start command with migration fix
 
-echo "🔧 Checking for failed migrations..."
+echo "🔧 Fixing failed migrations..."
 
-# Mark any failed migrations as rolled back
+# Mark the original failed migration as rolled back
 npx prisma migrate resolve --rolled-back 20251225011135_add_appointment_system 2>/dev/null || true
 
-# Deploy all migrations
-echo "📦 Deploying migrations..."
+# Mark the first fix attempt as rolled back too
+npx prisma migrate resolve --rolled-back 20251225020000_fix_appointment_table 2>/dev/null || true
+
+# Deploy all migrations (will run the recreate migration)
+echo "📦 Deploying all migrations..."
 npx prisma migrate deploy
 
 # Start the server

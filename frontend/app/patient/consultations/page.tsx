@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePatientAuth } from '@/store/patientAuthStore';
-import { patientAuth } from '@/lib/api';
+import { patientAuth, appointmentApi } from '@/lib/api';
 import Link from 'next/link';
 import AnimatedBackground from '@/components/AnimatedBackground';
 
@@ -37,12 +37,38 @@ interface Consultation {
   };
 }
 
+interface Appointment {
+  id: string;
+  requestedDate: string;
+  requestedTimePreference?: string;
+  reason?: string;
+  scheduledTime?: string;
+  proposedTime?: string;
+  proposedMessage?: string;
+  rejectionReason?: string;
+  duration: number;
+  status: string;
+  consultationType: string;
+  createdAt: string;
+  respondedAt?: string;
+  doctor: {
+    id: string;
+    fullName: string;
+    specialization: string;
+    profilePhoto?: string;
+  };
+}
+
 export default function MyConsultationsPage() {
   const router = useRouter();
   const { isAuthenticated } = usePatientAuth();
+  const [mainTab, setMainTab] = useState<'consultations' | 'appointments'>('consultations');
   const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
+  const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -50,8 +76,12 @@ export default function MyConsultationsPage() {
       return;
     }
 
-    fetchConsultations();
-  }, [isAuthenticated]);
+    if (mainTab === 'consultations') {
+      fetchConsultations();
+    } else {
+      fetchAppointments();
+    }
+  }, [isAuthenticated, mainTab]);
 
   const fetchConsultations = async () => {
     try {
@@ -67,9 +97,67 @@ export default function MyConsultationsPage() {
     }
   };
 
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const response = await appointmentApi.getPatientAppointments();
+      if (response.success && response.data) {
+        setAppointments(response.data.appointments || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch appointments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptProposal = async (appointmentId: string) => {
+    try {
+      setActionLoading(appointmentId);
+      const response = await appointmentApi.acceptProposal(appointmentId);
+      if (response.success) {
+        alert('Proposed time accepted! Your appointment is confirmed.');
+        fetchAppointments();
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to accept proposal');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeclineProposal = async (appointmentId: string) => {
+    const message = prompt('Why are you declining this proposal? (Optional)');
+    try {
+      setActionLoading(appointmentId);
+      const response = await appointmentApi.declineProposal(appointmentId, message || undefined);
+      if (response.success) {
+        alert('Proposal declined. The doctor has been notified.');
+        fetchAppointments();
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to decline proposal');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filteredConsultations = consultations.filter((c) => {
     if (filter === 'completed') return c.status === 'COMPLETED';
     if (filter === 'pending') return c.status !== 'COMPLETED';
+    return true;
+  });
+
+  const filteredAppointments = appointments.filter((a) => {
+    const now = new Date();
+    const scheduledDate = a.scheduledTime ? new Date(a.scheduledTime) : new Date(a.requestedDate);
+
+    if (appointmentFilter === 'upcoming') {
+      return scheduledDate >= now && ['REQUESTED', 'PROPOSED_ALTERNATIVE', 'CONFIRMED'].includes(a.status);
+    }
+    if (appointmentFilter === 'past') {
+      return scheduledDate < now || ['COMPLETED', 'REJECTED', 'CANCELLED'].includes(a.status);
+    }
     return true;
   });
 
@@ -118,8 +206,12 @@ export default function MyConsultationsPage() {
                 </button>
               </Link>
               <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">My Consultations</h1>
-                <p className="text-xs text-gray-600">View your consultation history</p>
+                <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                  My {mainTab === 'consultations' ? 'Consultations' : 'Appointments'}
+                </h1>
+                <p className="text-xs text-gray-600">
+                  {mainTab === 'consultations' ? 'View your consultation history' : 'Manage your appointments'}
+                </p>
               </div>
             </div>
           </div>
@@ -127,9 +219,34 @@ export default function MyConsultationsPage() {
       </header>
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Tabs */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-cyan-200/50 p-2 mb-6 flex gap-2">
+          <button
+            onClick={() => setMainTab('consultations')}
+            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+              mainTab === 'consultations'
+                ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Consultations
+          </button>
+          <button
+            onClick={() => setMainTab('appointments')}
+            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+              mainTab === 'appointments'
+                ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Appointments
+          </button>
+        </div>
+
         {/* Filters */}
-        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-4 mb-6">
-          <div className="flex gap-2">
+        {mainTab === 'consultations' && (
+          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-4 mb-6">
+            <div className="flex gap-2">
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-xl font-medium transition-all ${
@@ -160,11 +277,50 @@ export default function MyConsultationsPage() {
             >
               Pending
             </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {mainTab === 'appointments' && (
+          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-4 mb-6">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setAppointmentFilter('all')}
+                className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                  appointmentFilter === 'all'
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg'
+                    : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setAppointmentFilter('upcoming')}
+                className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                  appointmentFilter === 'upcoming'
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg'
+                    : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                }`}
+              >
+                Upcoming
+              </button>
+              <button
+                onClick={() => setAppointmentFilter('past')}
+                className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                  appointmentFilter === 'past'
+                    ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg'
+                    : 'bg-white/50 text-gray-700 hover:bg-white/80'
+                }`}
+              >
+                Past
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Consultations List */}
-        {loading ? (
+        {mainTab === 'consultations' && (
+          loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
             <p className="text-gray-700 font-medium">Loading consultations...</p>
@@ -302,6 +458,158 @@ export default function MyConsultationsPage() {
               </div>
             ))}
           </div>
+          )
+        )}
+
+        {/* Appointments List */}
+        {mainTab === 'appointments' && (
+          loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+              <p className="text-gray-700 font-medium">Loading appointments...</p>
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <div className="text-center py-12 bg-white/70 backdrop-blur-xl rounded-3xl border border-cyan-200/50 shadow-lg shadow-cyan-500/10">
+              <svg className="w-16 h-16 text-cyan-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="text-gray-900 font-bold mb-2">No appointments found</p>
+              <p className="text-sm text-gray-600 mb-4">You haven't requested any appointments yet</p>
+              <Link
+                href="/patient/doctors"
+                className="inline-block px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl font-bold transition-all hover:scale-105 shadow-lg shadow-blue-500/30"
+              >
+                Find a Doctor
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredAppointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl p-6 shadow-lg shadow-cyan-500/10 hover:shadow-xl hover:shadow-cyan-500/20 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start gap-4">
+                      {appointment.doctor.profilePhoto ? (
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${appointment.doctor.profilePhoto}`}
+                          alt={appointment.doctor.fullName}
+                          className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-cyan-200"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900">{appointment.doctor.fullName}</h3>
+                        <p className="text-sm text-gray-600">{appointment.doctor.specialization}</p>
+                        <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
+                          appointment.status === 'REQUESTED' ? 'bg-yellow-100 text-yellow-800' :
+                          appointment.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
+                          appointment.status === 'PROPOSED_ALTERNATIVE' ? 'bg-blue-100 text-blue-800' :
+                          appointment.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {appointment.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                    <div>
+                      <p className="text-gray-600">Requested Date</p>
+                      <p className="font-medium text-gray-900">
+                        {new Date(appointment.requestedDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    {appointment.requestedTimePreference && (
+                      <div>
+                        <p className="text-gray-600">Time Preference</p>
+                        <p className="font-medium text-gray-900">{appointment.requestedTimePreference}</p>
+                      </div>
+                    )}
+                    {appointment.scheduledTime && (
+                      <div>
+                        <p className="text-gray-600">Scheduled Time</p>
+                        <p className="font-medium text-gray-900">
+                          {new Date(appointment.scheduledTime).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-gray-600">Consultation Type</p>
+                      <p className="font-medium text-gray-900">{appointment.consultationType}</p>
+                    </div>
+                  </div>
+
+                  {appointment.reason && (
+                    <div className="mb-4 p-3 bg-blue-50/50 rounded-xl">
+                      <p className="text-xs text-gray-600 font-medium mb-1">Your reason</p>
+                      <p className="text-sm text-gray-900">{appointment.reason}</p>
+                    </div>
+                  )}
+
+                  {appointment.proposedTime && appointment.status === 'PROPOSED_ALTERNATIVE' && (
+                    <div className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <p className="text-sm font-semibold text-blue-900 mb-2">Doctor's Alternative Proposal</p>
+                      <p className="text-sm text-gray-700 mb-2">
+                        <strong>Proposed Time:</strong>{' '}
+                        {new Date(appointment.proposedTime).toLocaleString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                      {appointment.proposedMessage && (
+                        <p className="text-sm text-gray-700 mb-3">
+                          <strong>Message:</strong> {appointment.proposedMessage}
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAcceptProposal(appointment.id)}
+                          disabled={actionLoading === appointment.id}
+                          className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleDeclineProposal(appointment.id)}
+                          disabled={actionLoading === appointment.id}
+                          className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {appointment.rejectionReason && (
+                    <div className="p-3 bg-red-50/50 rounded-xl">
+                      <p className="text-xs text-gray-600 font-medium mb-1">Rejection Reason</p>
+                      <p className="text-sm text-red-900">{appointment.rejectionReason}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
         )}
       </main>
     </div>

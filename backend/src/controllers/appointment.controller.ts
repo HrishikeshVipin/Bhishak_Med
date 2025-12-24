@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { notificationService } from '../services/notification.service';
 
 const prisma = new PrismaClient();
 
@@ -111,14 +112,16 @@ export const createAppointmentRequest = async (req: Request, res: Response) => {
       },
     });
 
-    // TODO: Send notification to doctor
-    // await notificationService.createNotification({
-    //   recipientType: 'DOCTOR',
-    //   recipientId: doctorId,
-    //   type: 'APPOINTMENT_REQUESTED',
-    //   title: 'New Appointment Request',
-    //   message: `${appointment.patient.fullName} requested appointment`,
-    // });
+    // Send notification to doctor
+    await notificationService.createNotification({
+      recipientType: 'DOCTOR',
+      recipientId: doctorId,
+      type: 'APPOINTMENT_REQUESTED',
+      title: 'New Appointment Request',
+      message: `${appointment.patient.fullName} requested an appointment for ${new Date(requestedDate).toLocaleDateString()}`,
+      actionUrl: '/doctor/appointments',
+      actionText: 'View Request',
+    });
 
     res.json({
       success: true,
@@ -340,14 +343,16 @@ export const acceptRequest = async (req: Request, res: Response) => {
       },
     });
 
-    // TODO: Send notification to patient
-    // await notificationService.createNotification({
-    //   recipientType: 'PATIENT',
-    //   recipientId: appointment.patientId,
-    //   type: 'APPOINTMENT_CONFIRMED',
-    //   title: 'Appointment Confirmed',
-    //   message: `Your appointment is confirmed for ${scheduledTime}`,
-    // });
+    // Send notification to patient
+    await notificationService.createNotification({
+      recipientType: 'PATIENT',
+      recipientId: appointment.patientId,
+      type: 'APPOINTMENT_CONFIRMED',
+      title: 'Appointment Confirmed',
+      message: `Your appointment has been confirmed for ${new Date(scheduledTime).toLocaleString()}`,
+      actionUrl: '/patient/consultations?tab=appointments',
+      actionText: 'View Appointment',
+    });
 
     res.json({
       success: true,
@@ -411,7 +416,16 @@ export const proposeAlternative = async (req: Request, res: Response) => {
       },
     });
 
-    // TODO: Send notification to patient
+    // Send notification to patient
+    await notificationService.createNotification({
+      recipientType: 'PATIENT',
+      recipientId: appointment.patientId,
+      type: 'APPOINTMENT_PROPOSED_ALTERNATIVE',
+      title: 'Alternative Time Proposed',
+      message: `Doctor proposed ${new Date(proposedTime).toLocaleString()} for your appointment. ${proposedMessage || ''}`,
+      actionUrl: '/patient/consultations?tab=appointments',
+      actionText: 'View Proposal',
+    });
 
     res.json({
       success: true,
@@ -458,7 +472,16 @@ export const rejectRequest = async (req: Request, res: Response) => {
       },
     });
 
-    // TODO: Send notification to patient
+    // Send notification to patient
+    await notificationService.createNotification({
+      recipientType: 'PATIENT',
+      recipientId: appointment.patientId,
+      type: 'APPOINTMENT_REJECTED',
+      title: 'Appointment Request Declined',
+      message: `Your appointment request was declined. Reason: ${rejectionReason}`,
+      actionUrl: '/patient/consultations?tab=appointments',
+      actionText: 'View Details',
+    });
 
     res.json({
       success: true,
@@ -561,7 +584,21 @@ export const acceptProposal = async (req: Request, res: Response) => {
       },
     });
 
-    // TODO: Send notification to doctor
+    // Send notification to doctor
+    const patient = await prisma.patient.findUnique({
+      where: { id: appointment.patientId },
+      select: { fullName: true },
+    });
+
+    await notificationService.createNotification({
+      recipientType: 'DOCTOR',
+      recipientId: appointment.doctorId,
+      type: 'APPOINTMENT_PROPOSAL_ACCEPTED',
+      title: 'Appointment Proposal Accepted',
+      message: `${patient?.fullName || 'Patient'} accepted your proposed time for ${new Date(appointment.proposedTime).toLocaleString()}`,
+      actionUrl: '/doctor/appointments',
+      actionText: 'View Appointment',
+    });
 
     res.json({
       success: true,
@@ -608,7 +645,21 @@ export const declineProposal = async (req: Request, res: Response) => {
       },
     });
 
-    // TODO: Send notification to doctor
+    // Send notification to doctor
+    const patient = await prisma.patient.findUnique({
+      where: { id: appointment.patientId },
+      select: { fullName: true },
+    });
+
+    await notificationService.createNotification({
+      recipientType: 'DOCTOR',
+      recipientId: appointment.doctorId,
+      type: 'APPOINTMENT_PROPOSAL_DECLINED',
+      title: 'Appointment Proposal Declined',
+      message: `${patient?.fullName || 'Patient'} declined your proposed time. ${message ? `Message: ${message}` : ''}`,
+      actionUrl: '/doctor/appointments',
+      actionText: 'View Request',
+    });
 
     res.json({
       success: true,
@@ -660,7 +711,38 @@ export const cancelAppointment = async (req: Request, res: Response) => {
       },
     });
 
-    // TODO: Send notification to other party
+    // Send notification to other party
+    if (userType === 'doctor') {
+      const patient = await prisma.patient.findUnique({
+        where: { id: appointment.patientId },
+        select: { fullName: true },
+      });
+
+      await notificationService.createNotification({
+        recipientType: 'PATIENT',
+        recipientId: appointment.patientId,
+        type: 'APPOINTMENT_CANCELLED',
+        title: 'Appointment Cancelled',
+        message: `Your appointment has been cancelled by the doctor. ${cancellationReason || ''}`,
+        actionUrl: '/patient/consultations?tab=appointments',
+        actionText: 'View Details',
+      });
+    } else {
+      const patient = await prisma.patient.findUnique({
+        where: { id: appointment.patientId },
+        select: { fullName: true },
+      });
+
+      await notificationService.createNotification({
+        recipientType: 'DOCTOR',
+        recipientId: appointment.doctorId,
+        type: 'APPOINTMENT_CANCELLED',
+        title: 'Appointment Cancelled',
+        message: `${patient?.fullName || 'Patient'} cancelled their appointment. ${cancellationReason || ''}`,
+        actionUrl: '/doctor/appointments',
+        actionText: 'View Details',
+      });
+    }
 
     res.json({
       success: true,

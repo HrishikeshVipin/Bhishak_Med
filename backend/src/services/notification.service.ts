@@ -1,5 +1,6 @@
 import prisma from '../config/database';
 import { emailService } from './email.service';
+import { sendSMS } from './sms.service';
 import type { Server as SocketIOServer } from 'socket.io';
 
 interface CreateNotificationData {
@@ -49,6 +50,25 @@ class NotificationService {
         actionText: data.actionText,
         createdAt: notification.createdAt,
       });
+    }
+
+    // Send SMS for important appointment notifications
+    const importantTypes = ['APPOINTMENT_CONFIRMED', 'APPOINTMENT_REJECTED'];
+    if (importantTypes.includes(data.type) && data.recipientType === 'PATIENT') {
+      try {
+        // Get patient phone number
+        const patient = await prisma.patient.findUnique({
+          where: { id: data.recipientId },
+          select: { phone: true },
+        });
+
+        if (patient?.phone) {
+          const smsMessage = `Bhishak Med: ${data.title} - ${data.message}`;
+          await sendSMS(patient.phone, smsMessage);
+        }
+      } catch (error) {
+        console.error('Error sending SMS notification:', error);
+      }
     }
 
     // Send email if requested

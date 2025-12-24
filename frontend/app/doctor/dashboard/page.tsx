@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '../../../store/authStore';
-import { authApi, subscriptionApi, consultationApi } from '../../../lib/api';
+import { authApi, subscriptionApi, consultationApi, appointmentApi } from '../../../lib/api';
 import { connectSocket } from '../../../lib/socket';
 import { NotificationProvider } from '../../../context/NotificationContext';
 import NotificationBell from '../../../components/NotificationBell';
@@ -20,6 +20,7 @@ export default function DoctorDashboard() {
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [unreadChats, setUnreadChats] = useState<any[]>([]);
   const [totalUnread, setTotalUnread] = useState(0);
+  const [pendingAppointmentsCount, setPendingAppointmentsCount] = useState(0);
 
   useEffect(() => {
     initAuth();
@@ -76,6 +77,20 @@ export default function DoctorDashboard() {
 
     fetchUnreadChats();
 
+    // Fetch pending appointments count
+    const fetchPendingAppointments = async () => {
+      try {
+        const response = await appointmentApi.getPendingRequests({ limit: 100 });
+        if (response.success && response.data?.appointments) {
+          setPendingAppointmentsCount(response.data.appointments.length);
+        }
+      } catch (error) {
+        console.error('Error fetching pending appointments:', error);
+      }
+    };
+
+    fetchPendingAppointments();
+
     // Connect to socket for real-time updates
     const socket = connectSocket();
 
@@ -89,8 +104,15 @@ export default function DoctorDashboard() {
       fetchUnreadChats();
     });
 
+    // Listen for new appointment requests
+    socket.on('new-appointment-request', (data: any) => {
+      console.log('New appointment request:', data);
+      fetchPendingAppointments();
+    });
+
     return () => {
       socket.off('new-unread-message');
+      socket.off('new-appointment-request');
     };
   }, [isAuthenticated, role, user?.id]);
 
@@ -464,6 +486,30 @@ export default function DoctorDashboard() {
                       <p className="font-semibold text-blue-900 text-sm">View Patients</p>
                       <p className="text-xs text-gray-700">Manage patients</p>
                     </div>
+                  </Link>
+
+                  <Link
+                    href="/doctor/appointments"
+                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl hover:shadow-md transition-all duration-300 hover:scale-105 hover:-translate-y-1 border border-purple-200/50"
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-900 text-sm">Appointment Requests</p>
+                      <p className="text-xs text-gray-700">
+                        {pendingAppointmentsCount > 0 ? `${pendingAppointmentsCount} pending` : 'No pending'}
+                      </p>
+                    </div>
+                    {pendingAppointmentsCount > 0 && (
+                      <div className="ml-auto">
+                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                          {pendingAppointmentsCount}
+                        </span>
+                      </div>
+                    )}
                   </Link>
                 </div>
               </div>

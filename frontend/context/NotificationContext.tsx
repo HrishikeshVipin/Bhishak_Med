@@ -37,6 +37,30 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Play notification sound
+  const playNotificationSound = () => {
+    try {
+      // Create and play a simple notification beep using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800; // Frequency in Hz
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (error) {
+      console.error('Error playing notification sound:', error);
+    }
+  };
+
   useEffect(() => {
     if (!user?.id || !role) return;
 
@@ -74,6 +98,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     socket.on('notification', (notification: Notification) => {
       setNotifications(prev => [notification, ...prev]);
       setUnreadCount(prev => prev + 1);
+
+      // Play notification sound
+      playNotificationSound();
 
       // Show browser notification if permitted
       if ('Notification' in window && Notification.permission === 'granted') {

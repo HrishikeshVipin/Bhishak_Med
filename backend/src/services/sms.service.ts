@@ -267,3 +267,69 @@ export async function cleanupExpiredOtps(): Promise<void> {
     console.error('Error cleaning up expired OTPs:', error);
   }
 }
+
+// Send general SMS notification via Fast2SMS
+export async function sendSMS(phone: string, message: string): Promise<{ success: boolean; message: string }> {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        if (SMS_PROVIDER === 'FAST2SMS') {
+          console.log('📤 Sending SMS via Fast2SMS...');
+          await axios.post(
+            'https://www.fast2sms.com/dev/bulkV2',
+            {
+              route: 'q',
+              message: message,
+              language: 'english',
+              flash: 0,
+              numbers: phone,
+            },
+            {
+              headers: {
+                authorization: FAST2SMS_API_KEY,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          console.log(`✅ SMS sent successfully via ${SMS_PROVIDER} to ${phone}`);
+        } else if (SMS_PROVIDER === 'MSG91') {
+          console.log('📤 Sending SMS via MSG91...');
+          const formattedPhone = phone.startsWith('+')
+            ? phone.substring(1)
+            : phone.startsWith('91')
+            ? phone
+            : `91${phone}`;
+
+          await axios.get('https://api.msg91.com/api/sendhttp.php', {
+            params: {
+              authkey: MSG91_OTP_TOKEN,
+              mobiles: formattedPhone,
+              message: message,
+              sender: MSG91_SENDER_ID,
+              route: '4',
+              country: '91',
+            },
+          });
+          console.log(`✅ SMS sent successfully via ${SMS_PROVIDER} to ${phone}`);
+        }
+      } catch (smsError: any) {
+        console.error(`❌ ${SMS_PROVIDER} Error:`, smsError.response?.data || smsError.message);
+        console.log(`📱 FALLBACK - SMS for ${phone}: ${message}`);
+      }
+    } else {
+      // Development mode: log SMS to console
+      console.log(`📱 DEV MODE - SMS for ${phone}: ${message} (not sent via SMS)`);
+    }
+
+    return {
+      success: true,
+      message: 'SMS sent successfully',
+    };
+  } catch (error: any) {
+    console.error('Error sending SMS:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to send SMS',
+    };
+  }
+}

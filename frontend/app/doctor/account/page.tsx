@@ -7,6 +7,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { authApi, appointmentApi, doctorDiscovery } from '../../../lib/api';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import NotificationBell from '../../../components/NotificationBell';
+import { NotificationProvider } from '../../../context/NotificationContext';
 import type { Doctor, DoctorAvailability } from '../../../types';
 
 export default function DoctorAccountPage() {
@@ -266,8 +267,9 @@ export default function DoctorAccountPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40 pb-20">
-      <AnimatedBackground />
+    <NotificationProvider>
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40 pb-20">
+        <AnimatedBackground />
 
       {/* Header */}
       <header className="relative z-50 bg-white border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10">
@@ -716,6 +718,7 @@ export default function DoctorAccountPage() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </NotificationProvider>
   );
 }

@@ -181,16 +181,7 @@ export default function DoctorProfilePage() {
       }
     } catch (error: any) {
       console.error('Failed to request appointment:', error);
-
-      // Check if it's an authentication error
-      if (error.response?.status === 401) {
-        const shouldLogin = confirm('You need to login to book an appointment. Would you like to login now?');
-        if (shouldLogin) {
-          router.push('/patient/login');
-        }
-      } else {
-        alert(error.response?.data?.message || error.message || 'Failed to submit appointment request. Please try again.');
-      }
+      alert(error.response?.data?.message || error.message || 'Failed to submit appointment request. Please try again.');
     } finally {
       setSubmitting(false);
     }

@@ -15,10 +15,12 @@ interface PatientAuthStore {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  initialized: boolean;
 
   setAuth: (data: { patient: Patient; accessToken: string; refreshToken: string }) => void;
   logout: () => void;
   updatePatient: (patient: Patient) => void;
+  setInitialized: () => void;
 }
 
 export const usePatientAuth = create<PatientAuthStore>()(
@@ -28,6 +30,7 @@ export const usePatientAuth = create<PatientAuthStore>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      initialized: false,
 
       setAuth: (data) =>
         set({
@@ -35,6 +38,7 @@ export const usePatientAuth = create<PatientAuthStore>()(
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           isAuthenticated: true,
+          initialized: true,
         }),
 
       logout: () =>
@@ -43,15 +47,27 @@ export const usePatientAuth = create<PatientAuthStore>()(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          initialized: true,
         }),
 
       updatePatient: (patient) =>
         set({
           patient,
         }),
+
+      setInitialized: () =>
+        set({
+          initialized: true,
+        }),
     }),
     {
       name: 'patient-auth-storage',
+      onRehydrateStorage: () => (state) => {
+        // Mark as initialized after rehydration
+        if (state) {
+          state.initialized = true;
+        }
+      },
     }
   )
 );

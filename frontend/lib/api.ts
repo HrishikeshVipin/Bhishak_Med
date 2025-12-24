@@ -39,40 +39,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const role = localStorage.getItem('role');
-      const token = localStorage.getItem('token');
-      const currentPath = window.location.pathname;
-
-      // Don't clear storage or redirect on login/signup failures
-      if (currentPath.includes('/login') || currentPath.includes('/signup')) {
-        return Promise.reject(error);
-      }
-
-      // Don't redirect if on public pages (like browsing doctors)
-      const publicPaths = ['/patient/doctors', '/join', '/p/'];
-      const isOnPublicPage = publicPaths.some(path => currentPath.startsWith(path));
-
-      if (isOnPublicPage && !token) {
-        // User is not logged in, just reject the error without redirect
-        return Promise.reject(error);
-      }
-
-      // Only clear storage and redirect if user had a token (session expired)
-      if (token) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('role');
-
-        // Redirect to appropriate login page based on role or current path
-        if (role === 'DOCTOR' || currentPath.startsWith('/doctor')) {
-          window.location.href = '/doctor/login';
-        } else if (role === 'PATIENT' || currentPath.startsWith('/patient')) {
-          window.location.href = '/patient/login';
-        }
-      }
-      // Note: No redirect for admin - they must manually type /admin/login
-    }
+    // Never automatically redirect on 401 errors
+    // Errors will be handled by individual components
+    // Only manual logout or explicit session timeout should redirect
     return Promise.reject(error);
   }
 );

@@ -7,6 +7,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { patientApi } from '@/lib/api';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import NotificationBell from '../../../components/NotificationBell';
+import { NotificationProvider } from '../../../context/NotificationContext';
 
 interface Patient {
   id: string;
@@ -165,8 +166,9 @@ export default function PatientsListPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
-      <AnimatedBackground />
+    <NotificationProvider>
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+        <AnimatedBackground />
 
       <header className="relative z-50 bg-white border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -610,6 +612,7 @@ export default function PatientsListPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </NotificationProvider>
   );
 }

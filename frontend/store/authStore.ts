@@ -6,6 +6,7 @@ interface AuthState {
   user: Admin | Doctor | null;
   isAuthenticated: boolean;
   role: 'ADMIN' | 'DOCTOR' | null;
+  initialized: boolean;
 
   setAuth: (token: string, user: Admin | Doctor, role: 'ADMIN' | 'DOCTOR') => void;
   clearAuth: () => void;
@@ -17,19 +18,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   role: null,
+  initialized: false,
 
   setAuth: (token, user, role) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('role', role);
-    set({ token, user, isAuthenticated: true, role });
+    set({ token, user, isAuthenticated: true, role, initialized: true });
   },
 
   clearAuth: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('role');
-    set({ token: null, user: null, isAuthenticated: false, role: null });
+    set({ token: null, user: null, isAuthenticated: false, role: null, initialized: true });
   },
 
   initAuth: () => {
@@ -40,13 +42,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (token && userStr && role) {
       try {
         const user = JSON.parse(userStr);
-        set({ token, user, isAuthenticated: true, role });
+        set({ token, user, isAuthenticated: true, role, initialized: true });
       } catch (error) {
         console.error('Failed to parse user from localStorage:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('role');
+        set({ initialized: true });
       }
+    } else {
+      set({ initialized: true });
     }
   },
 }));

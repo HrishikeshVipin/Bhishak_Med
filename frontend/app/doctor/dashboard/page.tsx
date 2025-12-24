@@ -56,30 +56,7 @@ export default function DoctorDashboard() {
     }
   }, [isAuthenticated, role, user]);
 
-  // Refetch subscription info when page becomes visible or focused (after payment)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated && role === 'DOCTOR') {
-        console.log('🔄 Page visible - refreshing subscription data');
-        fetchSubscriptionInfo();
-      }
-    };
-
-    const handleFocus = () => {
-      if (isAuthenticated && role === 'DOCTOR') {
-        console.log('🔄 Window focused - refreshing subscription data');
-        fetchSubscriptionInfo();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [isAuthenticated, role]);
+  // Subscription info is fetched once on login and can be manually refreshed using the refresh button
 
   // Fetch unread chats and set up real-time updates
   useEffect(() => {

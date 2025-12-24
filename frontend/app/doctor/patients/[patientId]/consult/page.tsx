@@ -40,7 +40,7 @@ export default function DoctorConsultationPage() {
   const router = useRouter();
   const params = useParams();
   const patientId = params.patientId as string;
-  const { isAuthenticated, role, user } = useAuthStore();
+  const { isAuthenticated, role, user, initialized, initAuth } = useAuthStore();
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -67,7 +67,15 @@ export default function DoctorConsultationPage() {
   // Check if patient is waitlisted
   const isWaitlisted = consultation?.patient.status === 'WAITLISTED';
 
+  // Initialize auth on mount
   useEffect(() => {
+    initAuth();
+  }, [initAuth]);
+
+  // Check authentication only after initialization
+  useEffect(() => {
+    if (!initialized) return; // Wait for auth initialization
+
     if (!isAuthenticated || role !== 'DOCTOR') {
       router.push('/doctor/login');
       return;
@@ -87,7 +95,7 @@ export default function DoctorConsultationPage() {
         disconnectSocket();
       }
     };
-  }, [patientId, isAuthenticated, role, user]);
+  }, [patientId, isAuthenticated, role, user, initialized]);
 
   useEffect(() => {
     if (consultation && !joined && user) {
@@ -160,6 +168,36 @@ export default function DoctorConsultationPage() {
       setLoading(false);
     }
   };
+
+  // Refresh messages silently in background
+  const refreshMessages = async () => {
+    if (!consultation?.id) return;
+
+    try {
+      const response = await consultationApi.startConsultation(patientId);
+      if (response.success && response.data?.consultation?.chatMessages) {
+        // Update only the messages without disrupting other state
+        setConsultation(prev => prev && response.data ? {
+          ...prev,
+          chatMessages: response.data.consultation.chatMessages
+        } : prev);
+      }
+    } catch (error) {
+      // Silently fail - don't disrupt user experience
+      console.error('Background message refresh failed:', error);
+    }
+  };
+
+  // Auto-refresh messages every 2 seconds
+  useEffect(() => {
+    if (!consultation?.id) return;
+
+    const interval = setInterval(() => {
+      refreshMessages();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [consultation?.id]);
 
   const initializeSocket = () => {
     const newSocket = connectSocket();

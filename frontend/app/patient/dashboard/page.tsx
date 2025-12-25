@@ -40,7 +40,7 @@ export default function PatientDashboard() {
     fetchUpcomingAppointments();
 
     // Setup socket for real-time updates
-    const socket: Socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001', {
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000', {
       auth: {
         token: localStorage.getItem('patientToken'),
       },

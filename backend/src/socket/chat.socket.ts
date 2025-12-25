@@ -48,6 +48,27 @@ export const initializeChatSocket = (io: SocketIOServer) => {
       }
     });
 
+    // Join patient's personal room for notifications
+    socket.on('join-patient-room', async (data: { patientId: string }) => {
+      try {
+        const { patientId } = data;
+        const roomName = `patient-${patientId}`;
+        socket.join(roomName);
+        console.log(`🧑‍⚕️ Patient ${patientId} joined their personal notification room: ${roomName}`);
+
+        socket.emit('joined-patient-room', {
+          patientId,
+          message: 'Successfully joined patient notification room',
+        });
+      } catch (error: any) {
+        console.error('Join patient room error:', error);
+        socket.emit('error', {
+          message: 'Failed to join patient room',
+          error: error.message,
+        });
+      }
+    });
+
     // Join consultation room
     socket.on('join-consultation', async (data: { consultationId: string; userType: 'doctor' | 'patient'; userName: string }) => {
       try {
@@ -77,6 +98,71 @@ export const initializeChatSocket = (io: SocketIOServer) => {
           error: error.message,
         });
       }
+    });
+
+    // User online status in consultation (presence tracking)
+    socket.on('user-online-in-consultation', (data: { consultationId: string; userType: 'doctor' | 'patient' }) => {
+      const { consultationId, userType } = data;
+      console.log(`✅ ${userType} is online in consultation: ${consultationId}`);
+
+      // Broadcast to others in the room
+      socket.to(consultationId).emit('user-status-changed', {
+        userType,
+        isOnline: true,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    // User offline status
+    socket.on('user-offline-in-consultation', (data: { consultationId: string; userType: 'doctor' | 'patient' }) => {
+      const { consultationId, userType } = data;
+      console.log(`❌ ${userType} is offline in consultation: ${consultationId}`);
+
+      socket.to(consultationId).emit('user-status-changed', {
+        userType,
+        isOnline: false,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    // Video call initiation (doctor only)
+    socket.on('initiate-video-call', (data: { consultationId: string; doctorName: string }) => {
+      const { consultationId, doctorName } = data;
+      console.log(`📹 Doctor ${doctorName} initiating video call in consultation: ${consultationId}`);
+
+      // Notify patient in the room
+      socket.to(consultationId).emit('incoming-video-call', {
+        consultationId,
+        doctorName,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    // Video call accepted (patient)
+    socket.on('accept-video-call', (data: { consultationId: string; patientName: string }) => {
+      const { consultationId, patientName } = data;
+      console.log(`✅ Patient ${patientName} accepted video call in consultation: ${consultationId}`);
+
+      // Notify doctor that patient accepted
+      socket.to(consultationId).emit('video-call-accepted', {
+        consultationId,
+        patientName,
+        timestamp: new Date().toISOString(),
+      });
+    });
+
+    // Video call declined (patient)
+    socket.on('decline-video-call', (data: { consultationId: string; patientName: string; reason?: string }) => {
+      const { consultationId, patientName, reason } = data;
+      console.log(`❌ Patient ${patientName} declined video call in consultation: ${consultationId}`);
+
+      // Notify doctor that patient declined
+      socket.to(consultationId).emit('video-call-declined', {
+        consultationId,
+        patientName,
+        reason: reason || 'Patient declined the call',
+        timestamp: new Date().toISOString(),
+      });
     });
 
     // Send message

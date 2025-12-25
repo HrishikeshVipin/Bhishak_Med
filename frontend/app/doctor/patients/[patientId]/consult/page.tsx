@@ -64,6 +64,10 @@ export default function DoctorConsultationPage() {
   const [consultationHistory, setConsultationHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // Online presence state
+  const [isPatientOnline, setIsPatientOnline] = useState(false);
+  const [callingPatient, setCallingPatient] = useState(false);
+
   // Check if patient is waitlisted
   const isWaitlisted = consultation?.patient.status === 'WAITLISTED';
 
@@ -226,6 +230,35 @@ export default function DoctorConsultationPage() {
       console.log('✅ Joined consultation room');
       clearTimeout(joinTimeout);
       setJoined(true);
+
+      // Notify that doctor is online
+      newSocket.emit('user-online-in-consultation', {
+        consultationId: consultation!.id,
+        userType: 'doctor',
+      });
+    });
+
+    // Listen for patient's online/offline status
+    newSocket.on('user-status-changed', (data: { userType: string; isOnline: boolean }) => {
+      if (data.userType === 'patient') {
+        console.log('Patient status changed:', data.isOnline ? 'Online' : 'Offline');
+        setIsPatientOnline(data.isOnline);
+      }
+    });
+
+    // Listen for video call acceptance
+    newSocket.on('video-call-accepted', async (data: { patientName: string }) => {
+      console.log('✅ Patient accepted video call');
+      setCallingPatient(false);
+      // Auto-join the video call
+      await startVideoCall();
+    });
+
+    // Listen for video call decline
+    newSocket.on('video-call-declined', (data: { patientName: string; reason: string }) => {
+      console.log('❌ Patient declined video call:', data.reason);
+      setCallingPatient(false);
+      alert(`Patient declined the call: ${data.reason}`);
     });
 
     // Listen for new messages and update consultation state
@@ -251,7 +284,17 @@ export default function DoctorConsultationPage() {
 
     // Cleanup listeners
     return () => {
+      // Notify offline before leaving
+      if (consultation) {
+        newSocket.emit('user-offline-in-consultation', {
+          consultationId: consultation.id,
+          userType: 'doctor',
+        });
+      }
       newSocket.off('receive-message');
+      newSocket.off('user-status-changed');
+      newSocket.off('video-call-accepted');
+      newSocket.off('video-call-declined');
     };
   };
 
@@ -354,6 +397,25 @@ export default function DoctorConsultationPage() {
     setIsVideoActive(false);
     setVideoTokens(null);
     // Video timer automatically stops when isVideoActive becomes false
+  };
+
+  const initiateVideoCall = () => {
+    if (!socket || !consultation || !isPatientOnline) {
+      if (!isPatientOnline) {
+        alert('Patient is not online. Please wait for the patient to join the consultation.');
+      }
+      return;
+    }
+
+    setCallingPatient(true);
+
+    // Emit video call initiation event
+    socket.emit('initiate-video-call', {
+      consultationId: consultation.id,
+      doctorName: user!.fullName,
+    });
+
+    console.log('📹 Calling patient...');
   };
 
   const fetchConsultationHistory = async () => {
@@ -846,18 +908,36 @@ export default function DoctorConsultationPage() {
                   <h3 className="font-semibold text-gray-900 mb-2">Quick Actions</h3>
                   <div className="space-y-2">
                     {!isVideoActive ? (
-                      <button
-                        onClick={startVideoCall}
-                        disabled={loadingVideo || isWaitlisted}
-                        className={`w-full px-4 py-2 rounded-xl transition-all ${
-                          isWaitlisted
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white hover:scale-105 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:hover:scale-100'
-                        }`}
-                        title={isWaitlisted ? 'Video call disabled for waitlisted patients' : ''}
-                      >
-                        {isWaitlisted ? 'Video Disabled (Waitlisted)' : loadingVideo ? 'Starting Video...' : 'Start Video Call'}
-                      </button>
+                      <div>
+                        {isPatientOnline && (
+                          <div className="mb-2 flex items-center justify-center gap-2 text-sm">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="text-green-700 font-semibold">Patient Online</span>
+                          </div>
+                        )}
+                        <button
+                          onClick={initiateVideoCall}
+                          disabled={loadingVideo || isWaitlisted || !isPatientOnline || callingPatient}
+                          className={`w-full px-4 py-2 rounded-xl transition-all ${
+                            isWaitlisted || !isPatientOnline
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : callingPatient
+                              ? 'bg-blue-400 text-white cursor-wait animate-pulse'
+                              : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white hover:scale-105 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:hover:scale-100'
+                          }`}
+                          title={isWaitlisted ? 'Video call disabled for waitlisted patients' : !isPatientOnline ? 'Patient is not online' : ''}
+                        >
+                          {isWaitlisted
+                            ? 'Video Disabled (Waitlisted)'
+                            : callingPatient
+                            ? '📞 Calling Patient...'
+                            : !isPatientOnline
+                            ? '📴 Patient Offline'
+                            : loadingVideo
+                            ? 'Starting Video...'
+                            : '📹 Start Video Call'}
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={handleVideoLeave}

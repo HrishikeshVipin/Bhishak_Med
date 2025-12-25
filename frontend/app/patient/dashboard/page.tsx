@@ -13,10 +13,13 @@ export default function PatientDashboard() {
   const { patient, isAuthenticated, logout } = usePatientAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [upcomingAppointmentsCount, setUpcomingAppointmentsCount] = useState(0);
+  const [pendingActionCount, setPendingActionCount] = useState(0); // Appointments requiring patient action
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/patient/login');
+    if (!isAuthenticated || !patient) {
+      if (!isAuthenticated) {
+        router.push('/patient/login');
+      }
       return;
     }
 
@@ -25,12 +28,21 @@ export default function PatientDashboard() {
       try {
         const response = await appointmentApi.getPatientAppointments({ status: 'upcoming' });
         if (response.success && response.data?.appointments) {
-          const upcoming = response.data.appointments.filter((a: any) => {
-            const now = new Date();
+          const now = new Date();
+          const allAppointments = response.data.appointments;
+
+          // Count all upcoming appointments
+          const upcoming = allAppointments.filter((a: any) => {
             const scheduledDate = a.scheduledTime ? new Date(a.scheduledTime) : new Date(a.requestedDate);
             return scheduledDate >= now && ['REQUESTED', 'PROPOSED_ALTERNATIVE', 'CONFIRMED'].includes(a.status);
           });
           setUpcomingAppointmentsCount(upcoming.length);
+
+          // Count appointments requiring patient action (proposals from doctor)
+          const pendingActions = allAppointments.filter((a: any) => {
+            return a.status === 'PROPOSED_ALTERNATIVE' && a.proposedTime;
+          });
+          setPendingActionCount(pendingActions.length);
         }
       } catch (error) {
         console.error('Error fetching appointments:', error);
@@ -46,6 +58,19 @@ export default function PatientDashboard() {
       },
     });
 
+    // Join patient's personal room for notifications
+    socket.emit('join-patient-room', { patientId: patient.id });
+
+    // Listen for all notification events
+    socket.on('notification', (data: any) => {
+      console.log('Notification received:', data);
+      // Refresh appointments for any appointment-related notification
+      if (data.type && data.type.includes('APPOINTMENT')) {
+        fetchUpcomingAppointments();
+      }
+    });
+
+    // Backward compatibility with specific events
     socket.on('appointment-status-updated', (data: any) => {
       console.log('Appointment status updated:', data);
       fetchUpcomingAppointments();
@@ -59,7 +84,7 @@ export default function PatientDashboard() {
     return () => {
       socket.disconnect();
     };
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, patient, router]);
 
   const handleLogout = () => {
     logout();
@@ -217,9 +242,19 @@ export default function PatientDashboard() {
                 ? `${upcomingAppointmentsCount} upcoming`
                 : 'No upcoming appointments'}
             </p>
-            {upcomingAppointmentsCount > 0 && (
+            {pendingActionCount > 0 && (
+              <div className="absolute top-4 right-4 flex flex-col gap-1">
+                <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                  </svg>
+                  {pendingActionCount}
+                </span>
+              </div>
+            )}
+            {upcomingAppointmentsCount > 0 && pendingActionCount === 0 && (
               <div className="absolute top-4 right-4">
-                <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                   {upcomingAppointmentsCount}
                 </span>
               </div>

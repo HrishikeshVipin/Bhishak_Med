@@ -45,6 +45,11 @@ export default function PatientAccessPage() {
   const [videoTokens, setVideoTokens] = useState<any>(null);
   const [loadingVideo, setLoadingVideo] = useState(false);
 
+  // Online presence and call states
+  const [isDoctorOnline, setIsDoctorOnline] = useState(false);
+  const [showIncomingCall, setShowIncomingCall] = useState(false);
+  const [incomingCallData, setIncomingCallData] = useState<{ doctorName: string } | null>(null);
+
   useEffect(() => {
     if (token) {
       fetchConsultation();
@@ -105,6 +110,35 @@ export default function PatientAccessPage() {
     newSocket.on('joined-consultation', () => {
       console.log('Joined consultation room');
       setJoined(true);
+
+      // Notify that patient is online
+      newSocket.emit('user-online-in-consultation', {
+        consultationId: consultation!.id,
+        userType: 'patient',
+      });
+    });
+
+    // Listen for doctor's online/offline status
+    newSocket.on('user-status-changed', (data: { userType: string; isOnline: boolean }) => {
+      if (data.userType === 'doctor') {
+        console.log('Doctor status changed:', data.isOnline ? 'Online' : 'Offline');
+        setIsDoctorOnline(data.isOnline);
+      }
+    });
+
+    // Listen for incoming video call from doctor
+    newSocket.on('incoming-video-call', (data: { doctorName: string }) => {
+      console.log('📹 Incoming video call from:', data.doctorName);
+      setIncomingCallData({ doctorName: data.doctorName });
+      setShowIncomingCall(true);
+
+      // Play notification sound if possible
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(e => console.log('Could not play sound:', e));
+      } catch (e) {
+        console.log('Audio not available');
+      }
     });
 
     // Listen for new messages and update consultation state
@@ -124,7 +158,16 @@ export default function PatientAccessPage() {
 
     // Cleanup listeners on unmount
     return () => {
+      // Notify offline before leaving
+      if (consultation) {
+        newSocket.emit('user-offline-in-consultation', {
+          consultationId: consultation.id,
+          userType: 'patient',
+        });
+      }
       newSocket.off('receive-message');
+      newSocket.off('user-status-changed');
+      newSocket.off('incoming-video-call');
     };
   };
 
@@ -148,6 +191,35 @@ export default function PatientAccessPage() {
   const handleVideoLeave = () => {
     setIsVideoActive(false);
     setVideoTokens(null);
+  };
+
+  const handleAcceptCall = async () => {
+    if (!socket || !consultation) return;
+
+    setShowIncomingCall(false);
+
+    // Notify doctor that patient accepted
+    socket.emit('accept-video-call', {
+      consultationId: consultation.id,
+      patientName: 'Patient',
+    });
+
+    // Join the video call
+    await joinVideoCall();
+  };
+
+  const handleDeclineCall = () => {
+    if (!socket || !consultation) return;
+
+    setShowIncomingCall(false);
+    setIncomingCallData(null);
+
+    // Notify doctor that patient declined
+    socket.emit('decline-video-call', {
+      consultationId: consultation.id,
+      patientName: 'Patient',
+      reason: 'Patient declined the call',
+    });
   };
 
   if (loading) {
@@ -240,7 +312,20 @@ export default function PatientAccessPage() {
                 <span className="text-2xl">👨‍⚕️</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900">Dr. {consultation.doctor.fullName}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-gray-900">Dr. {consultation.doctor.fullName}</h3>
+                  {isDoctorOnline ? (
+                    <span className="flex items-center gap-1 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                      Online
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded-full">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                      Offline
+                    </span>
+                  )}
+                </div>
                 <p className="text-gray-600">{consultation.doctor.specialization}</p>
               </div>
             </div>
@@ -271,23 +356,13 @@ export default function PatientAccessPage() {
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">Consultation Chat</h2>
-            {consultation.patient?.status !== 'WAITLISTED' && (
-              !isVideoActive ? (
-                <button
-                  onClick={joinVideoCall}
-                  disabled={loadingVideo}
-                  className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-sm font-medium"
-                >
-                  {loadingVideo ? 'Joining Video...' : '📹 Join Video Call'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleVideoLeave}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium"
-                >
-                  Leave Video Call
-                </button>
-              )
+            {consultation.patient?.status !== 'WAITLISTED' && isVideoActive && (
+              <button
+                onClick={handleVideoLeave}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium"
+              >
+                Leave Video Call
+              </button>
             )}
           </div>
           <div className="p-6">
@@ -346,6 +421,55 @@ export default function PatientAccessPage() {
           </ul>
         </div>
       </main>
+
+      {/* Incoming Video Call Modal */}
+      {showIncomingCall && incomingCallData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-[bounce_1s_ease-in-out_3]">
+            <div className="text-center">
+              {/* Calling animation */}
+              <div className="mb-6 relative">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                  <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 bg-green-400/30 rounded-full animate-ping"></div>
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Incoming Video Call
+              </h2>
+              <p className="text-gray-600 mb-6">
+                <span className="font-semibold">{incomingCallData.doctorName}</span> is calling you
+              </p>
+
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={handleDeclineCall}
+                  className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  Decline
+                </button>
+                <button
+                  onClick={handleAcceptCall}
+                  className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 animate-pulse"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                  </svg>
+                  Accept
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { usePatientAuth } from '@/store/patientAuthStore';
 import { patientAuth, appointmentApi } from '@/lib/api';
 import Link from 'next/link';
@@ -59,16 +59,31 @@ interface Appointment {
   };
 }
 
-export default function MyConsultationsPage() {
+function ConsultationsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated } = usePatientAuth();
-  const [mainTab, setMainTab] = useState<'consultations' | 'appointments'>('consultations');
+
+  // Read tab from query parameter, default to 'consultations'
+  const initialTab = searchParams.get('tab') === 'appointments' ? 'appointments' : 'consultations';
+  const [mainTab, setMainTab] = useState<'consultations' | 'appointments'>(initialTab);
+
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
   const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'upcoming' | 'past'>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Update tab when query parameter changes
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'appointments') {
+      setMainTab('appointments');
+    } else {
+      setMainTab('consultations');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -613,5 +628,18 @@ export default function MyConsultationsPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function MyConsultationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40 flex items-center justify-center">
+        <AnimatedBackground />
+        <div className="text-lg text-blue-900">Loading...</div>
+      </div>
+    }>
+      <ConsultationsContent />
+    </Suspense>
   );
 }

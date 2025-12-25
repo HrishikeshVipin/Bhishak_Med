@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../../../store/authStore';
 import { appointmentApi } from '../../../lib/api';
 import { NotificationProvider } from '../../../context/NotificationContext';
@@ -65,6 +66,33 @@ export default function DoctorAppointmentsPage() {
       fetchAppointments();
     }
   }, [activeTab, isAuthenticated, role]);
+
+  // Real-time socket updates
+  useEffect(() => {
+    if (!isAuthenticated || role !== 'DOCTOR' || !user?.id) return;
+
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000', {
+      auth: {
+        token: localStorage.getItem('token'),
+      },
+    });
+
+    // Join doctor's room for real-time notifications
+    socket.emit('join-doctor-room', { doctorId: user.id });
+
+    // Listen for notifications (includes appointment events)
+    socket.on('notification', (data: any) => {
+      console.log('Notification received:', data);
+      // Refresh appointments list for any appointment-related notification
+      if (data.type && data.type.includes('APPOINTMENT')) {
+        fetchAppointments();
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [isAuthenticated, role, user, activeTab]);
 
   const fetchAppointments = async () => {
     try {

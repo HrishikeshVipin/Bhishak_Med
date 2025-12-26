@@ -163,7 +163,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-6">
           <h2 className="text-xl font-semibold text-blue-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Link
               href="/admin/doctors/pending"
               className="p-4 border-2 border-yellow-300/50 rounded-2xl hover:bg-yellow-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
@@ -198,6 +198,14 @@ export default function AdminDashboard() {
             >
               <h3 className="font-semibold text-green-800">Subscription Plans</h3>
               <p className="text-sm text-gray-700 mt-1">Manage pricing and features</p>
+            </Link>
+
+            <Link
+              href="/admin/settings"
+              className="p-4 border-2 border-cyan-300/50 rounded-2xl hover:bg-cyan-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+            >
+              <h3 className="font-semibold text-cyan-800">System Settings</h3>
+              <p className="text-sm text-gray-700 mt-1">Configure app settings</p>
             </Link>
           </div>
         </div>

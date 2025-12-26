@@ -20,6 +20,7 @@ import reviewRoutes from './routes/review.routes';
 import medicineRoutes from './routes/medicine.routes';
 import notificationRoutes from './routes/notification.routes';
 import appointmentRoutes from './routes/appointment.routes';
+import systemSettingsRoutes from './routes/system-settings.routes';
 import { initializeChatSocket } from './socket/chat.socket';
 import { notificationService } from './services/notification.service';
 import { apiLimiter } from './middleware/rateLimiter';
@@ -128,6 +129,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/system-settings', systemSettingsRoutes);
 
 // Test database connection
 app.get('/api/test-db', async (req: Request, res: Response) => {

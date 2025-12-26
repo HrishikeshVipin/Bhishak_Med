@@ -158,6 +158,28 @@ async function main() {
     console.log(`✅ Created/Updated plan: ${plan.name} (${plan.tier})`);
   }
 
+  // Create default system settings
+  const systemSettings = [
+    {
+      key: 'ENABLE_PATIENT_SIGNUP',
+      value: 'false', // Default: disabled
+      type: 'BOOLEAN',
+      label: 'Enable Patient Self-Registration',
+      description: 'Allow patients to sign up directly via the app. When disabled, patients can only be added by doctors or through invite links.',
+      category: 'FEATURES',
+    },
+  ];
+
+  console.log('\n📝 Creating system settings...');
+  for (const setting of systemSettings) {
+    await prisma.systemSetting.upsert({
+      where: { key: setting.key },
+      update: setting,
+      create: setting,
+    });
+    console.log(`✅ Created/Updated setting: ${setting.label} (${setting.key})`);
+  }
+
   console.log('\n🌱 Seeding complete!');
 }
 

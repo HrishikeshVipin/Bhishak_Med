@@ -543,6 +543,23 @@ model Appointment {
   @@index([doctorId, scheduledTime])
 }
 
+// System Settings - Global application configuration
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique // Setting identifier (e.g., "ENABLE_PATIENT_SIGNUP")
+  value     String   // Setting value (stored as string, parse as needed)
+  type      String   @default("BOOLEAN") // "BOOLEAN" | "STRING" | "NUMBER" | "JSON"
+  label     String   // Human-readable label for admin UI
+  description String? @db.Text // Optional description
+  category  String   @default("GENERAL") // "GENERAL" | "FEATURES" | "SECURITY" | "NOTIFICATIONS"
+  updatedBy String?  // Admin ID who last updated
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([category])
+}
+
 // Phase 2: Medicine Reminders
 model MedicineReminder {
   id                  String                 @id @default(uuid())

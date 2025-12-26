@@ -41,7 +41,7 @@ const allowedOrigins = [
   'http://192.168.0.241:3000', // Actual WiFi network IP for mobile access
   'http://192.168.0.1:3000', // Router IP range
   'http://192.168.1.1:3000', // Alternative router range
-  'https://unique-fulfillment-production.up.railway.app', // Production frontend
+  'https://mediquory-connect.up.railway.app', // Production frontend
 ];
 
 // Add production frontend URL if set

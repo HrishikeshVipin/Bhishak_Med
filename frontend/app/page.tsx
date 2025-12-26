@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 // Dynamic import for Three.js scene (client-side only)
 const Medical3DScene = dynamic(() => import('@/components/Medical3DScene'), {
@@ -10,9 +11,18 @@ const Medical3DScene = dynamic(() => import('@/components/Medical3DScene'), {
 });
 
 export default function Home() {
+  const router = useRouter();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Redirect to doctor-portal if patient signup is disabled
+  useEffect(() => {
+    const isPatientSignupEnabled = process.env.NEXT_PUBLIC_ENABLE_PATIENT_SIGNUP === 'true';
+    if (!isPatientSignupEnabled) {
+      router.replace('/doctor-portal');
+    }
+  }, [router]);
 
   // Mouse tracking for interactive elements
   useEffect(() => {

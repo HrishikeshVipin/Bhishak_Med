@@ -227,7 +227,9 @@ export const getUpcomingAppointments = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: appointments,
+      data: {
+        appointments,
+      },
     });
   } catch (error) {
     console.error('Get upcoming appointments error:', error);
@@ -312,6 +314,8 @@ export const acceptRequest = async (req: Request, res: Response) => {
           select: {
             id: true,
             fullName: true,
+            doctorId: true,
+            status: true,
           },
         },
       },
@@ -327,6 +331,59 @@ export const acceptRequest = async (req: Request, res: Response) => {
 
     if (appointment.status !== 'REQUESTED') {
       return res.status(400).json({ success: false, message: 'Appointment is not in requested status' });
+    }
+
+    // Check if patient needs to be added to doctor's patient list
+    const patientNeedsLinking = !appointment.patient.doctorId || appointment.patient.doctorId !== doctorId;
+
+    if (patientNeedsLinking) {
+      // Get doctor's subscription info
+      const doctor = await prisma.doctor.findUnique({
+        where: { id: doctorId },
+        select: {
+          patientLimit: true,
+          subscriptionTier: true,
+        },
+      });
+
+      if (!doctor) {
+        return res.status(404).json({ success: false, message: 'Doctor not found' });
+      }
+
+      // Count active patients for this doctor (only if not unlimited)
+      if (doctor.patientLimit !== -1) {
+        const activePatientCount = await prisma.patient.count({
+          where: {
+            doctorId,
+            status: 'ACTIVE',
+          },
+        });
+
+        console.log(`📊 Doctor ${doctorId} has ${activePatientCount}/${doctor.patientLimit} active patients`);
+
+        // Check if doctor has reached patient limit
+        if (activePatientCount >= doctor.patientLimit) {
+          return res.status(403).json({
+            success: false,
+            message: `Patient limit reached (${doctor.patientLimit}/${doctor.patientLimit}). Please upgrade your subscription to accept more patients.`,
+            code: 'PATIENT_LIMIT_REACHED',
+            currentCount: activePatientCount,
+            limit: doctor.patientLimit,
+          });
+        }
+      }
+
+      // Link patient to doctor and set as ACTIVE
+      await prisma.patient.update({
+        where: { id: appointment.patientId },
+        data: {
+          doctorId,
+          status: 'ACTIVE',
+          activatedAt: new Date(),
+        },
+      });
+
+      console.log(`✅ Patient ${appointment.patientId} added to doctor ${doctorId}'s patient list`);
     }
 
     // Update appointment

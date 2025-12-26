@@ -12,14 +12,16 @@ import {
   getMyMedicalRecords,
 } from '../controllers/patient-auth.controller';
 import { authenticatePatient } from '../middleware/patient-auth';
+import { checkPatientSignupEnabled } from '../middleware/checkPatientSignup';
 
 const router = express.Router();
 
 // Public routes (no auth required)
-router.post('/send-otp', sendOtp);
-router.post('/verify-otp', verifyOtp);
-router.post('/signup', signup);
-router.post('/login', login);
+// Note: send-otp and signup are protected by feature flag
+router.post('/send-otp', checkPatientSignupEnabled, sendOtp);
+router.post('/verify-otp', verifyOtp); // Allow verification for existing users
+router.post('/signup', checkPatientSignupEnabled, signup);
+router.post('/login', login); // Always allow login for existing patients
 router.post('/refresh', refreshToken);
 
 // Protected routes (require authentication)

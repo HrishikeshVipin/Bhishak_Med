@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { patientAuth } from '@/lib/api';
 import { usePatientAuth } from '@/store/patientAuthStore';
@@ -10,6 +10,14 @@ import AnimatedBackground from '@/components/AnimatedBackground';
 export default function PatientSignup() {
   const router = useRouter();
   const { setAuth } = usePatientAuth();
+
+  // Check if patient signup is enabled
+  useEffect(() => {
+    const isPatientSignupEnabled = process.env.NEXT_PUBLIC_ENABLE_PATIENT_SIGNUP === 'true';
+    if (!isPatientSignupEnabled) {
+      router.replace('/patient/coming-soon');
+    }
+  }, [router]);
 
   // Form state
   const [step, setStep] = useState(1); // 1: Phone, 2: OTP, 3: Profile

@@ -62,7 +62,7 @@ interface Appointment {
 function ConsultationsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = usePatientAuth();
+  const { isAuthenticated, initialized } = usePatientAuth();
 
   // Read tab from query parameter, default to 'consultations'
   const initialTab = searchParams.get('tab') === 'appointments' ? 'appointments' : 'consultations';
@@ -86,6 +86,9 @@ function ConsultationsContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    // Wait for store to rehydrate before checking auth
+    if (!initialized) return;
+
     if (!isAuthenticated) {
       router.push('/patient/login');
       return;
@@ -96,7 +99,7 @@ function ConsultationsContent() {
     } else {
       fetchAppointments();
     }
-  }, [isAuthenticated, mainTab]);
+  }, [initialized, isAuthenticated, mainTab]);
 
   const fetchConsultations = async () => {
     try {
@@ -157,6 +160,26 @@ function ConsultationsContent() {
     }
   };
 
+  const handleCancelAppointment = async (appointmentId: string) => {
+    const reason = prompt('Please provide a reason for cancellation (optional):');
+    if (!confirm('Are you sure you want to cancel this appointment?')) {
+      return;
+    }
+
+    try {
+      setActionLoading(appointmentId);
+      const response = await appointmentApi.cancelAppointment(appointmentId, { cancellationReason: reason || 'Cancelled by patient' });
+      if (response.success) {
+        alert('Appointment cancelled successfully');
+        fetchAppointments();
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to cancel appointment');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filteredConsultations = consultations.filter((c) => {
     if (filter === 'completed') return c.status === 'COMPLETED';
     if (filter === 'pending') return c.status !== 'COMPLETED';
@@ -200,7 +223,7 @@ function ConsultationsContent() {
     });
   };
 
-  if (!isAuthenticated) {
+  if (!initialized || !isAuthenticated) {
     return null;
   }
 
@@ -619,6 +642,19 @@ function ConsultationsContent() {
                     <div className="p-3 bg-red-50/50 rounded-xl">
                       <p className="text-xs text-gray-600 font-medium mb-1">Rejection Reason</p>
                       <p className="text-sm text-red-900">{appointment.rejectionReason}</p>
+                    </div>
+                  )}
+
+                  {/* Cancel Button - show for REQUESTED, PROPOSED_ALTERNATIVE, CONFIRMED statuses */}
+                  {['REQUESTED', 'PROPOSED_ALTERNATIVE', 'CONFIRMED'].includes(appointment.status) && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <button
+                        onClick={() => handleCancelAppointment(appointment.id)}
+                        disabled={actionLoading === appointment.id}
+                        className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors disabled:opacity-50 border border-red-200"
+                      >
+                        {actionLoading === appointment.id ? 'Cancelling...' : 'Cancel Appointment'}
+                      </button>
                     </div>
                   )}
                 </div>

@@ -173,35 +173,8 @@ export default function DoctorConsultationPage() {
     }
   };
 
-  // Refresh messages silently in background
-  const refreshMessages = async () => {
-    if (!consultation?.id) return;
-
-    try {
-      const response = await consultationApi.startConsultation(patientId);
-      if (response.success && response.data?.consultation?.chatMessages) {
-        // Update only the messages without disrupting other state
-        setConsultation(prev => prev && response.data ? {
-          ...prev,
-          chatMessages: response.data.consultation.chatMessages
-        } : prev);
-      }
-    } catch (error) {
-      // Silently fail - don't disrupt user experience
-      console.error('Background message refresh failed:', error);
-    }
-  };
-
-  // Auto-refresh messages every 2 seconds
-  useEffect(() => {
-    if (!consultation?.id) return;
-
-    const interval = setInterval(() => {
-      refreshMessages();
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [consultation?.id]);
+  // Note: Message refresh is handled by socket.io in real-time
+  // No polling needed - socket 'receive-message' event handles updates
 
   const initializeSocket = () => {
     const newSocket = connectSocket();

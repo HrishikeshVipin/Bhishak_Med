@@ -10,23 +10,24 @@ import { io, Socket } from 'socket.io-client';
 
 export default function PatientDashboard() {
   const router = useRouter();
-  const { patient, isAuthenticated, logout } = usePatientAuth();
+  const { patient, isAuthenticated, logout, initialized } = usePatientAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [upcomingAppointmentsCount, setUpcomingAppointmentsCount] = useState(0);
   const [pendingActionCount, setPendingActionCount] = useState(0); // Appointments requiring patient action
 
   useEffect(() => {
+    // Wait for store to rehydrate before checking auth
+    if (!initialized) return;
+
     if (!isAuthenticated || !patient) {
-      if (!isAuthenticated) {
-        router.push('/patient/login');
-      }
+      router.push('/patient/login');
       return;
     }
 
     // Fetch upcoming appointments count
     const fetchUpcomingAppointments = async () => {
       try {
-        const response = await appointmentApi.getPatientAppointments({ status: 'upcoming' });
+        const response = await appointmentApi.getPatientAppointments();
         if (response.success && response.data?.appointments) {
           const now = new Date();
           const allAppointments = response.data.appointments;
@@ -84,7 +85,7 @@ export default function PatientDashboard() {
     return () => {
       socket.disconnect();
     };
-  }, [isAuthenticated, patient, router]);
+  }, [initialized, isAuthenticated, patient, router]);
 
   const handleLogout = () => {
     logout();

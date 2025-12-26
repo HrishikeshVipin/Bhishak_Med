@@ -191,7 +191,7 @@ export default function SubscriptionPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-teal-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
         <div className="text-lg">Loading subscription details...</div>
       </div>
     );
@@ -208,23 +208,24 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Mediquory Connect" className="w-10 h-10" />
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                   Subscription Management
                 </h1>
-                <p className="text-xs text-navy-600">Manage your plan and video minutes</p>
+                <p className="text-xs text-gray-600">Manage your plan and video minutes</p>
               </div>
               <NotificationBell />
             </div>
             <Link
               href="/doctor/dashboard"
-              className="px-4 py-2 bg-navy-100 hover:bg-navy-200 text-navy-800 rounded-lg font-medium text-sm transition-all"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl font-medium text-sm transition-all hover:scale-105"
             >
               Back to Dashboard
             </Link>
@@ -235,7 +236,7 @@ export default function SubscriptionPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         {/* Current Usage Section */}
         {subscriptionInfo && (
-          <div className="bg-white rounded-lg shadow border border-gray-100 p-6">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg shadow-cyan-500/5 border border-cyan-200/50 p-6">
             <h2 className="text-xl font-bold text-navy-900 mb-4">Current Usage</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Patients Usage */}
@@ -246,9 +247,9 @@ export default function SubscriptionPage() {
                     {subscriptionInfo.usage.patients.used} / {subscriptionInfo.usage.patients.unlimited ? '∞' : subscriptionInfo.usage.patients.limit}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
-                    className="bg-teal-500 h-2 rounded-full"
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2.5 rounded-full transition-all"
                     style={{
                       width: subscriptionInfo.usage.patients.unlimited
                         ? '100%'
@@ -292,7 +293,7 @@ export default function SubscriptionPage() {
         )}
 
         {/* Buy Extra Minutes Section */}
-        <div className="bg-white rounded-lg shadow border border-gray-100 p-6">
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg shadow-cyan-500/5 border border-cyan-200/50 p-6">
           <h2 className="text-xl font-bold text-navy-900 mb-2">Buy Extra Minutes</h2>
           <p className="text-sm text-gray-600 mb-6">
             One-time purchase. Extra minutes carry over and never expire.
@@ -301,7 +302,7 @@ export default function SubscriptionPage() {
             {minutePackages.map((pkg) => (
               <div
                 key={pkg.minutes}
-                className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-400 transition-all cursor-pointer"
+                className="bg-white border-2 border-cyan-200/50 rounded-2xl p-5 hover:border-blue-400 hover:shadow-xl transition-all cursor-pointer transform hover:scale-105"
               >
                 <div className="text-center mb-3">
                   <div className="text-3xl font-bold text-navy-900">{pkg.minutes}</div>
@@ -318,7 +319,7 @@ export default function SubscriptionPage() {
                 )}
                 <button
                   onClick={() => handleBuyMinutes(pkg)}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+                  className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl text-sm font-semibold transition-all hover:scale-105 shadow-md shadow-blue-500/30"
                 >
                   Buy Now
                 </button>
@@ -328,7 +329,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Subscription Plans Section */}
-        <div className="bg-white rounded-lg shadow border border-gray-100 p-6">
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg shadow-cyan-500/5 border border-cyan-200/50 p-6">
           <h2 className="text-xl font-bold text-navy-900 mb-2">Subscription Plans</h2>
           <p className="text-sm text-gray-600 mb-6">
             Monthly subscription with patient limits and video minutes quota.
@@ -342,7 +343,7 @@ export default function SubscriptionPage() {
               return (
                 <div
                   key={plan.tier}
-                  className={`border-2 rounded-lg p-5 ${getTierColor(plan.tier)} ${isCurrent ? 'ring-2 ring-blue-500 border-blue-500' : ''}`}
+                  className={`border-2 rounded-2xl p-5 ${getTierColor(plan.tier)} ${isCurrent ? 'ring-2 ring-blue-500 border-blue-500 shadow-xl shadow-blue-500/20' : 'hover:shadow-lg transition-all'}`}
                 >
                   {isCurrent && (
                     <div className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full inline-block mb-3">
@@ -390,7 +391,7 @@ export default function SubscriptionPage() {
                   {!isCurrent && plan.tier !== 'TRIAL' && (
                     <button
                       onClick={() => handleUpgradePlan(plan.tier, plan.name, plan.price)}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl text-sm font-semibold transition-all hover:scale-105 shadow-md shadow-blue-500/30"
                     >
                       Upgrade to {plan.tier}
                     </button>
@@ -402,7 +403,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Info Note */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50/70 backdrop-blur-sm border border-blue-200/50 rounded-2xl p-4 shadow-sm">
           <h3 className="font-semibold text-blue-900 mb-2 text-sm">Test Mode</h3>
           <p className="text-xs text-blue-800">
             Payment gateway is in TEST mode. Use Razorpay test cards for payments. No real money will be charged.

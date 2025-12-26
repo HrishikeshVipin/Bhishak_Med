@@ -294,7 +294,7 @@ export const verifyDoctor = async (req: Request, res: Response): Promise<void> =
       recipientId: updatedDoctor.id,
       type: 'DOCTOR_VERIFIED',
       title: '✅ Registration Approved',
-      message: 'Your registration has been approved. You can now start using Bhishak Med.',
+      message: 'Your registration has been approved. You can now start using Mediquory Connect.',
       actionUrl: '/doctor/dashboard',
       actionText: 'Go to Dashboard',
       metadata: { doctorName: updatedDoctor.fullName },

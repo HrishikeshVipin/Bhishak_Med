@@ -63,7 +63,7 @@ class NotificationService {
         });
 
         if (patient?.phone) {
-          const smsMessage = `Bhishak Med: ${data.title} - ${data.message}`;
+          const smsMessage = `Mediquory Connect: ${data.title} - ${data.message}`;
           await sendSMS(patient.phone, smsMessage);
         }
       } catch (error) {

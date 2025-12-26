@@ -3,7 +3,7 @@ import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
 
 export const metadata: Metadata = {
-  title: "Bhishak Med - Doctor Teleconsultation",
+  title: "Mediquory Connect - Doctor Teleconsultation",
   description: "Professional telemedicine platform for doctors and patients",
   viewport: {
     width: 'device-width',
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Bhishak Med',
+    title: 'Mediquory Connect',
   },
 };
 

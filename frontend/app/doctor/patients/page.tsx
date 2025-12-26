@@ -534,28 +534,6 @@ export default function PatientsListPage() {
                 </button>
               )}
 
-              {/* Video Call Toggle */}
-              <div className="bg-white/70 backdrop-blur-sm border border-cyan-200/50 rounded-2xl p-4">
-                <div className="flex justify-between items-center gap-3">
-                  <div>
-                    <p className="font-semibold text-blue-900">Video Call Access</p>
-                    <p className="text-sm text-gray-600 mt-0.5">
-                      {managingPatient.videoCallEnabled ? 'Enabled' : 'Disabled'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleToggleVideo(managingPatient.id, !managingPatient.videoCallEnabled)}
-                    className={`px-4 py-2 rounded-xl font-semibold transition-all hover:scale-105 shadow-md ${
-                      managingPatient.videoCallEnabled
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white hover:from-amber-600 hover:to-yellow-700'
-                        : 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-700'
-                    }`}
-                  >
-                    {managingPatient.videoCallEnabled ? 'Disable' : 'Enable'}
-                  </button>
-                </div>
-              </div>
-
               {/* Delete Button */}
               <button
                 onClick={() => setShowDeleteConfirm(true)}

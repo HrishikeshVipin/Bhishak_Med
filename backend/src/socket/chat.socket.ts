@@ -2,9 +2,16 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import prisma from '../config/database';
 import { notificationService } from '../services/notification.service';
 
+// Track active users in consultations
+const consultationUsers = new Map<string, Map<string, { userType: 'doctor' | 'patient'; socketId: string }>>();
+
 export const initializeChatSocket = (io: SocketIOServer) => {
   io.on('connection', (socket: Socket) => {
     console.log('✅ Client connected:', socket.id);
+
+    // Track which consultation this socket is in
+    let currentConsultation: string | null = null;
+    let currentUserType: 'doctor' | 'patient' | null = null;
 
     // Join doctor's personal room for notifications
     socket.on('join-doctor-room', async (data: { doctorId: string }) => {
@@ -74,8 +81,18 @@ export const initializeChatSocket = (io: SocketIOServer) => {
       try {
         const { consultationId, userType, userName } = data;
 
+        // Track this socket's consultation
+        currentConsultation = consultationId;
+        currentUserType = userType;
+
         // Join the room
         socket.join(consultationId);
+
+        // Track user in consultation
+        if (!consultationUsers.has(consultationId)) {
+          consultationUsers.set(consultationId, new Map());
+        }
+        consultationUsers.get(consultationId)!.set(userType, { userType, socketId: socket.id });
 
         console.log(`👤 ${userName} (${userType}) joined consultation: ${consultationId}`);
 
@@ -91,6 +108,21 @@ export const initializeChatSocket = (io: SocketIOServer) => {
           consultationId,
           message: `Successfully joined consultation`,
         });
+
+        // Notify who else is already online in the consultation
+        const usersInConsultation = consultationUsers.get(consultationId);
+        if (usersInConsultation) {
+          usersInConsultation.forEach((user, type) => {
+            if (type !== userType) {
+              // Tell the newly joined user that the other user is online
+              socket.emit('user-status-changed', {
+                userType: type,
+                isOnline: true,
+                timestamp: new Date().toISOString(),
+              });
+            }
+          });
+        }
       } catch (error: any) {
         console.error('Join consultation error:', error);
         socket.emit('error', {
@@ -354,6 +386,29 @@ export const initializeChatSocket = (io: SocketIOServer) => {
     // Disconnect
     socket.on('disconnect', () => {
       console.log('❌ Client disconnected:', socket.id);
+
+      // If user was in a consultation, notify others they went offline
+      if (currentConsultation && currentUserType) {
+        console.log(`❌ ${currentUserType} disconnected from consultation: ${currentConsultation}`);
+
+        // Remove from tracking
+        const usersInConsultation = consultationUsers.get(currentConsultation);
+        if (usersInConsultation) {
+          usersInConsultation.delete(currentUserType);
+
+          // Clean up empty consultations
+          if (usersInConsultation.size === 0) {
+            consultationUsers.delete(currentConsultation);
+          }
+        }
+
+        // Notify others in the consultation
+        socket.to(currentConsultation).emit('user-status-changed', {
+          userType: currentUserType,
+          isOnline: false,
+          timestamp: new Date().toISOString(),
+        });
+      }
     });
   });
 };

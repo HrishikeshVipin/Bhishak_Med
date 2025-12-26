@@ -380,6 +380,12 @@ export default function DoctorConsultationPage() {
       return;
     }
 
+    // Block video calls for WAITLISTED patients (only ACTIVE patients can video call)
+    if (isWaitlisted) {
+      alert('Video calls are only available for activated patients. Please activate this patient first.');
+      return;
+    }
+
     setCallingPatient(true);
 
     // Emit video call initiation event

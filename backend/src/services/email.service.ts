@@ -24,7 +24,7 @@ class EmailService {
   async sendEmail(options: EmailOptions): Promise<boolean> {
     try {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Bhishak Med" <noreply@bhishak.com>',
+        from: process.env.SMTP_FROM || '"Mediquory Connect" <noreply@mediquory.com>',
         to: options.to,
         subject: options.subject,
         html: options.html,
@@ -40,11 +40,11 @@ class EmailService {
   async sendDoctorVerificationEmail(doctorEmail: string, doctorName: string): Promise<boolean> {
     return this.sendEmail({
       to: doctorEmail,
-      subject: '✅ Your Registration has been Approved - Bhishak Med',
+      subject: '✅ Your Registration has been Approved - Mediquory Connect',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #10b981;">Congratulations, Dr. ${doctorName}!</h2>
-          <p>Your registration on Bhishak Med has been <strong>approved</strong>.</p>
+          <p>Your registration on Mediquory Connect has been <strong>approved</strong>.</p>
           <p>You can now:</p>
           <ul>
             <li>Manage your patients</li>
@@ -69,12 +69,12 @@ class EmailService {
   async sendDoctorRejectionEmail(doctorEmail: string, doctorName: string, reason: string): Promise<boolean> {
     return this.sendEmail({
       to: doctorEmail,
-      subject: '❌ Registration Update - Bhishak Med',
+      subject: '❌ Registration Update - Mediquory Connect',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #ef4444;">Registration Status Update</h2>
           <p>Dear Dr. ${doctorName},</p>
-          <p>We regret to inform you that your registration on Bhishak Med could not be approved at this time.</p>
+          <p>We regret to inform you that your registration on Mediquory Connect could not be approved at this time.</p>
           <p><strong>Reason:</strong> ${reason}</p>
           <p>You may reapply after addressing the concerns mentioned above.</p>
           <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">
@@ -89,7 +89,7 @@ class EmailService {
   async sendNewChatNotificationEmail(doctorEmail: string, doctorName: string, patientName: string, message: string): Promise<boolean> {
     return this.sendEmail({
       to: doctorEmail,
-      subject: `💬 New Message from ${patientName} - Bhishak Med`,
+      subject: `💬 New Message from ${patientName} - Mediquory Connect`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #3b82f6;">New Message from Patient</h2>

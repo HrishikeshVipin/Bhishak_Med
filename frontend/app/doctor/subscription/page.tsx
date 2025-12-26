@@ -75,7 +75,7 @@ export default function SubscriptionPage() {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SAMPLE_KEY',
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency,
-          name: 'Bhishak Med',
+          name: 'Mediquory Connect',
           description: `${packageInfo.minutes} Video Minutes`,
           order_id: razorpayOrder.id,
           handler: async function (response: any) {
@@ -139,7 +139,7 @@ export default function SubscriptionPage() {
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SAMPLE_KEY',
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency,
-          name: 'Bhishak Med',
+          name: 'Mediquory Connect',
           description: `${planName} - Monthly Subscription`,
           order_id: razorpayOrder.id,
           handler: async function (response: any) {

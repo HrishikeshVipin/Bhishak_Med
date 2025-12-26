@@ -1,4 +1,4 @@
-# Bhishak Med - Doctor Teleconsultation Platform (MVP)
+# Mediquory Connect - Doctor Teleconsultation Platform (MVP)
 
 A comprehensive telemedicine platform where doctors can conduct online consultations with patients via chat and video.
 
@@ -69,21 +69,21 @@ npm install
 
 ```bash
 # Install PostgreSQL and create database
-createdb bhishak_med
+createdb mediquory_connect
 
 # Copy environment file
 cd backend
 cp .env.example .env
 
 # Update DATABASE_URL in .env
-DATABASE_URL="postgresql://user:password@localhost:5432/bhishak_med"
+DATABASE_URL="postgresql://user:password@localhost:5432/mediquory_connect"
 ```
 
 ### 3. Configure Environment Variables
 
 **Backend** (`backend/.env`):
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/bhishak_med"
+DATABASE_URL="postgresql://user:password@localhost:5432/mediquory_connect"
 NODE_ENV=development
 PORT=5000
 JWT_SECRET=your-secret-key
@@ -122,7 +122,7 @@ npm run prisma:seed
 ```
 
 **Default Admin Credentials:**
-- Email: `admin@bhishakmed.com`
+- Email: `admin@mediquory.com`
 - Password: `admin123`
 
 ### 5. Run Development Servers
@@ -145,7 +145,7 @@ Visit:
 ## 📁 Project Structure
 
 ```
-bhishak-med/
+mediquory-connect/
 ├── frontend/          # Next.js app
 │   ├── app/           # Pages (App Router)
 │   ├── components/    # React components
@@ -214,10 +214,10 @@ npm install -g pm2
 
 # Clone and setup
 git clone your-repo
-cd bhishak-med
+cd mediquory-connect
 
 # Setup database
-sudo -u postgres createdb bhishak_med
+sudo -u postgres createdb mediquory_connect
 
 # Backend
 cd backend
@@ -267,7 +267,7 @@ Private - All Rights Reserved
 
 ## 🆘 Support
 
-For setup issues, contact: admin@bhishakmed.com
+For setup issues, contact: admin@mediquory.com
 
 ---
 

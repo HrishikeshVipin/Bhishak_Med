@@ -10,10 +10,10 @@ async function main() {
   const adminPassword = await bcrypt.hash('admin123', 10);
 
   const admin = await prisma.admin.upsert({
-    where: { email: 'admin@bhishakmed.com' },
+    where: { email: 'admin@mediquory.com' },
     update: {},
     create: {
-      email: 'admin@bhishakmed.com',
+      email: 'admin@mediquory.com',
       password: adminPassword,
       fullName: 'Super Admin',
       role: 'ADMIN',
@@ -21,7 +21,7 @@ async function main() {
   });
 
   console.log('✅ Created admin user:', admin.email);
-  console.log('📧 Email: admin@bhishakmed.com');
+  console.log('📧 Email: admin@mediquory.com');
   console.log('🔑 Password: admin123');
 
   // Create verified test doctor for development

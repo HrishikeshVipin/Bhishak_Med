@@ -171,28 +171,36 @@ export default function PatientsListPage() {
         <AnimatedBackground />
 
       <header className="relative z-50 bg-white border-b border-cyan-200/50 sticky top-0 shadow-lg shadow-cyan-500/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Mediquory Connect" className="w-10 h-10" />
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">My Patients</h1>
-              <p className="text-sm text-gray-600">Manage your patient list</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* Mobile: Stack vertically, Desktop: Horizontal layout */}
+          <div className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+            {/* Left section: Logo, Title, Notification */}
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Mediquory Connect" className="w-10 h-10" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">My Patients</h1>
+                <p className="text-sm text-gray-600 hidden sm:block">Manage your patient list</p>
+              </div>
+              <NotificationBell />
             </div>
-            <NotificationBell />
-          </div>
-          <div className="flex gap-3">
-            <Link
-              href="/doctor/patients/new"
-              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl font-medium transition-all hover:scale-105"
-            >
-              + Create New Patient
-            </Link>
-            <Link
-              href="/doctor/dashboard"
-              className="px-4 py-2 bg-white/70 border border-cyan-200/50 text-blue-900 rounded-xl font-medium hover:bg-white transition-all"
-            >
-              ← Back to Dashboard
-            </Link>
+
+            {/* Right section: Action buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto">
+              <Link
+                href="/doctor/patients/new"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl font-medium transition-all hover:scale-105 text-center"
+              >
+                <span className="hidden sm:inline">+ Create New Patient</span>
+                <span className="sm:hidden">+ New Patient</span>
+              </Link>
+              <Link
+                href="/doctor/dashboard"
+                className="px-4 py-2 bg-white/70 border border-cyan-200/50 text-blue-900 rounded-xl font-medium hover:bg-white transition-all text-center"
+              >
+                <span className="hidden sm:inline">← Back to Dashboard</span>
+                <span className="sm:hidden">← Dashboard</span>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -209,7 +217,7 @@ export default function PatientsListPage() {
           <p className="text-sm text-gray-600 mb-4">
             Share this link on your social media or website to let patients register under you directly:
           </p>
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
             <input
               type="text"
               readOnly
@@ -218,7 +226,7 @@ export default function PatientsListPage() {
             />
             <button
               onClick={copyRegistrationLink}
-              className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105 ${
+              className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105 whitespace-nowrap ${
                 copiedRegistrationLink
                   ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                   : 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-700'

@@ -127,6 +127,16 @@ export default function DoctorConsultationPage() {
         setSocket(null);
       }
 
+      // Reset video call state for new consultation
+      setIsVideoActive(false);
+      setVideoTokens(null);
+      setCallingPatient(false);
+      setLoadingVideo(false);
+      setVideoStartTime(null);
+      setVideoDuration(0);
+      setInOvertime(false);
+      setOvertimeMinutes(0);
+
       const response = await consultationApi.startConsultation(patientId);
 
       if (response.success && response.data) {
@@ -231,6 +241,7 @@ export default function DoctorConsultationPage() {
     newSocket.on('video-call-declined', (data: { patientName: string; reason: string }) => {
       console.log('❌ Patient declined video call:', data.reason);
       setCallingPatient(false);
+      setLoadingVideo(false); // Reset loading state
       alert(`Patient declined the call: ${data.reason}`);
     });
 
@@ -358,9 +369,10 @@ export default function DoctorConsultationPage() {
         setIsVideoActive(true);
         setVideoStartTime(new Date().getTime()); // Start video timer
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting video call:', error);
-      alert('Failed to start video call');
+      setCallingPatient(false); // Reset calling state on error
+      alert(error.response?.data?.message || 'Failed to start video call. Please try again.');
     } finally {
       setLoadingVideo(false);
     }
@@ -395,6 +407,11 @@ export default function DoctorConsultationPage() {
     });
 
     console.log('📹 Calling patient...');
+
+    // Auto-reset calling state after 30 seconds if no response
+    setTimeout(() => {
+      setCallingPatient(false);
+    }, 30000);
   };
 
   const fetchConsultationHistory = async () => {
@@ -436,29 +453,7 @@ export default function DoctorConsultationPage() {
     }
   };
 
-  const handleToggleVideo = async () => {
-    if (!consultation?.patient.id) return;
-
-    const currentStatus = consultation.patient.videoCallEnabled;
-    const newStatus = !currentStatus;
-
-    try {
-      const response = await patientApi.toggleVideoCall(consultation.patient.id, newStatus);
-      if (response.success) {
-        alert(`Video call ${newStatus ? 'enabled' : 'disabled'} successfully!`);
-        // Update consultation state
-        setConsultation({
-          ...consultation,
-          patient: {
-            ...consultation.patient,
-            videoCallEnabled: newStatus
-          }
-        });
-      }
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to toggle video call');
-    }
-  };
+  // handleToggleVideo function removed - video calls now initiated directly by doctor
 
   if (loading) {
     return (
@@ -559,27 +554,7 @@ export default function DoctorConsultationPage() {
                     Activate Patient
                   </button>
                 )}
-                <button
-                  onClick={handleToggleVideo}
-                  disabled={isWaitlisted}
-                  className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${
-                    isWaitlisted
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : consultation.patient.videoCallEnabled
-                      ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white hover:scale-105'
-                      : 'bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white hover:scale-105'
-                  }`}
-                  title={isWaitlisted ? 'Video call disabled for waitlisted patients' : consultation.patient.videoCallEnabled ? 'Disable video calling' : 'Enable video calling'}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {consultation.patient.videoCallEnabled ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    )}
-                  </svg>
-                  {isWaitlisted ? 'Video Disabled (Waitlisted)' : consultation.patient.videoCallEnabled ? 'Disable Video' : 'Enable Video'}
-                </button>
+                {/* Enable/Disable Video button removed - doctor now initiates video calls directly */}
                 <button
                   onClick={endConsultation}
                   disabled={consultation.status === 'COMPLETED'}

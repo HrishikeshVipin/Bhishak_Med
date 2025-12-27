@@ -693,14 +693,8 @@ export const generateVideoTokens = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // Check if video is enabled for this patient
-    if (!consultation.patient.videoCallEnabled) {
-      res.status(403).json({
-        success: false,
-        message: 'Video call is not enabled for this patient.',
-      });
-      return;
-    }
+    // Note: Removed videoCallEnabled check - doctor controls video call initiation
+    // videoCallEnabled field is deprecated in favor of doctor-initiated calls
 
     if (consultation.status !== 'ACTIVE') {
       res.status(400).json({

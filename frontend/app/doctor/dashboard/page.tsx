@@ -345,7 +345,7 @@ export default function DoctorDashboard() {
                   <div>
                     <p className="text-xs text-gray-700">Patients</p>
                     <p className="text-lg font-bold text-blue-900">
-                      {subscriptionInfo?.usage.patients.used || doctor.patientsCreated} / {subscriptionInfo?.usage.patients.unlimited ? '∞' : (subscriptionInfo?.usage.patients.limit || doctor.patientLimit)}
+                      {subscriptionInfo?.usage.patients.used ?? doctor.patientsCreated ?? 0} / {subscriptionInfo?.usage.patients.unlimited ? '∞' : (subscriptionInfo?.usage.patients.limit ?? doctor.patientLimit)}
                     </p>
                   </div>
                 </div>

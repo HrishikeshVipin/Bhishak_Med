@@ -9,6 +9,7 @@ import prisma from './config/database';
 import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
 import adminRevealRoutes from './routes/admin.reveal.routes';
+import auditRoutes from './routes/audit.routes';
 import patientRoutes from './routes/patient.routes';
 import patientAuthRoutes from './routes/patient-auth.routes';
 import doctorDiscoveryRoutes from './routes/doctor-discovery.routes';
@@ -120,6 +121,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin', adminRevealRoutes); // Admin reveal Aadhaar/UPI (15-sec window)
+app.use('/api/admin', auditRoutes); // Audit logs viewer
 app.use('/api/patients', patientRoutes);
 app.use('/api/patient-auth', patientAuthRoutes);
 app.use('/api/doctors', doctorDiscoveryRoutes);

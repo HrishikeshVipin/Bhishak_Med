@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '../../../../lib/api';
 import { useAuthStore } from '../../../../store/authStore';
+import AnimatedBackground from '../../../../components/AnimatedBackground';
 import type { DoctorWithCounts } from '../../../../types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -211,8 +212,11 @@ export default function DoctorDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+        <AnimatedBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-lg text-blue-900">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -223,14 +227,15 @@ export default function DoctorDetailPage() {
 
   if (error || !doctor) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow p-8 max-w-md">
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40 flex items-center justify-center">
+        <AnimatedBackground />
+        <div className="relative z-10 bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-8 max-w-md">
           <div className="text-red-600 text-5xl mb-4 text-center">⚠</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">Error</h3>
-          <p className="text-gray-600 text-center mb-4">{error || 'Doctor not found'}</p>
+          <h3 className="text-xl font-semibold text-blue-900 mb-2 text-center">Error</h3>
+          <p className="text-gray-700 text-center mb-4">{error || 'Doctor not found'}</p>
           <Link
             href="/admin/doctors/pending"
-            className="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="block w-full text-center px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all hover:scale-105"
           >
             Back to Pending Doctors
           </Link>
@@ -260,18 +265,19 @@ export default function DoctorDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+      <AnimatedBackground />
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="relative z-10 bg-white/80 backdrop-blur-lg border-b border-cyan-200/50 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Doctor Verification</h1>
-              <p className="text-sm text-gray-600 mt-1">{doctor.fullName}</p>
+              <h1 className="text-2xl font-bold text-blue-900">Doctor Verification</h1>
+              <p className="text-sm text-gray-700 mt-1">{doctor.fullName}</p>
             </div>
             <Link
               href="/admin/doctors/pending"
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all hover:scale-105"
             >
               Back to List
             </Link>
@@ -279,7 +285,7 @@ export default function DoctorDetailPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Status Badge */}
         <div className="mb-6">
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(doctor.status)}`}>
@@ -288,9 +294,9 @@ export default function DoctorDetailPage() {
         </div>
 
         {/* Basic Info */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
+        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 mb-6">
+          <div className="px-6 py-4 border-b border-cyan-200/50">
+            <h2 className="text-lg font-semibold text-blue-900">Basic Information</h2>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -308,18 +314,18 @@ export default function DoctorDetailPage() {
               />
               <InfoField label="Registration Number" value={doctor.registrationNo} />
               <div>
-                <p className="text-sm text-gray-500 mb-1">Aadhaar Number</p>
+                <p className="text-sm text-gray-600 mb-1">Aadhaar Number</p>
                 <div className="flex items-center gap-2">
                   {doctor.aadhaarNumber ? (
                     <button
                       onClick={() => handleRevealRequest('aadhaar')}
-                      className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition font-medium"
+                      className="px-4 py-2 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl transition-all hover:scale-105 font-medium"
                       title="View for 15 seconds"
                     >
                       👁 View for 15s
                     </button>
                   ) : (
-                    <p className="text-base font-medium text-gray-500">Not provided</p>
+                    <p className="text-base font-medium text-gray-600">Not provided</p>
                   )}
                 </div>
               </div>
@@ -327,8 +333,8 @@ export default function DoctorDetailPage() {
             </div>
 
             {doctor._count && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Platform Activity</h3>
+              <div className="mt-6 pt-6 border-t border-cyan-200/50">
+                <h3 className="text-sm font-semibold text-blue-900 mb-3">Platform Activity</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-blue-600">{doctor._count.patients}</p>
@@ -349,9 +355,9 @@ export default function DoctorDetailPage() {
         </div>
 
         {/* Subscription Info */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Subscription Information</h2>
+        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 mb-6">
+          <div className="px-6 py-4 border-b border-cyan-200/50">
+            <h2 className="text-lg font-semibold text-blue-900">Subscription Information</h2>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -366,9 +372,9 @@ export default function DoctorDetailPage() {
         </div>
 
         {/* Documents */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Uploaded Documents</h2>
+        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 mb-6">
+          <div className="px-6 py-4 border-b border-cyan-200/50">
+            <h2 className="text-lg font-semibold text-blue-900">Uploaded Documents</h2>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -398,25 +404,25 @@ export default function DoctorDetailPage() {
 
         {/* UPI Info */}
         {doctor.upiId && (
-          <div className="bg-white rounded-lg shadow mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Payment Information</h2>
+          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 mb-6">
+            <div className="px-6 py-4 border-b border-cyan-200/50">
+              <h2 className="text-lg font-semibold text-blue-900">Payment Information</h2>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">UPI ID</p>
+                  <p className="text-sm text-gray-600 mb-1">UPI ID</p>
                   <div className="flex items-center gap-2">
                     {doctor.upiId ? (
                       <button
                         onClick={() => handleRevealRequest('upi')}
-                        className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition font-medium"
+                        className="px-4 py-2 text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl transition-all hover:scale-105 font-medium"
                         title="View for 15 seconds"
                       >
                         👁 View for 15s
                       </button>
                     ) : (
-                      <p className="text-base font-medium text-gray-500">Not provided</p>
+                      <p className="text-base font-medium text-gray-600">Not provided</p>
                     )}
                   </div>
                 </div>
@@ -441,9 +447,9 @@ export default function DoctorDetailPage() {
         )}
 
         {/* Actions */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Actions</h2>
+        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10">
+          <div className="px-6 py-4 border-b border-cyan-200/50">
+            <h2 className="text-lg font-semibold text-blue-900">Actions</h2>
           </div>
           <div className="p-6">
             <div className="flex flex-wrap gap-3">
@@ -452,14 +458,14 @@ export default function DoctorDetailPage() {
                   <button
                     onClick={handleVerify}
                     disabled={actionLoading}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:scale-105"
                   >
                     ✓ Verify Doctor
                   </button>
                   <button
                     onClick={() => setShowRejectModal(true)}
                     disabled={actionLoading}
-                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:scale-105"
                   >
                     ✗ Reject Doctor
                   </button>
@@ -470,7 +476,7 @@ export default function DoctorDetailPage() {
                 <button
                   onClick={handleSuspend}
                   disabled={actionLoading}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:scale-105"
                 >
                   Suspend Doctor
                 </button>
@@ -480,7 +486,7 @@ export default function DoctorDetailPage() {
                 <button
                   onClick={handleReactivate}
                   disabled={actionLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:scale-105"
                 >
                   Reactivate Doctor
                 </button>
@@ -490,7 +496,7 @@ export default function DoctorDetailPage() {
                 <button
                   onClick={handleVerify}
                   disabled={actionLoading}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:scale-105"
                 >
                   Verify Doctor (Override Rejection)
                 </button>
@@ -503,37 +509,37 @@ export default function DoctorDetailPage() {
       {/* Reveal Aadhaar/UPI Modal */}
       {showRevealModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <div className="bg-white/95 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-2xl shadow-cyan-500/20 max-w-md w-full p-6">
             {!revealedData ? (
               <>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-indigo-100 p-2 rounded-lg">
+                  <div className="bg-gradient-to-br from-indigo-100 to-purple-100 p-2 rounded-xl">
                     <span className="text-2xl">🔓</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-blue-900">
                       Reveal {revealType === 'aadhaar' ? 'Aadhaar Number' : 'UPI ID'}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-700">
                       This action will be logged in audit trail
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4">
                   <p className="text-sm text-yellow-800">
                     ⚠ Sensitive data will be visible for 15 seconds only
                   </p>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-blue-900 mb-2">
                     Reason for Access <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={revealReason}
                     onChange={(e) => setRevealReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                     required
                   >
                     <option value="">Select a reason</option>
@@ -547,13 +553,13 @@ export default function DoctorDetailPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-blue-900 mb-2">
                     Additional Details (Optional)
                   </label>
                   <textarea
                     value={revealReasonDetails}
                     onChange={(e) => setRevealReasonDetails(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                     rows={3}
                     placeholder="Provide additional context (optional)"
                   />
@@ -563,14 +569,14 @@ export default function DoctorDetailPage() {
                   <button
                     onClick={handleRevealSubmit}
                     disabled={revealLoading || !revealReason}
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all hover:scale-105"
                   >
                     {revealLoading ? 'Revealing...' : '🔓 Reveal Data'}
                   </button>
                   <button
                     onClick={closeRevealModal}
                     disabled={revealLoading}
-                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
                   >
                     Cancel
                   </button>
@@ -579,18 +585,18 @@ export default function DoctorDetailPage() {
             ) : (
               <>
                 <div className="text-center mb-6">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-full mb-4">
                     <span className="text-3xl">✓</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-blue-900 mb-2">
                     {revealType === 'aadhaar' ? 'Aadhaar Number' : 'UPI ID'}
                   </h3>
-                  <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-4 mb-4">
-                    <p className="text-2xl font-mono font-bold text-gray-900 select-all">
+                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-300 rounded-xl p-4 mb-4">
+                    <p className="text-2xl font-mono font-bold text-blue-900 select-all">
                       {revealedData}
                     </p>
                   </div>
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                     <p className="text-red-700 font-semibold flex items-center justify-center gap-2">
                       <span className="text-3xl font-bold">{countdown}</span>
                       <span>seconds remaining</span>
@@ -604,13 +610,13 @@ export default function DoctorDetailPage() {
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-600 text-center mb-4">
+                <p className="text-sm text-gray-700 text-center mb-4">
                   Data will auto-hide when timer expires
                 </p>
 
                 <button
                   onClick={closeRevealModal}
-                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all hover:scale-105"
                 >
                   Close Now
                 </button>
@@ -623,15 +629,15 @@ export default function DoctorDetailPage() {
       {/* Reject Modal */}
       {showRejectModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Doctor</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white/95 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-2xl shadow-cyan-500/20 max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-blue-900 mb-4">Reject Doctor</h3>
+            <p className="text-sm text-gray-700 mb-4">
               Please provide a reason for rejecting this doctor's application. This will be shown to the doctor.
             </p>
             <textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="w-full px-3 py-2 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               rows={4}
               placeholder="e.g., Invalid registration certificate, Aadhaar photos unclear, etc."
             />
@@ -639,7 +645,7 @@ export default function DoctorDetailPage() {
               <button
                 onClick={handleReject}
                 disabled={actionLoading || !rejectionReason.trim()}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
               >
                 Reject
               </button>
@@ -649,7 +655,7 @@ export default function DoctorDetailPage() {
                   setRejectionReason('');
                 }}
                 disabled={actionLoading}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
               >
                 Cancel
               </button>
@@ -670,8 +676,8 @@ interface InfoFieldProps {
 function InfoField({ label, value, mono }: InfoFieldProps) {
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-1">{label}</p>
-      <p className={`text-base font-medium text-gray-900 ${mono ? 'font-mono' : ''}`}>
+      <p className="text-sm text-gray-600 mb-1">{label}</p>
+      <p className={`text-base font-medium text-blue-900 ${mono ? 'font-mono' : ''}`}>
         {value}
       </p>
     </div>
@@ -687,9 +693,9 @@ interface DocumentViewerProps {
 function DocumentViewer({ title, path, type }: DocumentViewerProps) {
   if (!path) {
     return (
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center">
-        <p className="text-xs font-medium text-gray-500">{title}</p>
-        <p className="text-xs text-gray-400 mt-1">Not uploaded</p>
+      <div className="border-2 border-dashed border-cyan-300/50 rounded-xl p-3 text-center">
+        <p className="text-xs font-medium text-gray-600">{title}</p>
+        <p className="text-xs text-gray-500 mt-1">Not uploaded</p>
       </div>
     );
   }
@@ -697,9 +703,9 @@ function DocumentViewer({ title, path, type }: DocumentViewerProps) {
   const fullUrl = `${BASE_URL}/${path}`;
 
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden">
-      <div className="bg-gray-50 px-3 py-2 border-b border-gray-300">
-        <p className="text-xs font-medium text-gray-700">{title}</p>
+    <div className="border border-cyan-200/50 rounded-xl overflow-hidden">
+      <div className="bg-gradient-to-r from-cyan-50/50 to-blue-50/50 px-3 py-2 border-b border-cyan-200/50">
+        <p className="text-xs font-medium text-blue-900">{title}</p>
       </div>
       <div className="p-3">
         {type === 'image' ? (
@@ -707,16 +713,16 @@ function DocumentViewer({ title, path, type }: DocumentViewerProps) {
             <img
               src={fullUrl}
               alt={title}
-              className="w-full h-32 object-cover bg-gray-100 rounded cursor-pointer hover:opacity-90 transition"
+              className="w-full h-32 object-cover bg-cyan-50 rounded cursor-pointer hover:opacity-90 transition"
             />
-            <p className="text-xs text-center text-blue-600 mt-2">Click to view full size</p>
+            <p className="text-xs text-center text-cyan-600 mt-2">Click to view full size</p>
           </a>
         ) : (
           <a
             href={fullUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-center py-4 text-blue-600 hover:text-blue-700"
+            className="block text-center py-4 text-cyan-600 hover:text-cyan-700"
           >
             <div className="text-2xl mb-1">📄</div>
             <div className="text-xs font-medium">View Document</div>

@@ -33,7 +33,9 @@ export interface AuditLogData {
     | 'ADMIN_SETTINGS_CHANGE'
     | 'PATIENT_CREATE'
     | 'CONSULTATION_START'
-    | 'CONSULTATION_COMPLETE';
+    | 'CONSULTATION_COMPLETE'
+    | 'VIDEO_CALL_START'
+    | 'CONSULTATION_NOTES_UPDATE';
   resourceType?: 'PATIENT' | 'DOCTOR' | 'PRESCRIPTION' | 'PAYMENT' | 'CONSULTATION';
   resourceId?: string;
   description?: string;

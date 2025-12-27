@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { adminPlanApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/authStore';
+import AnimatedBackground from '../../../components/AnimatedBackground';
 import type { SubscriptionPlan } from '../../../types';
 
 interface PlanFormData {
@@ -211,8 +212,11 @@ export default function AdminSubscriptionPlansPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+        <AnimatedBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-lg text-blue-900">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -222,21 +226,22 @@ export default function AdminSubscriptionPlansPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+      <AnimatedBackground />
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="relative z-10 bg-white/80 backdrop-blur-lg border-b border-cyan-200/50 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <Link href="/admin/dashboard" className="text-sm text-blue-600 hover:underline mb-2 block">
+              <Link href="/admin/dashboard" className="text-sm text-cyan-600 hover:text-cyan-800 mb-2 block transition-colors">
                 ← Back to Dashboard
               </Link>
-              <h1 className="text-3xl font-bold text-gray-900">Subscription Plans</h1>
-              <p className="text-gray-600 mt-1">Manage subscription tiers and pricing</p>
+              <h1 className="text-3xl font-bold text-blue-900">Subscription Plans</h1>
+              <p className="text-gray-700 mt-1">Manage subscription tiers and pricing</p>
             </div>
             <button
               onClick={openCreateModal}
-              className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium shadow-md transition"
+              className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-cyan-500/20 transition-all hover:scale-105"
             >
               + Create New Plan
             </button>
@@ -245,61 +250,61 @@ export default function AdminSubscriptionPlansPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">Total Plans</h3>
-            <p className="text-3xl font-bold text-gray-900">{plans.length}</p>
+          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-1">Total Plans</h3>
+            <p className="text-3xl font-bold text-blue-900">{plans.length}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">Active Plans</h3>
-            <p className="text-3xl font-bold text-green-600">
+          <div className="bg-gradient-to-br from-green-50 to-green-100/50 backdrop-blur-xl border border-green-200/50 rounded-3xl shadow-lg shadow-green-500/10 p-6">
+            <h3 className="text-sm font-medium text-green-700 mb-1">Active Plans</h3>
+            <p className="text-3xl font-bold text-green-900">
               {plans.filter(p => p.active).length}
             </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">Inactive Plans</h3>
-            <p className="text-3xl font-bold text-gray-600">
+          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-1">Inactive Plans</h3>
+            <p className="text-3xl font-bold text-gray-700">
               {plans.filter(p => !p.active).length}
             </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow border border-gray-200">
-            <h3 className="text-sm font-medium text-gray-600 mb-1">Total Revenue Potential</h3>
-            <p className="text-3xl font-bold text-blue-600">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-100/50 backdrop-blur-xl border border-blue-200/50 rounded-3xl shadow-lg shadow-blue-500/10 p-6">
+            <h3 className="text-sm font-medium text-blue-700 mb-1">Total Revenue Potential</h3>
+            <p className="text-3xl font-bold text-blue-900">
               ₹{plans.filter(p => p.active).reduce((sum, p) => sum + (p.price / 100), 0).toLocaleString()}
             </p>
           </div>
         </div>
 
         {/* Plans Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 overflow-hidden">
+          <table className="min-w-full divide-y divide-cyan-200/50">
+            <thead className="bg-gradient-to-r from-cyan-50/50 to-blue-50/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient Limit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Video Minutes</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">Tier</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">Patient Limit</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">Video Minutes</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white/50 divide-y divide-cyan-200/30">
               {plans.map((plan) => (
-                <tr key={plan.id} className="hover:bg-gray-50">
+                <tr key={plan.id} className="hover:bg-cyan-50/30 transition-colors">
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                       {plan.tier}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-gray-900">{plan.name}</td>
-                  <td className="px-6 py-4 text-gray-900">₹{(plan.price / 100).toLocaleString()}</td>
-                  <td className="px-6 py-4 text-gray-900">
+                  <td className="px-6 py-4 font-medium text-blue-900">{plan.name}</td>
+                  <td className="px-6 py-4 text-blue-900">₹{(plan.price / 100).toLocaleString()}</td>
+                  <td className="px-6 py-4 text-blue-900">
                     {plan.patientLimit === -1 ? '∞ Unlimited' : plan.patientLimit}
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{plan.monthlyVideoMinutes} min</td>
+                  <td className="px-6 py-4 text-blue-900">{plan.monthlyVideoMinutes} min</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                       plan.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'

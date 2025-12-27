@@ -207,6 +207,14 @@ export default function AdminDashboard() {
               <h3 className="font-semibold text-cyan-800">System Settings</h3>
               <p className="text-sm text-gray-700 mt-1">Configure app settings</p>
             </Link>
+
+            <Link
+              href="/admin/audit-logs"
+              className="p-4 border-2 border-purple-300/50 rounded-2xl hover:bg-purple-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+            >
+              <h3 className="font-semibold text-purple-800">Audit Logs</h3>
+              <p className="text-sm text-gray-700 mt-1">View security and activity logs</p>
+            </Link>
           </div>
         </div>
       </main>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '../../../../lib/api';
 import { useAuthStore } from '../../../../store/authStore';
+import AnimatedBackground from '../../../../components/AnimatedBackground';
 import type { Doctor } from '../../../../types';
 
 export default function PendingDoctorsPage() {
@@ -48,8 +49,11 @@ export default function PendingDoctorsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+        <AnimatedBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-lg text-blue-900">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -59,20 +63,21 @@ export default function PendingDoctorsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+      <AnimatedBackground />
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="relative z-10 bg-white/80 backdrop-blur-lg border-b border-cyan-200/50 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Pending Verifications</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-blue-900">Pending Verifications</h1>
+              <p className="text-sm text-gray-700 mt-1">
                 {doctors.length} doctor{doctors.length !== 1 ? 's' : ''} awaiting verification
               </p>
             </div>
             <Link
               href="/admin/dashboard"
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all hover:scale-105"
             >
               Back to Dashboard
             </Link>
@@ -80,18 +85,18 @@ export default function PendingDoctorsPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl">
             {error}
           </div>
         )}
 
         {doctors.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-gray-400 text-5xl mb-4">✓</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">All Caught Up!</h3>
-            <p className="text-gray-600">No pending doctor verifications at the moment.</p>
+          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-8 text-center">
+            <div className="text-cyan-400 text-5xl mb-4">✓</div>
+            <h3 className="text-xl font-semibold text-blue-900 mb-2">All Caught Up!</h3>
+            <p className="text-gray-700">No pending doctor verifications at the moment.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -121,54 +126,54 @@ function DoctorCard({ doctor }: DoctorCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+    <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 hover:shadow-xl transition-all hover:scale-[1.01]">
       <div className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                <span className="text-xl font-semibold text-yellow-700">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+                <span className="text-xl font-semibold text-yellow-800">
                   {doctor.fullName.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{doctor.fullName}</h3>
-                <p className="text-sm text-gray-600">{doctor.specialization}</p>
+                <h3 className="text-lg font-semibold text-blue-900">{doctor.fullName}</h3>
+                <p className="text-sm text-gray-700">{doctor.specialization}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="text-sm font-medium text-gray-900">{doctor.email}</p>
+                <p className="text-sm text-gray-600">Email</p>
+                <p className="text-sm font-medium text-blue-900">{doctor.email}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="text-sm font-medium text-gray-900">{doctor.phone}</p>
+                <p className="text-sm text-gray-600">Phone</p>
+                <p className="text-sm font-medium text-blue-900">{doctor.phone}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Registration Type</p>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm text-gray-600">Registration Type</p>
+                <p className="text-sm font-medium text-blue-900">
                   {doctor.registrationType === 'STATE_MEDICAL_COUNCIL'
                     ? `State Medical Council${doctor.registrationState ? ` (${doctor.registrationState})` : ''}`
                     : 'National Medical Commission'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Registration Number</p>
-                <p className="text-sm font-medium text-gray-900">{doctor.registrationNo}</p>
+                <p className="text-sm text-gray-600">Registration Number</p>
+                <p className="text-sm font-medium text-blue-900">{doctor.registrationNo}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Aadhaar</p>
-                <p className="text-sm font-medium text-gray-900 font-mono">
+                <p className="text-sm text-gray-600">Aadhaar</p>
+                <p className="text-sm font-medium text-blue-900 font-mono">
                   {doctor.aadhaarNumber
                     ? `XXXX-XXXX-${doctor.aadhaarNumber.substring(8)}`
                     : 'Not provided'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Submitted</p>
-                <p className="text-sm font-medium text-gray-900">{formatDate(doctor.createdAt)}</p>
+                <p className="text-sm text-gray-600">Submitted</p>
+                <p className="text-sm font-medium text-blue-900">{formatDate(doctor.createdAt)}</p>
               </div>
             </div>
 
@@ -199,7 +204,7 @@ function DoctorCard({ doctor }: DoctorCardProps) {
           <div className="ml-6">
             <Link
               href={`/admin/doctors/${doctor.id}`}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all hover:scale-105 font-medium"
             >
               Review →
             </Link>

@@ -169,6 +169,49 @@ export const adminApi = {
     }>>(`/admin/reveal-upi/${doctorId}`, { reason, reasonDetails });
     return data;
   },
+
+  // Audit logs
+  getAuditLogs: async (params?: {
+    page?: number;
+    limit?: number;
+    actorType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) => {
+    const { data } = await api.get<ApiResponse<{
+      logs: any[];
+      pagination: any;
+    }>>('/admin/audit-logs', { params });
+    return data;
+  },
+
+  getAdminAccessLogs: async (params?: {
+    page?: number;
+    limit?: number;
+    accessType?: string;
+    resourceType?: string;
+    reason?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) => {
+    const { data } = await api.get<ApiResponse<{
+      logs: any[];
+      pagination: any;
+    }>>('/admin/admin-access-logs', { params });
+    return data;
+  },
+
+  getAuditStats: async (days?: number) => {
+    const { data } = await api.get<ApiResponse<{
+      stats: any;
+      recentFailedLogins: any[];
+      period: string;
+    }>>('/admin/audit-stats', { params: { days } });
+    return data;
+  },
 };
 
 // Patient API

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../config/database';
 import { z } from 'zod';
 import { generateConsultationTokens } from '../services/agora.service';
+import { createAuditLog } from '../middleware/audit.middleware';
 
 // Create or get active consultation
 export const startConsultation = async (req: Request, res: Response): Promise<void> => {
@@ -132,6 +133,29 @@ export const startConsultation = async (req: Request, res: Response): Promise<vo
           },
           chatMessages: true,
           prescription: true,
+        },
+      });
+
+      // Get doctor info for audit log
+      const doctorInfo = await prisma.doctor.findUnique({
+        where: { id: doctorId },
+        select: { fullName: true, email: true },
+      });
+
+      // Log consultation start
+      await createAuditLog(req, {
+        actorType: 'DOCTOR',
+        actorId: doctorId,
+        actorEmail: doctorInfo?.email,
+        actorName: doctorInfo?.fullName,
+        action: 'CONSULTATION_START',
+        resourceType: 'CONSULTATION',
+        resourceId: consultation.id,
+        description: `Started consultation with patient ${consultation.patient.fullName}`,
+        metadata: {
+          patientId: patientId,
+          patientName: consultation.patient.fullName,
+          patientStatus: consultation.patient.status,
         },
       });
     }
@@ -514,6 +538,39 @@ export const endConsultation = async (req: Request, res: Response): Promise<void
       });
     }
 
+    // Get doctor and patient info for audit log
+    const [doctorInfo, patientInfo] = await Promise.all([
+      prisma.doctor.findUnique({
+        where: { id: doctorId },
+        select: { fullName: true, email: true },
+      }),
+      prisma.patient.findUnique({
+        where: { id: consultation.patientId },
+        select: { fullName: true },
+      }),
+    ]);
+
+    // Log consultation completion
+    await createAuditLog(req, {
+      actorType: 'DOCTOR',
+      actorId: doctorId,
+      actorEmail: doctorInfo?.email,
+      actorName: doctorInfo?.fullName,
+      action: 'CONSULTATION_COMPLETE',
+      resourceType: 'CONSULTATION',
+      resourceId: consultationId,
+      description: `Completed consultation with patient ${patientInfo?.fullName}`,
+      metadata: {
+        patientId: consultation.patientId,
+        patientName: patientInfo?.fullName,
+        totalDuration: updatedConsultation.duration,
+        videoDuration: finalVideoDuration,
+        videoMinutesUsed,
+        wentOvertime: updatedConsultation.wentOvertime,
+        overtimeMinutes: updatedConsultation.overtimeMinutes,
+      },
+    });
+
     res.status(200).json({
       success: true,
       message: 'Consultation ended successfully',
@@ -635,6 +692,35 @@ export const updateConsultationNotes = async (req: Request, res: Response): Prom
         chiefComplaint,
         doctorNotes,
       },
+      include: {
+        patient: {
+          select: { fullName: true },
+        },
+      },
+    });
+
+    // Get doctor info for audit log
+    const doctorInfo = await prisma.doctor.findUnique({
+      where: { id: doctorId },
+      select: { fullName: true, email: true },
+    });
+
+    // Log notes update
+    await createAuditLog(req, {
+      actorType: 'DOCTOR',
+      actorId: doctorId,
+      actorEmail: doctorInfo?.email,
+      actorName: doctorInfo?.fullName,
+      action: 'CONSULTATION_NOTES_UPDATE',
+      resourceType: 'CONSULTATION',
+      resourceId: consultationId,
+      description: `Updated consultation notes for patient ${updatedConsultation.patient.fullName}`,
+      metadata: {
+        patientId: consultation.patientId,
+        patientName: updatedConsultation.patient.fullName,
+        hasChiefComplaint: !!chiefComplaint,
+        hasDoctorNotes: !!doctorNotes,
+      },
     });
 
     res.status(200).json({
@@ -731,12 +817,37 @@ export const generateVideoTokens = async (req: Request, res: Response): Promise<
     const tokens = generateConsultationTokens(consultationId);
 
     // Save tokens to database
-    await prisma.consultation.update({
+    const updatedConsultation = await prisma.consultation.update({
       where: { id: consultationId },
       data: {
         agoraChannelName: `${consultationId}_${tokens.doctor.uid}_${tokens.patient.uid}`,
         agoraDoctorToken: tokens.doctor.token,
         agoraPatientToken: tokens.patient.token,
+      },
+      include: {
+        doctor: {
+          select: { id: true, fullName: true, email: true },
+        },
+        patient: {
+          select: { fullName: true },
+        },
+      },
+    });
+
+    // Log video call start
+    await createAuditLog(req, {
+      actorType: 'DOCTOR',
+      actorId: updatedConsultation.doctor.id,
+      actorEmail: updatedConsultation.doctor.email,
+      actorName: updatedConsultation.doctor.fullName,
+      action: 'VIDEO_CALL_START',
+      resourceType: 'CONSULTATION',
+      resourceId: consultationId,
+      description: `Started video call with patient ${updatedConsultation.patient.fullName}`,
+      metadata: {
+        patientId: updatedConsultation.patientId,
+        patientName: updatedConsultation.patient.fullName,
+        channelName: updatedConsultation.agoraChannelName,
       },
     });
 

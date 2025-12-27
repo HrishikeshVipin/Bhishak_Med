@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '../../../lib/api';
 import { useAuthStore } from '../../../store/authStore';
+import AnimatedBackground from '../../../components/AnimatedBackground';
 import type { Doctor, PaginationData } from '../../../types';
 
 function DoctorsContent() {
@@ -70,8 +71,11 @@ function DoctorsContent() {
 
   if (loading && doctors.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+        <AnimatedBackground />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-lg text-blue-900">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -109,20 +113,21 @@ function DoctorsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
+      <AnimatedBackground />
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="relative z-10 bg-white/80 backdrop-blur-lg border-b border-cyan-200/50 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">All Doctors</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-blue-900">All Doctors</h1>
+              <p className="text-sm text-gray-700 mt-1">
                 {pagination ? `${pagination.total} total doctors` : 'Loading...'}
               </p>
             </div>
             <Link
               href="/admin/dashboard"
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all hover:scale-105"
             >
               Back to Dashboard
             </Link>
@@ -130,10 +135,10 @@ function DoctorsContent() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow mb-6 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
+        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 mb-6 p-6">
+          <h2 className="text-lg font-semibold text-blue-900 mb-4">Filters</h2>
 
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -148,7 +153,7 @@ function DoctorsContent() {
                     setStatusFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 >
                   <option value="">All Statuses</option>
                   <option value="PENDING_VERIFICATION">Pending Verification</option>
@@ -169,7 +174,7 @@ function DoctorsContent() {
                     setSubscriptionFilter(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 >
                   <option value="">All Subscriptions</option>
                   <option value="TRIAL">Trial</option>
@@ -194,7 +199,7 @@ function DoctorsContent() {
                     }
                   }}
                   placeholder="Name, email, phone..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
             </div>
@@ -202,7 +207,7 @@ function DoctorsContent() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white rounded-xl transition-all hover:scale-105"
               >
                 Apply Filters
               </button>
@@ -214,7 +219,7 @@ function DoctorsContent() {
                   setSearchQuery('');
                   setCurrentPage(1);
                 }}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all hover:scale-105"
               >
                 Clear All
               </button>
@@ -230,53 +235,53 @@ function DoctorsContent() {
 
         {/* Doctors Table */}
         {doctors.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-gray-400 text-5xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No Doctors Found</h3>
-            <p className="text-gray-600">Try adjusting your filters or search query.</p>
+          <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-8 text-center">
+            <div className="text-cyan-400 text-5xl mb-4">🔍</div>
+            <h3 className="text-xl font-semibold text-blue-900 mb-2">No Doctors Found</h3>
+            <p className="text-gray-700">Try adjusting your filters or search query.</p>
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 overflow-hidden">
+              <table className="min-w-full divide-y divide-cyan-200/50">
+                <thead className="bg-gradient-to-r from-cyan-50/50 to-blue-50/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                       Doctor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                       Subscription
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
                       Joined
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white/50 divide-y divide-cyan-200/30">
                   {doctors.map((doctor) => {
                     const statusBadge = getStatusBadge(doctor.status);
                     const subBadge = getSubscriptionBadge(doctor.subscriptionStatus);
 
                     return (
-                      <tr key={doctor.id} className="hover:bg-gray-50">
+                      <tr key={doctor.id} className="hover:bg-cyan-50/30 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{doctor.fullName}</div>
-                            <div className="text-sm text-gray-500">{doctor.specialization}</div>
+                            <div className="text-sm font-medium text-blue-900">{doctor.fullName}</div>
+                            <div className="text-sm text-gray-600">{doctor.specialization}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{doctor.email}</div>
-                          <div className="text-sm text-gray-500">{doctor.phone}</div>
+                          <div className="text-sm text-blue-900">{doctor.email}</div>
+                          <div className="text-sm text-gray-600">{doctor.phone}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge.bg} ${statusBadge.text}`}>
@@ -288,13 +293,13 @@ function DoctorsContent() {
                             {subBadge.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {formatDate(doctor.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <Link
                             href={`/admin/doctors/${doctor.id}`}
-                            className="text-blue-600 hover:text-blue-900 font-medium"
+                            className="text-cyan-600 hover:text-cyan-800 font-medium transition-colors"
                           >
                             View Details →
                           </Link>
@@ -309,21 +314,21 @@ function DoctorsContent() {
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
+                <div className="text-sm text-blue-900">
                   Showing page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-xl hover:bg-cyan-50/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
                     disabled={currentPage === pagination.totalPages}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-xl hover:bg-cyan-50/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105"
                   >
                     Next
                   </button>

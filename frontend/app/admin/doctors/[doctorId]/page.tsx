@@ -22,6 +22,15 @@ export default function DoctorDetailPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  // Reveal Aadhaar/UPI state
+  const [showRevealModal, setShowRevealModal] = useState(false);
+  const [revealType, setRevealType] = useState<'aadhaar' | 'upi'>('aadhaar');
+  const [revealReason, setRevealReason] = useState('');
+  const [revealReasonDetails, setRevealReasonDetails] = useState('');
+  const [revealedData, setRevealedData] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(15);
+  const [revealLoading, setRevealLoading] = useState(false);
+
   useEffect(() => {
     initAuth();
   }, [initAuth]);
@@ -134,6 +143,72 @@ export default function DoctorDetailPage() {
     }
   };
 
+  // Handle reveal Aadhaar/UPI
+  const handleRevealRequest = (type: 'aadhaar' | 'upi') => {
+    setRevealType(type);
+    setRevealReason('');
+    setRevealReasonDetails('');
+    setRevealedData(null);
+    setCountdown(15);
+    setShowRevealModal(true);
+  };
+
+  const handleRevealSubmit = async () => {
+    if (!doctor || !revealReason) {
+      alert('Please select a reason');
+      return;
+    }
+
+    try {
+      setRevealLoading(true);
+
+      if (revealType === 'aadhaar') {
+        const response = await adminApi.revealAadhaar(doctor.id, revealReason, revealReasonDetails);
+        if (response.success && response.data) {
+          setRevealedData(response.data.aadhaarNumber);
+          startCountdown();
+        }
+      } else {
+        const response = await adminApi.revealUpiId(doctor.id, revealReason, revealReasonDetails);
+        if (response.success && response.data) {
+          setRevealedData(response.data.upiId);
+          startCountdown();
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to reveal data:', err);
+      alert(err.response?.data?.message || 'Failed to reveal data');
+      setShowRevealModal(false);
+    } finally {
+      setRevealLoading(false);
+    }
+  };
+
+  const startCountdown = () => {
+    setCountdown(15);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setRevealedData(null);
+          setShowRevealModal(false);
+          setRevealReason('');
+          setRevealReasonDetails('');
+          return 15;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const closeRevealModal = () => {
+    setShowRevealModal(false);
+    setRevealedData(null);
+    setRevealReason('');
+    setRevealReasonDetails('');
+    setCountdown(15);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -232,11 +307,22 @@ export default function DoctorDetailPage() {
                 }
               />
               <InfoField label="Registration Number" value={doctor.registrationNo} />
-              <InfoField
-                label="Aadhaar Number"
-                value={doctor.aadhaarNumber || 'Not provided'}
-                mono
-              />
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Aadhaar Number</p>
+                <div className="flex items-center gap-2">
+                  {doctor.aadhaarNumber ? (
+                    <button
+                      onClick={() => handleRevealRequest('aadhaar')}
+                      className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition font-medium"
+                      title="View for 15 seconds"
+                    >
+                      👁 View for 15s
+                    </button>
+                  ) : (
+                    <p className="text-base font-medium text-gray-500">Not provided</p>
+                  )}
+                </div>
+              </div>
               <InfoField label="Submitted On" value={formatDate(doctor.createdAt)} />
             </div>
 
@@ -318,7 +404,22 @@ export default function DoctorDetailPage() {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InfoField label="UPI ID" value={doctor.upiId} mono />
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">UPI ID</p>
+                  <div className="flex items-center gap-2">
+                    {doctor.upiId ? (
+                      <button
+                        onClick={() => handleRevealRequest('upi')}
+                        className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 transition font-medium"
+                        title="View for 15 seconds"
+                      >
+                        👁 View for 15s
+                      </button>
+                    ) : (
+                      <p className="text-base font-medium text-gray-500">Not provided</p>
+                    )}
+                  </div>
+                </div>
                 {doctor.qrCodeImage && (
                   <DocumentViewer
                     title="QR Code"
@@ -398,6 +499,126 @@ export default function DoctorDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* Reveal Aadhaar/UPI Modal */}
+      {showRevealModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            {!revealedData ? (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-indigo-100 p-2 rounded-lg">
+                    <span className="text-2xl">🔓</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Reveal {revealType === 'aadhaar' ? 'Aadhaar Number' : 'UPI ID'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      This action will be logged in audit trail
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    ⚠ Sensitive data will be visible for 15 seconds only
+                  </p>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for Access <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={revealReason}
+                    onChange={(e) => setRevealReason(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  >
+                    <option value="">Select a reason</option>
+                    <option value="VERIFICATION">Doctor Verification</option>
+                    <option value="LEGAL_REQUEST">Legal/Law Enforcement Request</option>
+                    <option value="DISPUTE_RESOLUTION">Payment Dispute Resolution</option>
+                    <option value="QUALITY_AUDIT">Quality Audit</option>
+                    <option value="TECHNICAL_SUPPORT">Technical Support</option>
+                    <option value="USER_REQUEST">User Request</option>
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Additional Details (Optional)
+                  </label>
+                  <textarea
+                    value={revealReasonDetails}
+                    onChange={(e) => setRevealReasonDetails(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    rows={3}
+                    placeholder="Provide additional context (optional)"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleRevealSubmit}
+                    disabled={revealLoading || !revealReason}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {revealLoading ? 'Revealing...' : '🔓 Reveal Data'}
+                  </button>
+                  <button
+                    onClick={closeRevealModal}
+                    disabled={revealLoading}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                    <span className="text-3xl">✓</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {revealType === 'aadhaar' ? 'Aadhaar Number' : 'UPI ID'}
+                  </h3>
+                  <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-4 mb-4">
+                    <p className="text-2xl font-mono font-bold text-gray-900 select-all">
+                      {revealedData}
+                    </p>
+                  </div>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-700 font-semibold flex items-center justify-center gap-2">
+                      <span className="text-3xl font-bold">{countdown}</span>
+                      <span>seconds remaining</span>
+                    </p>
+                    <div className="w-full bg-red-200 rounded-full h-2 mt-2">
+                      <div
+                        className="bg-red-600 h-2 rounded-full transition-all duration-1000"
+                        style={{ width: `${(countdown / 15) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  Data will auto-hide when timer expires
+                </p>
+
+                <button
+                  onClick={closeRevealModal}
+                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Close Now
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Reject Modal */}
       {showRejectModal && (

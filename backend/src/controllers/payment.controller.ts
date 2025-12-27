@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
 import { socketService } from '../services/socket.service';
+import { createAuditLog } from '../middleware/audit.middleware';
 
 // Upload payment proof (patient)
 export const uploadPaymentProof = async (req: Request, res: Response): Promise<void> => {
@@ -108,6 +109,26 @@ export const confirmPayment = async (req: Request, res: Response): Promise<void>
       id: consultationId,
       status: 'COMPLETED',
     });
+
+    // Log payment confirmation in audit log
+    const user = (req as any).user;
+    if (user) {
+      await createAuditLog(req, {
+        actorType: 'DOCTOR',
+        actorId: user.id,
+        actorEmail: user.email,
+        actorName: user.fullName,
+        action: 'PAYMENT_CONFIRM',
+        resourceType: 'PAYMENT',
+        resourceId: payment.id,
+        description: `Payment of ₹${payment.amount} confirmed for consultation`,
+        metadata: {
+          consultationId,
+          amount: payment.amount,
+        },
+        success: true,
+      });
+    }
 
     res.status(200).json({
       success: true,

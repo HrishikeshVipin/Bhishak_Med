@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { encrypt } from '../src/utils/encryption';
 
 const prisma = new PrismaClient();
 
@@ -29,9 +30,16 @@ async function main() {
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
+  // Encrypt sensitive data
+  const encryptedAadhaar = encrypt('123456789012');
+  const encryptedUpiId = encrypt('doctor@upi');
+
   const testDoctor = await prisma.doctor.upsert({
     where: { email: 'doctor@test.com' },
-    update: {},
+    update: {
+      aadhaarNumber: encryptedAadhaar,
+      upiId: encryptedUpiId,
+    },
     create: {
       email: 'doctor@test.com',
       password: doctorPassword,
@@ -41,9 +49,9 @@ async function main() {
       registrationType: 'NATIONAL_MEDICAL_COMMISSION',
       registrationNo: 'NMC12345',
       registrationState: null,
-      aadhaarNumber: '123456789012',
+      aadhaarNumber: encryptedAadhaar, // ENCRYPTED
       status: 'VERIFIED', // Pre-verified for testing
-      upiId: 'doctor@upi',
+      upiId: encryptedUpiId, // ENCRYPTED
       trialEndsAt,
       subscriptionStatus: 'TRIAL',
       subscriptionTier: 'TRIAL',

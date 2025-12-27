@@ -10,6 +10,8 @@ import {
   validateFileUploads,
 } from '../utils/validators';
 import { notificationService } from '../services/notification.service';
+import { encrypt, safeEncrypt } from '../utils/encryption';
+import { createAuditLog, logTermsAcceptance } from '../middleware/audit.middleware';
 
 // Doctor Signup
 export const doctorSignup = async (req: Request, res: Response): Promise<void> => {
@@ -61,6 +63,10 @@ export const doctorSignup = async (req: Request, res: Response): Promise<void> =
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + 14);
 
+    // Encrypt sensitive data before storing
+    const encryptedAadhaar = encrypt(validatedData.aadhaarNumber);
+    const encryptedUpiId = validatedData.upiId ? encrypt(validatedData.upiId) : null;
+
     // Create doctor record
     const doctor = await prisma.doctor.create({
       data: {
@@ -72,12 +78,12 @@ export const doctorSignup = async (req: Request, res: Response): Promise<void> =
         registrationType: validatedData.registrationType,
         registrationNo: validatedData.registrationNo,
         registrationState: validatedData.registrationState || null,
-        aadhaarNumber: validatedData.aadhaarNumber,
+        aadhaarNumber: encryptedAadhaar, // ENCRYPTED
         registrationCertificate: files.registrationCertificate[0].path,
         aadhaarFrontPhoto: files.aadhaarFrontPhoto[0].path,
         aadhaarBackPhoto: files.aadhaarBackPhoto[0].path,
         profilePhoto: files.profilePhoto[0].path,
-        upiId: validatedData.upiId || null,
+        upiId: encryptedUpiId, // ENCRYPTED
         trialEndsAt,
         status: 'PENDING_VERIFICATION',
       },
@@ -156,6 +162,17 @@ export const doctorLogin = async (req: Request, res: Response): Promise<void> =>
     });
 
     if (!doctor) {
+      // Log failed login attempt
+      await createAuditLog(req, {
+        actorType: 'DOCTOR',
+        actorId: 'unknown',
+        actorEmail: validatedData.email,
+        action: 'FAILED_LOGIN',
+        description: 'Login failed: Email not found',
+        success: false,
+        errorMessage: 'Invalid email',
+      });
+
       res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -167,6 +184,18 @@ export const doctorLogin = async (req: Request, res: Response): Promise<void> =>
     const isPasswordValid = await bcrypt.compare(validatedData.password, doctor.password);
 
     if (!isPasswordValid) {
+      // Log failed login attempt
+      await createAuditLog(req, {
+        actorType: 'DOCTOR',
+        actorId: doctor.id,
+        actorEmail: doctor.email,
+        actorName: doctor.fullName,
+        action: 'FAILED_LOGIN',
+        description: 'Login failed: Invalid password',
+        success: false,
+        errorMessage: 'Invalid password',
+      });
+
       res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -217,6 +246,17 @@ export const doctorLogin = async (req: Request, res: Response): Promise<void> =>
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-origin in production
+    });
+
+    // Log successful login
+    await createAuditLog(req, {
+      actorType: 'DOCTOR',
+      actorId: doctor.id,
+      actorEmail: doctor.email,
+      actorName: doctor.fullName,
+      action: 'LOGIN',
+      description: `Doctor logged in successfully`,
+      success: true,
     });
 
     // Check trial/subscription status
@@ -275,6 +315,17 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
     });
 
     if (!admin) {
+      // Log failed login attempt
+      await createAuditLog(req, {
+        actorType: 'ADMIN',
+        actorId: 'unknown',
+        actorEmail: validatedData.email,
+        action: 'FAILED_LOGIN',
+        description: 'Admin login failed: Email not found',
+        success: false,
+        errorMessage: 'Invalid email',
+      });
+
       res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -286,6 +337,18 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
     const isPasswordValid = await bcrypt.compare(validatedData.password, admin.password);
 
     if (!isPasswordValid) {
+      // Log failed login attempt
+      await createAuditLog(req, {
+        actorType: 'ADMIN',
+        actorId: admin.id,
+        actorEmail: admin.email,
+        actorName: admin.fullName,
+        action: 'FAILED_LOGIN',
+        description: 'Admin login failed: Invalid password',
+        success: false,
+        errorMessage: 'Invalid password',
+      });
+
       res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -306,6 +369,17 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-origin in production
+    });
+
+    // Log successful admin login
+    await createAuditLog(req, {
+      actorType: 'ADMIN',
+      actorId: admin.id,
+      actorEmail: admin.email,
+      actorName: admin.fullName,
+      action: 'LOGIN',
+      description: `Admin logged in successfully`,
+      success: true,
     });
 
     res.status(200).json({
@@ -342,6 +416,20 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
 
 // Logout (clear cookie)
 export const logout = async (req: Request, res: Response): Promise<void> => {
+  // Log logout if user info available (from authenticateUser middleware)
+  const user = (req as any).user;
+  if (user) {
+    await createAuditLog(req, {
+      actorType: user.role || 'DOCTOR',
+      actorId: user.id,
+      actorEmail: user.email,
+      actorName: user.fullName,
+      action: 'LOGOUT',
+      description: `User logged out`,
+      success: true,
+    });
+  }
+
   res.clearCookie('token');
   res.status(200).json({
     success: true,

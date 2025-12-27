@@ -146,6 +146,29 @@ export const adminApi = {
     const { data } = await api.put<ApiResponse<{ doctor: Doctor }>>(`/admin/doctors/${doctorId}/subscription`, update);
     return data;
   },
+
+  // Reveal sensitive data (15-second window)
+  revealAadhaar: async (doctorId: string, reason: string, reasonDetails?: string) => {
+    const { data } = await api.post<ApiResponse<{
+      doctorId: string;
+      doctorName: string;
+      aadhaarNumber: string;
+      expiresAt: number;
+      validFor: number;
+    }>>(`/admin/reveal-aadhaar/${doctorId}`, { reason, reasonDetails });
+    return data;
+  },
+
+  revealUpiId: async (doctorId: string, reason: string, reasonDetails?: string) => {
+    const { data } = await api.post<ApiResponse<{
+      doctorId: string;
+      doctorName: string;
+      upiId: string;
+      expiresAt: number;
+      validFor: number;
+    }>>(`/admin/reveal-upi/${doctorId}`, { reason, reasonDetails });
+    return data;
+  },
 };
 
 // Patient API

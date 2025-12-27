@@ -4,6 +4,8 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import { socketService } from '../services/socket.service';
+import { encrypt, decrypt } from '../utils/encryption';
+import { createAuditLog } from '../middleware/audit.middleware';
 
 // Create prescription
 export const createPrescription = async (req: Request, res: Response): Promise<void> => {
@@ -18,6 +20,7 @@ export const createPrescription = async (req: Request, res: Response): Promise<v
         doctor: {
           select: {
             id: true,
+            email: true,
             fullName: true,
             specialization: true,
             registrationNo: true,
@@ -66,6 +69,11 @@ export const createPrescription = async (req: Request, res: Response): Promise<v
       return;
     }
 
+    // Encrypt sensitive prescription data before storing
+    const encryptedDiagnosis = encrypt(diagnosis);
+    const encryptedMedications = encrypt(JSON.stringify(medications || []));
+    const encryptedInstructions = instructions ? encrypt(instructions) : null;
+
     // Create prescription with atomic serial number generation
     const prescription = await prisma.$transaction(async (tx) => {
       // 1. Increment doctor's serial number atomically
@@ -75,15 +83,15 @@ export const createPrescription = async (req: Request, res: Response): Promise<v
         select: { lastPrescriptionSerial: true },
       });
 
-      // 2. Create prescription with new serial number
+      // 2. Create prescription with new serial number (ENCRYPTED)
       return await tx.prescription.create({
         data: {
           consultationId,
           doctorId: consultation.doctorId,
           serialNumber: updatedDoctor.lastPrescriptionSerial,
-          diagnosis,
-          medications: JSON.stringify(medications || []),
-          instructions: instructions || null,
+          diagnosis: encryptedDiagnosis, // ENCRYPTED
+          medications: encryptedMedications, // ENCRYPTED
+          instructions: encryptedInstructions, // ENCRYPTED
         },
       });
     });
@@ -95,6 +103,24 @@ export const createPrescription = async (req: Request, res: Response): Promise<v
     const updatedPrescription = await prisma.prescription.update({
       where: { id: prescription.id },
       data: { pdfPath },
+    });
+
+    // Log prescription creation in audit log
+    await createAuditLog(req, {
+      actorType: 'DOCTOR',
+      actorId: consultation.doctorId,
+      actorEmail: consultation.doctor.email || undefined,
+      actorName: consultation.doctor.fullName,
+      action: 'PRESCRIPTION_CREATE',
+      resourceType: 'PRESCRIPTION',
+      resourceId: updatedPrescription.id,
+      description: `Prescription #${updatedPrescription.serialNumber} created for patient ${consultation.patient.fullName}`,
+      metadata: {
+        consultationId,
+        patientId: consultation.patient.id,
+        serialNumber: updatedPrescription.serialNumber,
+      },
+      success: true,
     });
 
     // Emit real-time event to consultation room
@@ -442,6 +468,25 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
         message: 'Prescription file not found on server',
       });
       return;
+    }
+
+    // Log prescription download in audit log
+    const user = (req as any).user;
+    if (user) {
+      await createAuditLog(req, {
+        actorType: user.role === 'DOCTOR' ? 'DOCTOR' : 'PATIENT',
+        actorId: user.id,
+        actorEmail: user.email,
+        actorName: user.fullName,
+        action: 'PRESCRIPTION_DOWNLOAD',
+        resourceType: 'PRESCRIPTION',
+        resourceId: prescription.id,
+        description: `Prescription #${prescription.serialNumber} downloaded`,
+        metadata: {
+          consultationId: prescription.consultationId,
+        },
+        success: true,
+      });
     }
 
     res.download(filePath, `prescription_${prescriptionId}.pdf`);

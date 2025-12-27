@@ -25,13 +25,32 @@ model Admin {
   email     String   @unique
   password  String   // bcrypt hashed
   fullName  String
-  role      String   @default("ADMIN") // "ADMIN"
+  role      String   @default("ADMIN") // "SUPER_ADMIN" | "ADMIN"
+
+  // SUPER_ADMIN: Full access to everything + manage other admins
+  // ADMIN: Limited access (configurable permissions)
+
+  // Permissions (JSON array of permission strings)
+  // Super Admin has all permissions by default
+  // Regular Admin permissions controlled by Super Admin
+  permissions Json?  // ["VALIDATE_DOCTORS", "VIEW_PATIENTS", "VIEW_ANALYTICS", etc.]
+
+  // Status
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
 
   // Notification preferences
   emailNotifications Boolean @default(true)
 
+  // T&C Acceptance
+  termsAcceptedAt      DateTime?
+  termsVersion         String?   @default("v1.0")
+  privacyPolicyAccepted Boolean  @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([role, isActive])
 }
 
 // Doctor model
@@ -124,6 +143,13 @@ model Doctor {
   // Phase 2: Referral Credits
   referralCredits Int @default(0) // Total credits earned from referrals
 
+  // SECURITY: Terms & Conditions Acceptance
+  termsAcceptedAt       DateTime?
+  termsVersion          String?   @default("v1.0")
+  privacyPolicyAccepted Boolean   @default(false)
+  consentFormAccepted   Boolean   @default(false)
+  acceptanceIpAddress   String?   // Legal proof of acceptance
+
   patients              Patient[]
   consultations         Consultation[]
   prescriptions         Prescription[]
@@ -172,6 +198,12 @@ model Patient {
   refreshToken    String?   // For JWT refresh
   lastLoginAt     DateTime?
   accountType     String    @default("LINK_BASED") // "LINK_BASED" | "APP_ACCOUNT"
+
+  // SECURITY: Terms & Conditions Acceptance (for APP_ACCOUNT patients)
+  termsAcceptedAt       DateTime?
+  termsVersion          String?
+  privacyPolicyAccepted Boolean   @default(false)
+  acceptanceIpAddress   String?   // Legal proof of acceptance
 
   consultations  Consultation[]
   vitals         Vitals[]
@@ -637,4 +669,94 @@ model ReferralIncentive {
   doctor   Doctor   @relation(fields: [referringDoctorId], references: [id])
 
   @@index([referringDoctorId, status])
+}
+
+// SECURITY: Audit Log for all sensitive operations
+// Tracks: Login/Logout, Data Access, Prescription Creation, Payment Confirmation, Failed Logins
+model AuditLog {
+  id             String   @id @default(uuid())
+
+  // Actor (who performed the action)
+  actorType      String   // "DOCTOR" | "ADMIN" | "PATIENT" | "SYSTEM"
+  actorId        String   // User ID
+  actorEmail     String?  // For easy identification
+  actorName      String?  // Full name
+
+  // Action details
+  action         String   // "LOGIN" | "LOGOUT" | "PRESCRIPTION_CREATE" | "PRESCRIPTION_DOWNLOAD" | "PAYMENT_CONFIRM" | "PATIENT_DATA_ACCESS" | "DOCTOR_VERIFY" | "DOCTOR_REJECT" | "FAILED_LOGIN" | "ADMIN_SETTINGS_CHANGE"
+  resourceType   String?  // "PATIENT" | "DOCTOR" | "PRESCRIPTION" | "PAYMENT" | "CONSULTATION"
+  resourceId     String?  // ID of affected resource
+
+  // Context
+  description    String?  @db.Text // Human-readable description
+  ipAddress      String?  // IP address of request
+  userAgent      String?  @db.Text // Browser/device info
+  metadata       Json?    // Additional context (old value, new value, etc.)
+
+  // Success/Failure
+  success        Boolean  @default(true)
+  errorMessage   String?  @db.Text // If failed
+
+  createdAt      DateTime @default(now())
+
+  @@index([actorType, actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([resourceType, resourceId])
+  @@index([createdAt]) // For date-based queries
+}
+
+// SECURITY: Admin Access Log (specific to admin viewing patient/doctor data)
+// Tracks admin accessing sensitive medical data with reason
+model AdminAccessLog {
+  id             String   @id @default(uuid())
+
+  // Admin who accessed
+  adminId        String
+  adminEmail     String
+  adminName      String
+
+  // What was accessed
+  accessType     String   // "PATIENT_VIEW" | "PATIENT_MEDICAL_DATA" | "DOCTOR_VIEW" | "CONSULTATION_VIEW" | "PRESCRIPTION_VIEW" | "PAYMENT_VIEW"
+  resourceType   String   // "PATIENT" | "DOCTOR" | "CONSULTATION" | "PRESCRIPTION" | "PAYMENT"
+  resourceId     String   // ID of accessed resource
+
+  // Why accessed (REQUIRED)
+  reason         String   // "LEGAL_REQUEST" | "DISPUTE_RESOLUTION" | "QUALITY_AUDIT" | "TECHNICAL_SUPPORT" | "USER_REQUEST"
+  reasonDetails  String?  @db.Text // Additional explanation
+
+  // Context
+  ipAddress      String?
+  userAgent      String?  @db.Text
+
+  // What action was taken
+  action         String   // "VIEW" | "EDIT" | "DELETE" | "EXPORT"
+
+  accessedAt     DateTime @default(now())
+
+  @@index([adminId, accessedAt])
+  @@index([resourceType, resourceId, accessedAt])
+  @@index([reason])
+  @@index([accessedAt]) // For date-based queries and Google Sheets export
+}
+
+// SECURITY: Terms & Conditions Acceptance Log
+model TermsAcceptance {
+  id             String   @id @default(uuid())
+
+  // User who accepted
+  userType       String   // "DOCTOR" | "PATIENT" | "ADMIN"
+  userId         String
+  userEmail      String?
+
+  // T&C details
+  termsType      String   // "TERMS_AND_CONDITIONS" | "PRIVACY_POLICY" | "CONSENT_FORM"
+  termsVersion   String   // "v1.0", "v2.0", etc.
+
+  // Acceptance details
+  acceptedAt     DateTime @default(now())
+  ipAddress      String?  // Legal proof
+  userAgent      String?  @db.Text
+
+  @@index([userId, termsType])
+  @@index([userType, acceptedAt])
 }

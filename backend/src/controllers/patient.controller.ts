@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../config/database';
 import { z } from 'zod';
 import { socketService } from '../services/socket.service';
+import { createAuditLog } from '../middleware/audit.middleware';
 
 // Validation schema for creating a patient
 const createPatientSchema = z.object({
@@ -408,6 +409,18 @@ export const getPatientByToken = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    // Log patient accessing consultation portal
+    await createAuditLog(req, {
+      actorType: 'PATIENT',
+      actorId: patient.id,
+      actorName: patient.fullName,
+      action: 'PATIENT_DATA_ACCESS',
+      resourceType: 'PATIENT',
+      resourceId: patient.id,
+      description: `Patient ${patient.fullName} accessed consultation portal`,
+      success: true,
+    });
+
     res.status(200).json({
       success: true,
       data: { patient },
@@ -542,6 +555,18 @@ export const selfRegisterPatient = async (req: Request, res: Response): Promise<
 
     // Generate patient access link
     const patientAccessLink = `${process.env.FRONTEND_URL || 'http://localhost:3002'}/p/${patient.accessToken}`;
+
+    // Log patient self-registration
+    await createAuditLog(req, {
+      actorType: 'PATIENT',
+      actorId: patient.id,
+      actorName: patient.fullName,
+      action: 'PATIENT_CREATE',
+      resourceType: 'PATIENT',
+      resourceId: patient.id,
+      description: `Patient ${patient.fullName} self-registered via join link for Dr. ${doctor.fullName}`,
+      success: true,
+    });
 
     res.status(201).json({
       success: true,
@@ -690,6 +715,18 @@ export const getDoctorInfoForRegistration = async (req: Request, res: Response):
       });
       return;
     }
+
+    // Log patient viewing join link
+    await createAuditLog(req, {
+      actorType: 'PATIENT',
+      actorId: doctorId, // Doctor ID to link anonymous visitor to doctor
+      actorName: 'Anonymous',
+      action: 'PATIENT_DATA_ACCESS',
+      resourceType: 'DOCTOR',
+      resourceId: doctorId,
+      description: `Anonymous visitor viewed registration page for Dr. ${doctor.fullName}`,
+      success: true,
+    });
 
     res.status(200).json({
       success: true,

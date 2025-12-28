@@ -14,8 +14,8 @@ const router = Router();
 router.post('/patients/:patientId/vitals', validatePatientToken, saveVitals);
 router.get('/patients/:patientId/vitals', validatePatientToken, getVitalsHistory);
 
-// Medical file upload routes
-router.post('/patients/:patientId/files', validatePatientToken, uploadMedicalFiles.single('file'), uploadMedicalFile);
+// Medical file upload routes (supports multiple files)
+router.post('/patients/:patientId/files', validatePatientToken, uploadMedicalFiles.array('files', 10), uploadMedicalFile);
 router.get('/patients/:patientId/files', validatePatientToken, getMedicalFiles);
 
 export default router;

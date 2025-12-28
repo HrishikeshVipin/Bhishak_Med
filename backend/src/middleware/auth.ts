@@ -274,7 +274,11 @@ export const validatePatientToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { accessToken } = req.params;
+    // Check for access token in body, headers, or params
+    const accessToken =
+      req.body.accessToken ||
+      req.headers['x-patient-token'] as string ||
+      req.params.accessToken;
 
     if (!accessToken) {
       res.status(400).json({

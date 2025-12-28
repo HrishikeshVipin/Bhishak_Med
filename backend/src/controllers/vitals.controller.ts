@@ -92,12 +92,12 @@ export const uploadMedicalFile = async (req: Request, res: Response): Promise<vo
   try {
     const { patientId } = req.params;
     const { description } = req.body;
-    const file = req.file;
+    const files = req.files as Express.Multer.File[];
 
-    if (!file) {
+    if (!files || files.length === 0) {
       res.status(400).json({
         success: false,
-        message: 'No file uploaded',
+        message: 'No files uploaded',
       });
       return;
     }
@@ -115,27 +115,31 @@ export const uploadMedicalFile = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Save file info to database
-    const medicalUpload = await prisma.medicalUpload.create({
-      data: {
-        patientId,
-        filePath: file.path,
-        fileType: file.mimetype,
-        fileName: file.originalname,
-        description: description || null,
-      },
-    });
+    // Save all file info to database
+    const uploadedFiles = await Promise.all(
+      files.map((file, index) =>
+        prisma.medicalUpload.create({
+          data: {
+            patientId,
+            filePath: file.path,
+            fileType: file.mimetype,
+            fileName: file.originalname,
+            description: description || `Medical record page ${index + 1}`,
+          },
+        })
+      )
+    );
 
     res.status(201).json({
       success: true,
-      message: 'File uploaded successfully',
-      data: { file: medicalUpload },
+      message: `${files.length} file(s) uploaded successfully`,
+      data: { files: uploadedFiles },
     });
   } catch (error: any) {
     console.error('Upload medical file error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error uploading file',
+      message: 'Error uploading files',
       error: error.message,
     });
   }

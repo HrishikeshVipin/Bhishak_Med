@@ -53,14 +53,15 @@ export default function ChatBox({
   }, [initialMessages]);
 
   const scrollToBottom = (force = false) => {
-    if (!messagesContainerRef.current || !messagesEndRef.current) return;
+    if (!messagesContainerRef.current) return;
 
     const container = messagesContainerRef.current;
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
 
     // Only auto-scroll if user is already near the bottom, or if forced
     if (force || isNearBottom) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      // Scroll only the chat container, not the entire page
+      container.scrollTop = container.scrollHeight;
     }
   };
 

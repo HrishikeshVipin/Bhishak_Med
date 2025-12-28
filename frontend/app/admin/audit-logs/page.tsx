@@ -14,6 +14,9 @@ interface AuditLog {
   id: string;
   actorType: string;
   actorId: string;
+  actorName?: string;
+  actorEmail?: string;
+  actorRole?: string; // SUPER_ADMIN, ADMIN, DOCTOR, PATIENT, SYSTEM
   action: string;
   resourceType?: string;
   resourceId?: string;
@@ -57,7 +60,7 @@ interface AuditStats {
 
 export default function AuditLogsPage() {
   const router = useRouter();
-  const { isAuthenticated, role, user, clearAuth, initAuth } = useAuthStore();
+  const { isAuthenticated, role, user, clearAuth, initAuth, isSuperAdmin } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('general');
 
@@ -111,10 +114,10 @@ export default function AuditLogsPage() {
   }, [initAuth]);
 
   useEffect(() => {
-    if (!loading && (!isAuthenticated || role !== 'ADMIN')) {
-      router.push('/admin/login');
+    if (!loading && (!isAuthenticated || role !== 'ADMIN' || !isSuperAdmin())) {
+      router.push('/admin/dashboard');
     }
-  }, [isAuthenticated, role, loading, router]);
+  }, [isAuthenticated, role, isSuperAdmin, loading, router]);
 
   // Fetch stats
   useEffect(() => {
@@ -160,7 +163,7 @@ export default function AuditLogsPage() {
           setGeneralLogs(response.data.logs);
           setGeneralPagination((prev) => ({
             ...prev,
-            ...response.data.pagination,
+            ...response.data?.pagination,
           }));
         }
       } catch (error) {
@@ -195,7 +198,7 @@ export default function AuditLogsPage() {
           setAdminAccessLogs(response.data.logs);
           setAdminAccessPagination((prev) => ({
             ...prev,
-            ...response.data.pagination,
+            ...response.data?.pagination,
           }));
         }
       } catch (error) {
@@ -517,12 +520,34 @@ export default function AuditLogsPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
-                                {log.actor?.fullName || 'Unknown'}
+                                {log.actorName || log.actor?.fullName || 'Unknown'}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {log.actor?.email || log.actorId}
+                                {log.actorEmail || log.actor?.email || log.actorId}
                               </div>
-                              <div className="text-xs text-gray-400">{log.actorType}</div>
+                              <div className="mt-1">
+                                {log.actorRole === 'SUPER_ADMIN' ? (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    Super Admin
+                                  </span>
+                                ) : log.actorRole === 'ADMIN' ? (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    Admin
+                                  </span>
+                                ) : log.actorType === 'DOCTOR' ? (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Doctor
+                                  </span>
+                                ) : log.actorType === 'PATIENT' ? (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800">
+                                    Patient
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    {log.actorType}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {log.action}

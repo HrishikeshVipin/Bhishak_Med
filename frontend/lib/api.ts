@@ -14,6 +14,7 @@ import type {
   ReviewStatistics,
   Medicine,
   DoctorMedicine,
+  Admin,
 } from '../types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -210,6 +211,54 @@ export const adminApi = {
       recentFailedLogins: any[];
       period: string;
     }>>('/admin/audit-stats', { params: { days } });
+    return data;
+  },
+
+  // Admin Management (Super Admin only)
+  createAdmin: async (adminData: {
+    email: string;
+    password: string;
+    fullName: string;
+    role: 'ADMIN' | 'SUPER_ADMIN';
+  }) => {
+    const { data } = await api.post<ApiResponse<{ admin: Admin }>>('/admin/admins', adminData);
+    return data;
+  },
+
+  getAdmins: async (params?: {
+    page?: number;
+    limit?: number;
+    role?: 'ADMIN' | 'SUPER_ADMIN';
+    isActive?: boolean;
+  }) => {
+    const { data } = await api.get<ApiResponse<{
+      admins: Admin[];
+      pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>>('/admin/admins', { params });
+    return data;
+  },
+
+  updateAdmin: async (adminId: string, updates: {
+    fullName?: string;
+    role?: 'ADMIN' | 'SUPER_ADMIN';
+    isActive?: boolean;
+  }) => {
+    const { data } = await api.put<ApiResponse<{ admin: Admin }>>(`/admin/admins/${adminId}`, updates);
+    return data;
+  },
+
+  deleteAdmin: async (adminId: string) => {
+    const { data } = await api.delete<ApiResponse<any>>(`/admin/admins/${adminId}`);
+    return data;
+  },
+
+  toggleAdminActive: async (adminId: string) => {
+    const { data } = await api.put<ApiResponse<{ admin: Admin }>>(`/admin/admins/${adminId}/toggle-active`);
     return data;
   },
 };
@@ -738,6 +787,15 @@ export const doctorDiscovery = {
 
     updateProfile: async (updates: any) => {
       const { data } = await api.put<ApiResponse<{ doctor: any }>>('/doctors/profile', updates);
+      return data;
+    },
+
+    updateProfilePhoto: async (formData: FormData) => {
+      const { data } = await api.put<ApiResponse<{ doctor: any }>>('/doctor/profile/photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return data;
     },
 };

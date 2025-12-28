@@ -27,12 +27,31 @@ export const revealAadhaar = async (req: Request, res: Response): Promise<void> 
     const { reason, reasonDetails } = req.body;
 
     // Get admin info from authenticateUser middleware
-    const admin = (req as any).user;
+    const adminFromToken = (req as any).user;
 
-    if (!admin || (admin.role !== 'ADMIN' && admin.role !== 'SUPER_ADMIN')) {
+    if (!adminFromToken || (adminFromToken.role !== 'ADMIN' && adminFromToken.role !== 'SUPER_ADMIN')) {
       res.status(403).json({
         success: false,
         message: 'Access denied. Admin privileges required.',
+      });
+      return;
+    }
+
+    // Fetch full admin record from database to get actual role
+    const admin = await prisma.admin.findUnique({
+      where: { id: adminFromToken.id },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+      },
+    });
+
+    if (!admin) {
+      res.status(404).json({
+        success: false,
+        message: 'Admin not found',
       });
       return;
     }
@@ -55,6 +74,7 @@ export const revealAadhaar = async (req: Request, res: Response): Promise<void> 
         id: true,
         fullName: true,
         email: true,
+        status: true, // Need status for contextual access
         aadhaarNumber: true, // Encrypted
       },
     });
@@ -65,6 +85,17 @@ export const revealAadhaar = async (req: Request, res: Response): Promise<void> 
         message: 'Doctor not found',
       });
       return;
+    }
+
+    // CONTEXTUAL ACCESS CONTROL: Regular admins can only reveal during verification
+    if (admin.role !== 'SUPER_ADMIN') {
+      if (doctor.status !== 'PENDING_VERIFICATION') {
+        res.status(403).json({
+          success: false,
+          message: 'Regular admins can only reveal Aadhaar for doctors pending verification. Contact a Super Admin for access to verified/rejected/suspended doctors.',
+        });
+        return;
+      }
     }
 
     // Decrypt Aadhaar number
@@ -119,13 +150,32 @@ export const revealUpiId = async (req: Request, res: Response): Promise<void> =>
     const { doctorId } = req.params;
     const { reason, reasonDetails } = req.body;
 
-    // Get admin info
-    const admin = (req as any).user;
+    // Get admin info from token
+    const adminFromToken = (req as any).user;
 
-    if (!admin || (admin.role !== 'ADMIN' && admin.role !== 'SUPER_ADMIN')) {
+    if (!adminFromToken || (adminFromToken.role !== 'ADMIN' && adminFromToken.role !== 'SUPER_ADMIN')) {
       res.status(403).json({
         success: false,
         message: 'Access denied. Admin privileges required.',
+      });
+      return;
+    }
+
+    // Fetch full admin record from database to get actual role
+    const admin = await prisma.admin.findUnique({
+      where: { id: adminFromToken.id },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+      },
+    });
+
+    if (!admin) {
+      res.status(404).json({
+        success: false,
+        message: 'Admin not found',
       });
       return;
     }
@@ -148,6 +198,7 @@ export const revealUpiId = async (req: Request, res: Response): Promise<void> =>
         id: true,
         fullName: true,
         email: true,
+        status: true, // Need status for contextual access
         upiId: true, // Encrypted
       },
     });
@@ -166,6 +217,17 @@ export const revealUpiId = async (req: Request, res: Response): Promise<void> =>
         message: 'Doctor has not set UPI ID',
       });
       return;
+    }
+
+    // CONTEXTUAL ACCESS CONTROL: Regular admins can only reveal during verification
+    if (admin.role !== 'SUPER_ADMIN') {
+      if (doctor.status !== 'PENDING_VERIFICATION') {
+        res.status(403).json({
+          success: false,
+          message: 'Regular admins can only reveal UPI ID for doctors pending verification. Contact a Super Admin for access to verified/rejected/suspended doctors.',
+        });
+        return;
+      }
     }
 
     // Decrypt UPI ID

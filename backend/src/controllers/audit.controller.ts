@@ -61,10 +61,32 @@ export const getAuditLogs = async (req: Request, res: Response): Promise<void> =
       }),
     ]);
 
+    // Enrich logs with admin role information
+    const enrichedLogs = await Promise.all(
+      logs.map(async (log) => {
+        if (log.actorType === 'ADMIN' && log.actorId) {
+          // Fetch the admin to get their role
+          const admin = await prisma.admin.findUnique({
+            where: { id: log.actorId },
+            select: { role: true },
+          });
+
+          return {
+            ...log,
+            actorRole: admin?.role || 'ADMIN', // SUPER_ADMIN or ADMIN
+          };
+        }
+        return {
+          ...log,
+          actorRole: log.actorType, // DOCTOR, PATIENT, SYSTEM
+        };
+      })
+    );
+
     res.status(200).json({
       success: true,
       data: {
-        logs,
+        logs: enrichedLogs,
         pagination: {
           page: pageNum,
           limit: limitNum,

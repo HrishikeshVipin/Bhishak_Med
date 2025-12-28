@@ -12,12 +12,15 @@ async function main() {
 
   const admin = await prisma.admin.upsert({
     where: { email: 'admin@mediquory.com' },
-    update: {},
+    update: {
+      role: 'SUPER_ADMIN', // Ensure existing admin is upgraded to SUPER_ADMIN
+    },
     create: {
       email: 'admin@mediquory.com',
       password: adminPassword,
       fullName: 'Super Admin',
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
+      isActive: true,
     },
   });
 

@@ -1,21 +1,22 @@
 import express from 'express';
 import { getAuditLogs, getAdminAccessLogs, getAuditStats } from '../controllers/audit.controller';
-import { verifyToken, isAdmin } from '../middleware/auth';
+import { verifyToken, isSuperAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
 /**
  * Audit Log Routes
- * All routes require admin authentication
+ * All routes require SUPER_ADMIN authentication
+ * Regular admins cannot access audit logs for security reasons
  */
 
-// Get general audit logs with filters
-router.get('/audit-logs', verifyToken, isAdmin, getAuditLogs);
+// Get general audit logs with filters (Super Admin only)
+router.get('/audit-logs', verifyToken, isSuperAdmin, getAuditLogs);
 
-// Get admin access logs (Aadhaar/UPI reveals, patient data access)
-router.get('/admin-access-logs', verifyToken, isAdmin, getAdminAccessLogs);
+// Get admin access logs - Aadhaar/UPI reveals, patient data access (Super Admin only)
+router.get('/admin-access-logs', verifyToken, isSuperAdmin, getAdminAccessLogs);
 
-// Get audit statistics
-router.get('/audit-stats', verifyToken, isAdmin, getAuditStats);
+// Get audit statistics (Super Admin only)
+router.get('/audit-stats', verifyToken, isSuperAdmin, getAuditStats);
 
 export default router;

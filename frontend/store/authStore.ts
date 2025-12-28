@@ -11,9 +11,11 @@ interface AuthState {
   setAuth: (token: string, user: Admin | Doctor, role: 'ADMIN' | 'DOCTOR') => void;
   clearAuth: () => void;
   initAuth: () => void;
+  isSuperAdmin: () => boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   user: null,
   isAuthenticated: false,
@@ -53,5 +55,29 @@ export const useAuthStore = create<AuthState>((set) => ({
     } else {
       set({ initialized: true });
     }
+  },
+
+  isSuperAdmin: () => {
+    const { user, role } = get();
+    return role === 'ADMIN' && (user as Admin)?.role === 'SUPER_ADMIN';
+  },
+
+  hasPermission: (permission: string) => {
+    const { user, role } = get();
+
+    // Only admins have permissions
+    if (role !== 'ADMIN') {
+      return false;
+    }
+
+    const admin = user as Admin;
+
+    // SUPER_ADMIN has all permissions
+    if (admin?.role === 'SUPER_ADMIN') {
+      return true;
+    }
+
+    // Check if regular ADMIN has the specific permission
+    return admin?.permissions?.includes(permission) || false;
   },
 }));

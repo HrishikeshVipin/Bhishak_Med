@@ -3,7 +3,10 @@ export interface Admin {
   id: string;
   email: string;
   fullName: string;
-  role: string;
+  role: 'ADMIN' | 'SUPER_ADMIN';
+  permissions?: string[];
+  isActive: boolean;
+  lastLogin?: string;
   createdAt: string;
 }
 

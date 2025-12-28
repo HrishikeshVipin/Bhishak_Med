@@ -211,7 +211,7 @@ export default function DoctorDashboard() {
               <div className="flex items-center gap-2">
                 {doctor.profilePhoto ? (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${doctor.profilePhoto}`}
+                    src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${doctor.profilePhoto}`}
                     alt={doctor.fullName}
                     className="w-10 h-10 rounded-full object-cover border-2 border-cyan-200 hidden sm:block"
                   />
@@ -258,7 +258,7 @@ export default function DoctorDashboard() {
               {doctor.status === 'SUSPENDED' && '⚠'}
             </span>
             <div>
-              <p className="font-semibold text-xs sm:text-sm">Account Status: {doctor.status.replace(/_/g, ' ')}</p>
+              <p className="font-semibold text-xs sm:text-sm">Account Status: {doctor.status ? doctor.status.replace(/_/g, ' ') : 'VERIFIED'}</p>
               {doctor.status === 'PENDING_VERIFICATION' && (
                 <p className="text-xs mt-0.5">Your account is under review</p>
               )}

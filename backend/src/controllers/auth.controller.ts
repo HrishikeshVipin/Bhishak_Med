@@ -356,11 +356,17 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Generate JWT token
+    // Update lastLogin timestamp
+    await prisma.admin.update({
+      where: { id: admin.id },
+      data: { lastLogin: new Date() },
+    });
+
+    // Generate JWT token with actual role from database
     const token = generateToken({
       id: admin.id,
       email: admin.email,
-      role: 'ADMIN',
+      role: admin.role as 'ADMIN' | 'SUPER_ADMIN',
     });
 
     // Set httpOnly cookie
@@ -392,6 +398,7 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
           email: admin.email,
           fullName: admin.fullName,
           role: admin.role,
+          isActive: admin.isActive,
         },
       },
     });

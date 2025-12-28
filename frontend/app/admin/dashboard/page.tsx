@@ -13,7 +13,7 @@ import type { PlatformStats } from '../../../types';
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { isAuthenticated, role, user, clearAuth, initAuth } = useAuthStore();
+  const { isAuthenticated, role, user, clearAuth, initAuth, isSuperAdmin } = useAuthStore();
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +46,8 @@ export default function AdminDashboard() {
 
       // Connect to socket for real-time updates
       const socket = connectSocket();
-      socket.emit('join-admin-room', { adminId: user?.id });
+      // Note: NotificationProvider already handles join-admin-room
+      // Just listen for notifications here
 
       // Listen for new doctor registration notifications
       socket.on('notification', (notification: any) => {
@@ -163,7 +164,8 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-6">
           <h2 className="text-xl font-semibold text-blue-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Regular Admin Links (visible to all admins) */}
             <Link
               href="/admin/doctors/pending"
               className="p-4 border-2 border-yellow-300/50 rounded-2xl hover:bg-yellow-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
@@ -192,29 +194,42 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-700 mt-1">Manage subscriptions</p>
             </Link>
 
-            <Link
-              href="/admin/subscription-plans"
-              className="p-4 border-2 border-green-300/50 rounded-2xl hover:bg-green-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
-            >
-              <h3 className="font-semibold text-green-800">Subscription Plans</h3>
-              <p className="text-sm text-gray-700 mt-1">Manage pricing and features</p>
-            </Link>
+            {/* Super Admin Only Links */}
+            {isSuperAdmin() && (
+              <>
+                <Link
+                  href="/admin/admins"
+                  className="p-4 border-2 border-indigo-300/50 rounded-2xl hover:bg-indigo-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+                >
+                  <h3 className="font-semibold text-indigo-800">Admin Management</h3>
+                  <p className="text-sm text-gray-700 mt-1">Manage admin accounts</p>
+                </Link>
 
-            <Link
-              href="/admin/settings"
-              className="p-4 border-2 border-cyan-300/50 rounded-2xl hover:bg-cyan-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
-            >
-              <h3 className="font-semibold text-cyan-800">System Settings</h3>
-              <p className="text-sm text-gray-700 mt-1">Configure app settings</p>
-            </Link>
+                <Link
+                  href="/admin/subscription-plans"
+                  className="p-4 border-2 border-green-300/50 rounded-2xl hover:bg-green-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+                >
+                  <h3 className="font-semibold text-green-800">Subscription Plans</h3>
+                  <p className="text-sm text-gray-700 mt-1">Manage pricing and features</p>
+                </Link>
 
-            <Link
-              href="/admin/audit-logs"
-              className="p-4 border-2 border-purple-300/50 rounded-2xl hover:bg-purple-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
-            >
-              <h3 className="font-semibold text-purple-800">Audit Logs</h3>
-              <p className="text-sm text-gray-700 mt-1">View security and activity logs</p>
-            </Link>
+                <Link
+                  href="/admin/settings"
+                  className="p-4 border-2 border-cyan-300/50 rounded-2xl hover:bg-cyan-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+                >
+                  <h3 className="font-semibold text-cyan-800">System Settings</h3>
+                  <p className="text-sm text-gray-700 mt-1">Configure app settings</p>
+                </Link>
+
+                <Link
+                  href="/admin/audit-logs"
+                  className="p-4 border-2 border-purple-300/50 rounded-2xl hover:bg-purple-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+                >
+                  <h3 className="font-semibold text-purple-800">Audit Logs</h3>
+                  <p className="text-sm text-gray-700 mt-1">View security and activity logs</p>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </main>

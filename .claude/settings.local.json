@@ -68,7 +68,9 @@
       "Bash(\"C:\\\\Users\\\\hrish\\\\Downloads\\\\Bhishak_med\\\\New_Model\\\\frontend\\\\app\\\\patient\\\\doctors\\\\[doctorId]\\\\page.tsx\")",
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "Bash(set:*)",
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -d bhishakmed_local -c \"SELECT email, \"\"fullName\"\", role, \"\"isActive\"\" FROM \"\"Admin\"\";\")"
     ]
   }
 }

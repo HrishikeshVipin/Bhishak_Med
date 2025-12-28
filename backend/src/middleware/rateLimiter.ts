@@ -43,10 +43,13 @@ export const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  // Skip rate limiting for authenticated users with valid tokens
-  skip: (req: Request) => {
-    // If user is authenticated and verified, give them more leeway
-    return req.user?.role === 'ADMIN';
+  // Skip rate limiting for all authenticated users (admins, doctors, patients)
+  skip: (req: Request): boolean => {
+    if (!req.user || !req.user.role) {
+      return false;
+    }
+    const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'DOCTOR', 'PATIENT'];
+    return allowedRoles.includes(req.user.role);
   },
   validate: { trustProxy: false },
 });

@@ -280,7 +280,7 @@ export default function DoctorSearchPage() {
                 <div className="flex items-start gap-4 mb-4">
                   {doctor.profilePhoto ? (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_API_URL}${doctor.profilePhoto}`}
+                      src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${doctor.profilePhoto}`}
                       alt={doctor.fullName}
                       className="w-16 h-16 rounded-full object-cover flex-shrink-0 shadow-md border-2 border-cyan-200"
                     />

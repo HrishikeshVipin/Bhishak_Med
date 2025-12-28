@@ -399,7 +399,7 @@ function ConsultationsContent() {
                   <div className="flex items-start gap-4">
                     {consultation.doctor.profilePhoto ? (
                       <img
-                        src={`${process.env.NEXT_PUBLIC_API_URL}${consultation.doctor.profilePhoto}`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${consultation.doctor.profilePhoto}`}
                         alt={consultation.doctor.fullName}
                         className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-cyan-200"
                       />
@@ -542,7 +542,7 @@ function ConsultationsContent() {
                     <div className="flex items-start gap-4">
                       {appointment.doctor.profilePhoto ? (
                         <img
-                          src={`${process.env.NEXT_PUBLIC_API_URL}${appointment.doctor.profilePhoto}`}
+                          src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${appointment.doctor.profilePhoto}`}
                           alt={appointment.doctor.fullName}
                           className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-cyan-200"
                         />

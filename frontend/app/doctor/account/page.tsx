@@ -21,6 +21,12 @@ export default function DoctorAccountPage() {
   const [bio, setBio] = useState('');
   const [bioSaved, setBioSaved] = useState(false);
 
+  // Profile photo upload
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>('');
+  const [profilePhotoUploading, setProfilePhotoUploading] = useState(false);
+  const [profilePhotoSaved, setProfilePhotoSaved] = useState(false);
+
   // Signature upload
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [signaturePreview, setSignaturePreview] = useState<string>('');
@@ -104,14 +110,18 @@ export default function DoctorAccountPage() {
       const response = await doctorDiscovery.updateProfile({ bio });
 
       if (response.success && response.data?.doctor) {
-        // Update user in auth store to persist the bio
+        // Update only the bio field in the auth store
         const token = localStorage.getItem('token');
-        if (token) {
-          useAuthStore.getState().setAuth(token, response.data.doctor, 'DOCTOR');
-        }
+        if (token && doctor) {
+          const updatedDoctor = {
+            ...doctor,
+            bio: response.data.doctor.bio,
+          };
+          useAuthStore.getState().setAuth(token, updatedDoctor, 'DOCTOR');
 
-        // Update local doctor state
-        setDoctor(response.data.doctor);
+          // Update local doctor state
+          setDoctor(updatedDoctor);
+        }
 
         // Show success message
         setBioSaved(true);
@@ -124,6 +134,73 @@ export default function DoctorAccountPage() {
       alert(error.response?.data?.message || 'Failed to save bio. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setProfilePhotoFile(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfilePhotoUpload = async () => {
+    if (!profilePhotoFile) return;
+
+    try {
+      setProfilePhotoUploading(true);
+      const formData = new FormData();
+      formData.append('profilePhoto', profilePhotoFile);
+
+      const response = await doctorDiscovery.updateProfilePhoto(formData);
+
+      if (response.success && response.data?.doctor) {
+        // Update only the profilePhoto field in the auth store
+        const token = localStorage.getItem('token');
+        if (token && doctor) {
+          const updatedDoctor = {
+            ...doctor,
+            profilePhoto: response.data.doctor.profilePhoto,
+          };
+          useAuthStore.getState().setAuth(token, updatedDoctor, 'DOCTOR');
+
+          // Update local doctor state
+          setDoctor(updatedDoctor);
+        }
+
+        // Show success message
+        setProfilePhotoSaved(true);
+        setTimeout(() => setProfilePhotoSaved(false), 3000);
+
+        // Clear file selection
+        setProfilePhotoFile(null);
+      } else {
+        alert(response.message || 'Failed to update profile photo');
+      }
+    } catch (error: any) {
+      console.error('Profile photo upload error:', error);
+      alert(error.response?.data?.message || 'Failed to upload profile photo. Please try again.');
+    } finally {
+      setProfilePhotoUploading(false);
     }
   };
 
@@ -311,6 +388,89 @@ export default function DoctorAccountPage() {
               <h2 className="text-2xl font-bold text-blue-900">Dr. {doctor.fullName}</h2>
               <p className="text-gray-600">{doctor.specialization}</p>
               <p className="text-sm text-cyan-600">Reg. No: {doctor.registrationNo}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Photo Upload Card */}
+        <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-blue-900">Profile Photo</h3>
+            {profilePhotoSaved && (
+              <span className="text-sm text-green-600 font-medium">✓ Updated</span>
+            )}
+          </div>
+
+          <p className="text-sm text-gray-600 mb-4">
+            Upload a professional profile photo that will be visible to patients. Recommended: Clear headshot with professional attire.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Upload Section */}
+            <div>
+              <label className="block mb-2">
+                <span className="text-sm font-medium text-gray-700">Upload New Photo</span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={handleProfilePhotoChange}
+                  className="mt-2 block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-xl file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-gradient-to-r file:from-blue-500 file:to-cyan-600
+                    file:text-white file:cursor-pointer
+                    hover:file:from-blue-600 hover:file:to-cyan-700
+                    file:transition-all"
+                />
+              </label>
+
+              {profilePhotoFile && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Selected: {profilePhotoFile.name}
+                  </p>
+                  <button
+                    onClick={handleProfilePhotoUpload}
+                    disabled={profilePhotoUploading}
+                    className="w-full px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-medium text-sm transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {profilePhotoUploading ? 'Uploading...' : 'Upload Photo'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Preview Section */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Preview</p>
+              <div className="border-2 border-dashed border-cyan-200 rounded-xl p-4 bg-gray-50 min-h-[200px] flex items-center justify-center">
+                {profilePhotoPreview ? (
+                  <img
+                    src={profilePhotoPreview}
+                    alt="Profile photo preview"
+                    className="w-40 h-40 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                ) : doctor.profilePhoto ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${doctor.profilePhoto}`}
+                    alt="Current profile photo"
+                    className="w-40 h-40 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                ) : (
+                  <div className="text-center">
+                    <div className="w-40 h-40 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white text-5xl font-bold mx-auto mb-2">
+                      {doctor.fullName.charAt(0)}
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      No profile photo
+                    </p>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                This photo will appear on your public profile and in patient searches
+              </p>
             </div>
           </div>
         </div>

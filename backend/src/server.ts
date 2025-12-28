@@ -13,6 +13,7 @@ import auditRoutes from './routes/audit.routes';
 import patientRoutes from './routes/patient.routes';
 import patientAuthRoutes from './routes/patient-auth.routes';
 import doctorDiscoveryRoutes from './routes/doctor-discovery.routes';
+import doctorProfileRoutes from './routes/doctor.profile.routes';
 import consultationRoutes from './routes/consultation.routes';
 import vitalsRoutes from './routes/vitals.routes';
 import prescriptionRoutes from './routes/prescription.routes';
@@ -125,6 +126,7 @@ app.use('/api/admin', auditRoutes); // Audit logs viewer
 app.use('/api/patients', patientRoutes);
 app.use('/api/patient-auth', patientAuthRoutes);
 app.use('/api/doctors', doctorDiscoveryRoutes);
+app.use('/api/doctor/profile', doctorProfileRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api', vitalsRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
@@ -205,3 +207,4 @@ process.on('SIGTERM', async () => {
 });
 // Force restart
 // restart
+

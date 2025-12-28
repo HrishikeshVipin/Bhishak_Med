@@ -20,38 +20,61 @@ import {
   getPlanHistory,
   fixSubscriptionInconsistencies,
 } from '../controllers/subscriptionPlanAdmin.controller';
-import { verifyToken, isAdmin } from '../middleware/auth';
+import {
+  createAdmin,
+  getAdmins,
+  updateAdmin,
+  deleteAdmin,
+  toggleAdminActive,
+} from '../controllers/admin-management.controller';
+import { verifyToken, isAdmin, isSuperAdmin } from '../middleware/auth';
 
 const router = Router();
 
-// All admin routes require authentication and admin role
-router.use(verifyToken, isAdmin);
+// =============================================================================
+// REGULAR ADMIN ROUTES (Both ADMIN and SUPER_ADMIN can access)
+// =============================================================================
 
 // Platform statistics
-router.get('/stats', getPlatformStats);
+router.get('/stats', verifyToken, isAdmin, getPlatformStats);
 
 // Doctor management
-router.get('/doctors', getAllDoctors);
-router.get('/doctors/pending', getPendingDoctors);
-router.get('/doctors/:doctorId', getDoctorById);
+router.get('/doctors', verifyToken, isAdmin, getAllDoctors);
+router.get('/doctors/pending', verifyToken, isAdmin, getPendingDoctors);
+router.get('/doctors/:doctorId', verifyToken, isAdmin, getDoctorById);
 
 // Doctor verification
-router.put('/doctors/:doctorId/verify', verifyDoctor);
-router.put('/doctors/:doctorId/reject', rejectDoctor);
-router.put('/doctors/:doctorId/suspend', suspendDoctor);
-router.put('/doctors/:doctorId/reactivate', reactivateDoctor);
+router.put('/doctors/:doctorId/verify', verifyToken, isAdmin, verifyDoctor);
+router.put('/doctors/:doctorId/reject', verifyToken, isAdmin, rejectDoctor);
+router.put('/doctors/:doctorId/suspend', verifyToken, isAdmin, suspendDoctor);
+router.put('/doctors/:doctorId/reactivate', verifyToken, isAdmin, reactivateDoctor);
 
-// Subscription management
-router.put('/doctors/:doctorId/subscription', updateDoctorSubscription);
+// Subscription management (view and update doctor subscriptions)
+router.put('/doctors/:doctorId/subscription', verifyToken, isAdmin, updateDoctorSubscription);
 
-// Subscription plan management
-router.get('/subscription-plans', getAllPlans);
-router.post('/subscription-plans', createPlan);
-router.put('/subscription-plans/:planId', updatePlan);
-router.put('/subscription-plans/:planId/deactivate', deactivatePlan);
-router.put('/subscription-plans/:planId/activate', activatePlan);
-router.put('/doctors/:doctorId/grant-features', grantFeaturesToDoctor);
-router.get('/subscription-plans/:tier/history', getPlanHistory);
-router.post('/subscription-plans/fix-inconsistencies', fixSubscriptionInconsistencies);
+// View subscription plans (both admin levels can view)
+router.get('/subscription-plans', verifyToken, isAdmin, getAllPlans);
+router.get('/subscription-plans/:tier/history', verifyToken, isAdmin, getPlanHistory);
+
+// =============================================================================
+// SUPER ADMIN ONLY ROUTES
+// =============================================================================
+
+// Subscription plan management (create, modify, activate/deactivate)
+router.post('/subscription-plans', verifyToken, isSuperAdmin, createPlan);
+router.put('/subscription-plans/:planId', verifyToken, isSuperAdmin, updatePlan);
+router.put('/subscription-plans/:planId/activate', verifyToken, isSuperAdmin, activatePlan);
+router.put('/subscription-plans/:planId/deactivate', verifyToken, isSuperAdmin, deactivatePlan);
+
+// Manual subscription overrides
+router.put('/doctors/:doctorId/grant-features', verifyToken, isSuperAdmin, grantFeaturesToDoctor);
+router.post('/subscription-plans/fix-inconsistencies', verifyToken, isSuperAdmin, fixSubscriptionInconsistencies);
+
+// Admin management (Super Admin only)
+router.post('/admins', verifyToken, isSuperAdmin, createAdmin); // Create new admin
+router.get('/admins', verifyToken, isSuperAdmin, getAdmins); // Get all admins with filters
+router.put('/admins/:adminId', verifyToken, isSuperAdmin, updateAdmin); // Update admin
+router.delete('/admins/:adminId', verifyToken, isSuperAdmin, deleteAdmin); // Delete admin (soft)
+router.put('/admins/:adminId/toggle-active', verifyToken, isSuperAdmin, toggleAdminActive); // Toggle active status
 
 export default router;

@@ -11,7 +11,7 @@ import {
   removeFromMyMedicines,
   validatePrescriptionMedications,
 } from '../controllers/medicine.controller';
-import { auth } from '../middleware/auth';
+import { auth, verifyToken, isAdmin, isSuperAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -22,37 +22,37 @@ const router = express.Router();
 /**
  * @route   POST /api/medicines
  * @desc    Create a new medicine
- * @access  Admin only
+ * @access  Admin only (both ADMIN and SUPER_ADMIN)
  */
-router.post('/', auth, createMedicine);
+router.post('/', verifyToken, isAdmin, createMedicine);
 
 /**
  * @route   GET /api/medicines/admin/all
  * @desc    Get all medicines with filters
- * @access  Admin only
+ * @access  Admin only (both ADMIN and SUPER_ADMIN)
  */
-router.get('/admin/all', auth, getAllMedicines);
+router.get('/admin/all', verifyToken, isAdmin, getAllMedicines);
 
 /**
  * @route   PUT /api/medicines/:medicineId/verify
  * @desc    Verify a medicine
- * @access  Admin only
+ * @access  Admin only (both ADMIN and SUPER_ADMIN)
  */
-router.put('/:medicineId/verify', auth, verifyMedicine);
+router.put('/:medicineId/verify', verifyToken, isAdmin, verifyMedicine);
 
 /**
  * @route   PUT /api/medicines/:medicineId/ban
- * @desc    Ban a medicine
- * @access  Admin only
+ * @desc    Ban a medicine platform-wide
+ * @access  Super Admin only
  */
-router.put('/:medicineId/ban', auth, banMedicine);
+router.put('/:medicineId/ban', verifyToken, isSuperAdmin, banMedicine);
 
 /**
  * @route   PUT /api/medicines/:medicineId/unban
  * @desc    Unban a medicine
- * @access  Admin only
+ * @access  Super Admin only
  */
-router.put('/:medicineId/unban', auth, unbanMedicine);
+router.put('/:medicineId/unban', verifyToken, isSuperAdmin, unbanMedicine);
 
 /**
  * DOCTOR ROUTES

@@ -9,7 +9,7 @@ declare global {
       user?: {
         id: string;
         email: string;
-        role: 'DOCTOR' | 'ADMIN';
+        role: 'DOCTOR' | 'ADMIN' | 'SUPER_ADMIN';
         status?: string;
       };
       doctorId?: string;
@@ -25,7 +25,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 export const generateToken = (payload: {
   id: string;
   email: string;
-  role: 'DOCTOR' | 'ADMIN';
+  role: 'DOCTOR' | 'ADMIN' | 'SUPER_ADMIN';
   status?: string;
 }): string => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
@@ -59,7 +59,7 @@ export const verifyToken = async (
     const decoded = jwt.verify(token, JWT_SECRET) as {
       id: string;
       email: string;
-      role: 'DOCTOR' | 'ADMIN';
+      role: 'DOCTOR' | 'ADMIN' | 'SUPER_ADMIN';
       status?: string;
     };
 
@@ -138,7 +138,7 @@ export const isDoctor = async (
   next();
 };
 
-// Middleware to check if user is an admin
+// Middleware to check if user is an admin (ADMIN or SUPER_ADMIN)
 export const isAdmin = async (
   req: Request,
   res: Response,
@@ -152,10 +152,24 @@ export const isAdmin = async (
     return;
   }
 
-  if (req.user.role !== 'ADMIN') {
+  if (req.user.role !== 'ADMIN' && req.user.role !== 'SUPER_ADMIN') {
     res.status(403).json({
       success: false,
       message: 'Access denied. Admin role required.',
+    });
+    return;
+  }
+
+  // Check if admin is active
+  const admin = await prisma.admin.findUnique({
+    where: { id: req.user.id },
+    select: { isActive: true },
+  });
+
+  if (!admin || !admin.isActive) {
+    res.status(403).json({
+      success: false,
+      message: 'Account is inactive. Please contact support.',
     });
     return;
   }
@@ -164,6 +178,93 @@ export const isAdmin = async (
   (req as any).adminId = req.user.id;
 
   next();
+};
+
+// Middleware to check if user is a Super Admin (SUPER_ADMIN only)
+export const isSuperAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({
+      success: false,
+      message: 'Authentication required',
+    });
+    return;
+  }
+
+  if (req.user.role !== 'SUPER_ADMIN') {
+    res.status(403).json({
+      success: false,
+      message: 'Access denied. Super Admin role required.',
+    });
+    return;
+  }
+
+  // Check if admin is active
+  const admin = await prisma.admin.findUnique({
+    where: { id: req.user.id },
+    select: { isActive: true },
+  });
+
+  if (!admin || !admin.isActive) {
+    res.status(403).json({
+      success: false,
+      message: 'Account is inactive. Please contact support.',
+    });
+    return;
+  }
+
+  // Add adminId to request for easy access in controllers
+  (req as any).adminId = req.user.id;
+
+  next();
+};
+
+// Middleware to check if admin has a specific permission
+export const hasPermission = (permission: string) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+      return;
+    }
+
+    // Fetch admin with permissions
+    const admin = await prisma.admin.findUnique({
+      where: { id: req.user.id },
+      select: { role: true, permissions: true },
+    });
+
+    if (!admin) {
+      res.status(404).json({
+        success: false,
+        message: 'Admin not found',
+      });
+      return;
+    }
+
+    // SUPER_ADMIN has all permissions
+    if (admin.role === 'SUPER_ADMIN') {
+      next();
+      return;
+    }
+
+    // Check if regular ADMIN has the specific permission
+    const permissions = (admin.permissions as string[]) || [];
+    if (!permissions.includes(permission)) {
+      res.status(403).json({
+        success: false,
+        message: `Permission denied: ${permission} required`,
+      });
+      return;
+    }
+
+    next();
+  };
 };
 
 // Middleware to validate patient access token

@@ -217,3 +217,18 @@ export const uploadMedicalFiles = multer({
     fileSize: MAX_DOCUMENT_SIZE,
   },
 });
+
+// Upload middleware for profile photo update (doctor only)
+export const uploadProfilePhoto = multer({
+  storage: doctorKYCStorage,
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Profile photo must be an image file (JPG, PNG)'));
+    }
+  },
+  limits: {
+    fileSize: MAX_IMAGE_SIZE,
+  },
+}).single('profilePhoto');

@@ -22,7 +22,7 @@ interface PlanFormData {
 
 export default function AdminSubscriptionPlansPage() {
   const router = useRouter();
-  const { isAuthenticated, role, initAuth } = useAuthStore();
+  const { isAuthenticated, role, initAuth, isSuperAdmin } = useAuthStore();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -46,10 +46,10 @@ export default function AdminSubscriptionPlansPage() {
   }, [initAuth]);
 
   useEffect(() => {
-    if (!loading && (!isAuthenticated || role !== 'ADMIN')) {
-      router.push('/admin/login');
+    if (!loading && (!isAuthenticated || role !== 'ADMIN' || !isSuperAdmin())) {
+      router.push('/admin/dashboard');
     }
-  }, [isAuthenticated, role, loading, router]);
+  }, [isAuthenticated, role, isSuperAdmin, loading, router]);
 
   // Fetch plans
   useEffect(() => {

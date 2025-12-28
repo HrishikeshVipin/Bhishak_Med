@@ -23,19 +23,19 @@ interface SystemSetting {
 
 export default function AdminSettingsPage() {
   const router = useRouter();
-  const { isAuthenticated, role, clearAuth } = useAuthStore();
+  const { isAuthenticated, role, clearAuth, isSuperAdmin } = useAuthStore();
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated || role !== 'ADMIN') {
-      router.push('/admin/login');
+    if (!isAuthenticated || role !== 'ADMIN' || !isSuperAdmin()) {
+      router.push('/admin/dashboard');
       return;
     }
 
     fetchSettings();
-  }, [isAuthenticated, role, router]);
+  }, [isAuthenticated, role, isSuperAdmin, router]);
 
   const fetchSettings = async () => {
     try {

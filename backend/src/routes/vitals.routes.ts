@@ -15,7 +15,8 @@ router.post('/patients/:patientId/vitals', validatePatientToken, saveVitals);
 router.get('/patients/:patientId/vitals', validatePatientToken, getVitalsHistory);
 
 // Medical file upload routes (supports multiple files)
-router.post('/patients/:patientId/files', validatePatientToken, uploadMedicalFiles.array('files', 10), uploadMedicalFile);
+// NOTE: uploadMedicalFiles must run BEFORE validatePatientToken to parse form data
+router.post('/patients/:patientId/files', uploadMedicalFiles.array('files', 10), validatePatientToken, uploadMedicalFile);
 router.get('/patients/:patientId/files', validatePatientToken, getMedicalFiles);
 
 export default router;

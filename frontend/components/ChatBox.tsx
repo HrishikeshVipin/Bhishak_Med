@@ -71,8 +71,8 @@ export default function ChatBox({
     // Listen for incoming messages
     socket.on('receive-message', (data: Message) => {
       setMessages((prev) => [...prev, data]);
-      // Auto-scroll when new message arrives (only if near bottom)
-      setTimeout(() => scrollToBottom(), 100);
+      // Always force scroll when new message arrives
+      setTimeout(() => scrollToBottom(true), 100);
     });
 
     return () => {

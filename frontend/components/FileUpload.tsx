@@ -100,14 +100,37 @@ export default function FileUpload({ patientId, accessToken, onSuccess }: FileUp
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Select Files (Multiple pages supported)
           </label>
+          {/* Hidden file input */}
           <input
             id="file-input"
             type="file"
             onChange={handleFileChange}
             accept="image/*,.pdf"
             multiple
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="hidden"
           />
+          {/* Custom button to trigger file input */}
+          <label
+            htmlFor="file-input"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-md hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors"
+          >
+            <svg
+              className="w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <span className="text-sm text-gray-600">
+              {files.length > 0 ? 'Add More Files' : 'Choose Files'}
+            </span>
+          </label>
           <p className="mt-1 text-sm text-gray-500">
             Accepted formats: Images (JPG, PNG) and PDF files. You can select multiple files at once.
           </p>

@@ -326,6 +326,7 @@ export const validatePatientToken = async (
 
     next();
   } catch (error: any) {
+    console.error('❌ Error validating patient token:', error);
     res.status(500).json({
       success: false,
       message: 'Error validating patient token',

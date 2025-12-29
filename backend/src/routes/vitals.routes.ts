@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validatePatientToken } from '../middleware/auth';
+import { validatePatientToken, verifyToken, isDoctor } from '../middleware/auth';
 import { uploadMedicalFiles } from '../middleware/upload';
 import {
   saveVitals,
@@ -18,5 +18,9 @@ router.get('/patients/:patientId/vitals', validatePatientToken, getVitalsHistory
 // NOTE: uploadMedicalFiles must run BEFORE validatePatientToken to parse form data
 router.post('/patients/:patientId/files', uploadMedicalFiles.array('files', 10), validatePatientToken, uploadMedicalFile);
 router.get('/patients/:patientId/files', validatePatientToken, getMedicalFiles);
+
+// Doctor routes to view patient vitals and files
+router.get('/doctor/patients/:patientId/vitals', verifyToken, isDoctor, getVitalsHistory);
+router.get('/doctor/patients/:patientId/files', verifyToken, isDoctor, getMedicalFiles);
 
 export default router;

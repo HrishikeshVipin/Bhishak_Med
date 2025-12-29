@@ -326,6 +326,18 @@ export const patientApi = {
     const { data } = await api.delete<ApiResponse<any>>(`/patients/${patientId}`);
     return data;
   },
+
+  // Get patient vitals history (doctor only)
+  getPatientVitals: async (patientId: string) => {
+    const { data } = await api.get<ApiResponse<{ vitals: any[] }>>(`/doctor/patients/${patientId}/vitals`);
+    return data;
+  },
+
+  // Get patient medical files (doctor only)
+  getPatientFiles: async (patientId: string) => {
+    const { data } = await api.get<ApiResponse<{ files: any[] }>>(`/doctor/patients/${patientId}/files`);
+    return data;
+  },
 };
 
 // Consultation API

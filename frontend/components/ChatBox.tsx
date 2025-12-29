@@ -59,7 +59,7 @@ export default function ChatBox({
     }
   };
 
-  // Socket listeners for real-time messages - only setup once
+  // Socket listeners for real-time messages - setup once when socket is available
   useEffect(() => {
     if (!socket) {
       console.log('⚠️ ChatBox: No socket available');
@@ -77,18 +77,19 @@ export default function ChatBox({
       console.log('📨 ChatBox: Received message', {
         messageId: data.id,
         sender: data.senderName,
-        socketConnected: socket.connected
+        text: data.message
       });
+
       setMessages((prev) => {
-        console.log(`📊 ChatBox: Current messages: ${prev.length}, Adding message ${data.id}`);
         // Prevent duplicates - check if message already exists by ID
         if (prev.some(msg => msg.id === data.id)) {
-          console.log('⚠️ ChatBox: Duplicate message detected, skipping:', data.id);
+          console.log('⚠️ ChatBox: Duplicate detected, skipping:', data.id);
           return prev;
         }
-        console.log('✅ ChatBox: Adding new message to state');
+        console.log('✅ ChatBox: Adding message', data.id, 'Total:', prev.length + 1);
         return [...prev, data];
       });
+
       // Force scroll when new message arrives
       setTimeout(() => {
         if (messagesContainerRef.current) {
@@ -99,22 +100,14 @@ export default function ChatBox({
 
     // Attach listener
     socket.on('receive-message', handleReceiveMessage);
-    console.log('✅ ChatBox: Listener attached for receive-message');
+    console.log('✅ ChatBox: Listener attached');
 
-    // Test: Log all socket events
-    socket.onAny((eventName, ...args) => {
-      if (eventName !== 'receive-message') {
-        console.log(`🔔 Socket event: ${eventName}`, args);
-      }
-    });
-
-    // Cleanup on unmount or when socket/consultationId changes
+    // Cleanup ONLY on unmount or when socket changes (not on every render)
     return () => {
-      console.log('🧹 ChatBox: Cleaning up socket listeners for consultation:', consultationId);
+      console.log('🧹 ChatBox: Removing listener');
       socket.off('receive-message', handleReceiveMessage);
-      socket.offAny();
     };
-  }, [socket, consultationId]); // Re-setup if socket or consultationId changes
+  }, [socket]); // Only re-run when socket instance changes
 
   useEffect(() => {
     if (!socket) return;

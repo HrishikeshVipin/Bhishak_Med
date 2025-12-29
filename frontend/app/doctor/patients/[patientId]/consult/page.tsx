@@ -734,6 +734,26 @@ export default function DoctorConsultationPage() {
                 )}
               </div>
             </div>
+
+            {/* Patient Vitals */}
+            <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10">
+              <div className="px-6 py-4 border-b border-cyan-200/50">
+                <h2 className="text-lg font-semibold text-blue-900">Patient Vitals</h2>
+              </div>
+              <div className="p-6">
+                <PatientVitalsView patientId={patientId} />
+              </div>
+            </div>
+
+            {/* Medical Files */}
+            <div className="bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10">
+              <div className="px-6 py-4 border-b border-cyan-200/50">
+                <h2 className="text-lg font-semibold text-blue-900">Medical Records</h2>
+              </div>
+              <div className="p-6">
+                <PatientFilesView patientId={patientId} />
+              </div>
+            </div>
               </>
             ) : (
               /* History View */
@@ -1054,26 +1074,6 @@ export default function DoctorConsultationPage() {
                 consultationId={consultation.id}
                 onPaymentConfirmed={startOrGetConsultation}
               />
-            </div>
-
-            {/* Patient Vitals */}
-            <div className="mt-6 bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10">
-              <div className="px-6 py-4 border-b border-cyan-200/50">
-                <h2 className="text-lg font-semibold text-blue-900">Patient Vitals</h2>
-              </div>
-              <div className="p-6">
-                <PatientVitalsView patientId={patientId} />
-              </div>
-            </div>
-
-            {/* Medical Files */}
-            <div className="mt-6 bg-white/70 backdrop-blur-xl border border-cyan-200/50 rounded-3xl shadow-lg shadow-cyan-500/10">
-              <div className="px-6 py-4 border-b border-cyan-200/50">
-                <h2 className="text-lg font-semibold text-blue-900">Medical Records</h2>
-              </div>
-              <div className="p-6">
-                <PatientFilesView patientId={patientId} />
-              </div>
             </div>
           </div>
         </div>

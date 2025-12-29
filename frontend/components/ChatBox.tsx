@@ -40,17 +40,11 @@ export default function ChatBox({
 
   const WAITLIST_MESSAGE_LIMIT = 10;
 
-  // Debug: Log initial messages
+  // Initialize messages once on mount
   useEffect(() => {
     console.log('💬 ChatBox initialized with', initialMessages.length, 'messages:', initialMessages);
     setMessages(initialMessages);
-  }, []);
-
-  // Update messages when initialMessages changes (sync with parent)
-  useEffect(() => {
-    console.log('🔄 Syncing messages from initialMessages:', initialMessages.length, 'messages');
-    setMessages(initialMessages);
-  }, [initialMessages]);
+  }, []); // Only run once on mount - socket handles updates after that
 
   const scrollToBottom = (force = false) => {
     if (!messagesContainerRef.current) return;

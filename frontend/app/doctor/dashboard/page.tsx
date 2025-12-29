@@ -9,6 +9,7 @@ import { connectSocket } from '../../../lib/socket';
 import { NotificationProvider } from '../../../context/NotificationContext';
 import NotificationBell from '../../../components/NotificationBell';
 import AnimatedBackground from '../../../components/AnimatedBackground';
+import { formatDoctorName } from '../../../utils/format';
 import type { Doctor, SubscriptionInfo } from '../../../types';
 
 export default function DoctorDashboard() {
@@ -223,7 +224,7 @@ export default function DoctorDashboard() {
                   </div>
                 )}
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-semibold text-blue-900">Dr. {doctor.fullName}</p>
+                  <p className="text-sm font-semibold text-blue-900">{formatDoctorName(doctor.fullName)}</p>
                   <p className="text-xs text-gray-700">{doctor.specialization}</p>
                 </div>
                 <Link

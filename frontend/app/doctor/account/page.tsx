@@ -8,6 +8,7 @@ import { authApi, appointmentApi, doctorDiscovery } from '../../../lib/api';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import NotificationBell from '../../../components/NotificationBell';
 import { NotificationProvider } from '../../../context/NotificationContext';
+import { formatDoctorName } from '../../../utils/format';
 import type { Doctor, DoctorAvailability } from '../../../types';
 
 export default function DoctorAccountPage() {
@@ -385,7 +386,7 @@ export default function DoctorAccountPage() {
               {doctor.fullName.charAt(0)}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-blue-900">Dr. {doctor.fullName}</h2>
+              <h2 className="text-2xl font-bold text-blue-900">{formatDoctorName(doctor.fullName)}</h2>
               <p className="text-gray-600">{doctor.specialization}</p>
               <p className="text-sm text-cyan-600">Reg. No: {doctor.registrationNo}</p>
             </div>

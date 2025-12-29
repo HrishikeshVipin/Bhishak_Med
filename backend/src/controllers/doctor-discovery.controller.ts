@@ -310,7 +310,8 @@ export const updateOnlineStatus = async (req: Request, res: Response): Promise<v
 // Update doctor profile (doctor only - requires auth)
 export const updateDoctorProfile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const doctorId = (req as any).doctor?.id;
+    // Get doctorId from middleware (set by isDoctor middleware at req.doctorId)
+    const doctorId = (req as any).doctorId;
 
     if (!doctorId) {
       res.status(401).json({

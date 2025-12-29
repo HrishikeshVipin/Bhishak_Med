@@ -9,6 +9,7 @@ import VideoRoom from '../../../components/VideoRoom';
 import VitalsForm from '../../../components/VitalsForm';
 import FileUpload from '../../../components/FileUpload';
 import PaymentSection from '../../../components/PaymentSection';
+import { formatDoctorName } from '../../../utils/format';
 import type { Socket } from 'socket.io-client';
 
 interface Consultation {
@@ -326,7 +327,7 @@ export default function PatientAccessPage() {
               <h3 className="text-2xl font-bold text-green-900">Consultation Completed</h3>
             </div>
             <p className="text-green-800 text-lg mb-3">
-              Your consultation with Dr. {consultation.doctor.fullName} has been successfully completed.
+              Your consultation with {formatDoctorName(consultation.doctor.fullName)} has been successfully completed.
             </p>
             <div className="bg-green-100 border border-green-300 rounded-lg p-4 mt-4">
               <p className="text-green-900 font-semibold mb-2">📄 Your Prescription:</p>
@@ -345,7 +346,7 @@ export default function PatientAccessPage() {
               <h3 className="font-bold text-orange-900">You're on the Waiting List</h3>
             </div>
             <p className="text-orange-800 text-sm mb-2">
-              You can chat with Dr. {consultation.doctor.fullName}, but full consultation features
+              You can chat with {formatDoctorName(consultation.doctor.fullName)}, but full consultation features
               (video call, prescriptions) will be available once the doctor activates your account.
             </p>
             <div className="flex items-center gap-2 bg-orange-100 border border-orange-300 rounded-lg px-3 py-2 mt-3">
@@ -382,7 +383,7 @@ export default function PatientAccessPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold text-gray-900">Dr. {consultation.doctor.fullName}</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{formatDoctorName(consultation.doctor.fullName)}</h3>
                   {isDoctorOnline ? (
                     <span className="flex items-center gap-1 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
                       <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>

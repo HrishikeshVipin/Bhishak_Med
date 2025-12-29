@@ -4,8 +4,17 @@ import prisma from '../config/database';
 // Create or update patient vitals
 export const saveVitals = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { patientId } = req.params;
+    // Use patientId from middleware (validated via access token), not from URL params
+    const patientId = (req as any).patientId;
     const { weight, height, bloodPressure, temperature, heartRate, oxygenLevel, notes } = req.body;
+
+    if (!patientId) {
+      res.status(401).json({
+        success: false,
+        message: 'Patient authentication required',
+      });
+      return;
+    }
 
     // Verify patient exists
     const patient = await prisma.patient.findUnique({
@@ -66,7 +75,16 @@ export const saveVitals = async (req: Request, res: Response): Promise<void> => 
 // Get patient vitals history
 export const getVitalsHistory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { patientId } = req.params;
+    // Check if request is from doctor (has doctorId) or patient (has patientId from middleware)
+    const patientId = (req as any).patientId || req.params.patientId;
+
+    if (!patientId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+      return;
+    }
 
     const vitals = await prisma.vitals.findMany({
       where: { patientId },
@@ -90,9 +108,18 @@ export const getVitalsHistory = async (req: Request, res: Response): Promise<voi
 // Upload medical files
 export const uploadMedicalFile = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { patientId } = req.params;
+    // Use patientId from middleware (validated via access token), not from URL params
+    const patientId = (req as any).patientId;
     const { description } = req.body;
     const files = req.files as Express.Multer.File[];
+
+    if (!patientId) {
+      res.status(401).json({
+        success: false,
+        message: 'Patient authentication required',
+      });
+      return;
+    }
 
     if (!files || files.length === 0) {
       res.status(400).json({
@@ -148,7 +175,16 @@ export const uploadMedicalFile = async (req: Request, res: Response): Promise<vo
 // Get patient medical files
 export const getMedicalFiles = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { patientId } = req.params;
+    // Check if request is from doctor (has doctorId) or patient (has patientId from middleware)
+    const patientId = (req as any).patientId || req.params.patientId;
+
+    if (!patientId) {
+      res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+      return;
+    }
 
     const files = await prisma.medicalUpload.findMany({
       where: { patientId },

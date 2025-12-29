@@ -308,16 +308,9 @@ export default function DoctorConsultationPage() {
       });
     });
 
-    // Listen for new messages and update consultation state
-    newSocket.on('receive-message', (message: any) => {
-      setConsultation((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          chatMessages: [...prev.chatMessages, message],
-        };
-      });
-    });
+    // NOTE: Removed 'receive-message' listener from parent
+    // ChatBox component handles all message updates via its own socket listener
+    // This prevents duplicate listeners and state conflicts
 
     newSocket.on('connect_error', (error) => {
       console.error('❌ Socket connection error:', error);
@@ -338,7 +331,7 @@ export default function DoctorConsultationPage() {
           userType: 'doctor',
         });
       }
-      newSocket.off('receive-message');
+      // NOTE: 'receive-message' cleanup removed - ChatBox handles it
       newSocket.off('user-status-changed');
       newSocket.off('video-call-accepted');
       newSocket.off('video-call-declined');

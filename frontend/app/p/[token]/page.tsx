@@ -144,16 +144,9 @@ export default function PatientAccessPage() {
       }
     });
 
-    // Listen for new messages and update consultation state
-    newSocket.on('receive-message', (message: any) => {
-      setConsultation((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          chatMessages: [...prev.chatMessages, message],
-        };
-      });
-    });
+    // NOTE: Removed 'receive-message' listener from parent
+    // ChatBox component handles all message updates via its own socket listener
+    // This prevents duplicate listeners and state conflicts
 
     // Listen for prescription updates (doctor created prescription)
     newSocket.on('prescription-updated', (data: { prescription: any; timestamp: string }) => {
@@ -218,7 +211,7 @@ export default function PatientAccessPage() {
           userType: 'patient',
         });
       }
-      newSocket.off('receive-message');
+      // NOTE: 'receive-message' cleanup removed - ChatBox handles it
       newSocket.off('user-status-changed');
       newSocket.off('incoming-video-call');
       newSocket.off('prescription-updated');

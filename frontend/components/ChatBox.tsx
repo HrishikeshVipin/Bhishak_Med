@@ -61,19 +61,32 @@ export default function ChatBox({
 
   // Socket listeners for real-time messages - only setup once
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log('⚠️ ChatBox: No socket available');
+      return;
+    }
 
-    console.log('📡 Setting up socket listeners for consultation:', consultationId);
+    console.log('📡 ChatBox: Setting up socket listeners', {
+      consultationId,
+      socketConnected: socket.connected,
+      socketId: socket.id
+    });
 
     // Message handler
     const handleReceiveMessage = (data: Message) => {
-      console.log('📨 Received message:', data);
+      console.log('📨 ChatBox: Received message', {
+        messageId: data.id,
+        sender: data.senderName,
+        socketConnected: socket.connected
+      });
       setMessages((prev) => {
+        console.log(`📊 ChatBox: Current messages: ${prev.length}, Adding message ${data.id}`);
         // Prevent duplicates - check if message already exists by ID
         if (prev.some(msg => msg.id === data.id)) {
-          console.log('⚠️ Duplicate message detected, skipping:', data.id);
+          console.log('⚠️ ChatBox: Duplicate message detected, skipping:', data.id);
           return prev;
         }
+        console.log('✅ ChatBox: Adding new message to state');
         return [...prev, data];
       });
       // Force scroll when new message arrives
@@ -86,11 +99,20 @@ export default function ChatBox({
 
     // Attach listener
     socket.on('receive-message', handleReceiveMessage);
+    console.log('✅ ChatBox: Listener attached for receive-message');
+
+    // Test: Log all socket events
+    socket.onAny((eventName, ...args) => {
+      if (eventName !== 'receive-message') {
+        console.log(`🔔 Socket event: ${eventName}`, args);
+      }
+    });
 
     // Cleanup on unmount or when socket/consultationId changes
     return () => {
-      console.log('🧹 Cleaning up socket listeners for consultation:', consultationId);
+      console.log('🧹 ChatBox: Cleaning up socket listeners for consultation:', consultationId);
       socket.off('receive-message', handleReceiveMessage);
+      socket.offAny();
     };
   }, [socket, consultationId]); // Re-setup if socket or consultationId changes
 

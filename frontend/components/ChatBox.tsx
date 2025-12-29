@@ -59,21 +59,40 @@ export default function ChatBox({
     }
   };
 
-  // Only scroll when receiving new messages (not when syncing from initialMessages)
+  // Socket listeners for real-time messages - only setup once
   useEffect(() => {
     if (!socket) return;
 
-    // Listen for incoming messages
-    socket.on('receive-message', (data: Message) => {
-      setMessages((prev) => [...prev, data]);
-      // Always force scroll when new message arrives
-      setTimeout(() => scrollToBottom(true), 100);
-    });
+    console.log('📡 Setting up socket listeners for consultation:', consultationId);
 
-    return () => {
-      socket.off('receive-message');
+    // Message handler
+    const handleReceiveMessage = (data: Message) => {
+      console.log('📨 Received message:', data);
+      setMessages((prev) => {
+        // Prevent duplicates - check if message already exists by ID
+        if (prev.some(msg => msg.id === data.id)) {
+          console.log('⚠️ Duplicate message detected, skipping:', data.id);
+          return prev;
+        }
+        return [...prev, data];
+      });
+      // Force scroll when new message arrives
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
     };
-  }, [socket]);
+
+    // Attach listener
+    socket.on('receive-message', handleReceiveMessage);
+
+    // Cleanup on unmount or when socket/consultationId changes
+    return () => {
+      console.log('🧹 Cleaning up socket listeners for consultation:', consultationId);
+      socket.off('receive-message', handleReceiveMessage);
+    };
+  }, [socket, consultationId]); // Re-setup if socket or consultationId changes
 
   useEffect(() => {
     if (!socket) return;
@@ -143,7 +162,11 @@ export default function ChatBox({
     socket.emit('stop-typing', { consultationId });
 
     // Force scroll to bottom when user sends a message
-    setTimeout(() => scrollToBottom(true), 100);
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }, 100);
   };
 
   return (

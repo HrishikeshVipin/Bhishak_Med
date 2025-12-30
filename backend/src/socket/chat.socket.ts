@@ -312,6 +312,10 @@ export const initializeChatSocket = (io: SocketIOServer) => {
         console.log(`   Sender socket: ${socket.id}`);
         console.log(`   All sockets: ${socketsInRoom.map(s => s.id).join(', ')}`);
 
+        // Determine who should receive
+        const receivers = socketsInRoom.filter(s => s.id !== socket.id);
+        console.log(`   📨 Will broadcast to ${receivers.length} sockets:`, receivers.map(s => s.id).join(', '));
+
         socket.to(consultationId).emit('receive-message', {
           id: chatMessage.id,
           consultationId,
@@ -320,6 +324,8 @@ export const initializeChatSocket = (io: SocketIOServer) => {
           message,
           createdAt: chatMessage.createdAt,
         });
+
+        console.log(`   ✅ Broadcasted 'receive-message' event to room ${consultationId}`);
 
         // Send confirmation back to sender with the saved message ID
         socket.emit('message-sent', {

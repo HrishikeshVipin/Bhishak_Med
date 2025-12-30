@@ -76,6 +76,7 @@ export default function ChatBox({
       consultationId,
       socketConnected: socket.connected,
       socketId: socket.id,
+      socketRooms: (socket as any).rooms ? Array.from((socket as any).rooms) : 'N/A',
       timestamp: new Date().toISOString()
     });
 
@@ -125,11 +126,10 @@ export default function ChatBox({
       });
     };
 
-    // Test if socket can receive ANY event
+    // Test if socket can receive ANY event - log everything during debugging
     socket.onAny((eventName, ...args) => {
-      if (eventName === 'receive-message' || eventName === 'message-sent') {
-        console.log(`🔔 ChatBox (${userType}): Socket received event:`, eventName, args);
-      }
+      console.log(`🔔 ChatBox (${userType}): Socket received ANY event:`, eventName,
+        eventName === 'receive-message' || eventName === 'message-sent' ? args : '(other event)');
     });
 
     // Attach listeners

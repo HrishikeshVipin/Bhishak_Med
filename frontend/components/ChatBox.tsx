@@ -67,11 +67,12 @@ export default function ChatBox({
   // Socket listeners for real-time messages - setup once when socket is available
   useEffect(() => {
     if (!socket) {
-      console.log('⚠️ ChatBox: No socket available');
+      console.log('⚠️ ChatBox: No socket available', { userType });
       return;
     }
 
     console.log('📡 ChatBox: Setting up socket listeners', {
+      userType,
       consultationId,
       socketConnected: socket.connected,
       socketId: socket.id,
@@ -124,17 +125,26 @@ export default function ChatBox({
       });
     };
 
+    // Test if socket can receive ANY event
+    socket.onAny((eventName, ...args) => {
+      if (eventName === 'receive-message' || eventName === 'message-sent') {
+        console.log(`🔔 ChatBox (${userType}): Socket received event:`, eventName, args);
+      }
+    });
+
     // Attach listeners
     socket.on('receive-message', handleReceiveMessage);
     socket.on('message-sent', handleMessageSent);
-    console.log('✅ ChatBox: Listeners attached');
+    console.log('✅ ChatBox: Listeners attached', { userType });
 
     // Cleanup ONLY on unmount or when socket changes (not on every render)
     return () => {
       console.log('🧹 ChatBox: Removing listeners', {
+        userType,
         socketId: socket.id,
         timestamp: new Date().toISOString()
       });
+      socket.offAny(); // Remove the onAny listener
       socket.off('receive-message', handleReceiveMessage);
       socket.off('message-sent', handleMessageSent);
     };
@@ -215,6 +225,13 @@ export default function ChatBox({
     setMessages((prev) => [...prev, optimisticMessage]);
 
     // Emit message to server
+    console.log('📡 ChatBox: Emitting send-message event', {
+      userType,
+      consultationId,
+      messageText: messageText.substring(0, 30),
+      socketId: socket.id
+    });
+
     socket.emit('send-message', {
       consultationId,
       senderType: userType,

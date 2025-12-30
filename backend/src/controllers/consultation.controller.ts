@@ -910,6 +910,15 @@ export const markMessagesAsRead = async (req: Request, res: Response): Promise<v
       data: { hasUnreadMessages: false },
     });
 
+    // Notify doctor's dashboard to refresh unread count via socket
+    const io = (req as any).io;
+    if (io) {
+      io.to(`doctor-${doctorId}`).emit('messages-marked-read', {
+        consultationId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Messages marked as read',

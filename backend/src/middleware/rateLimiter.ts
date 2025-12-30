@@ -20,8 +20,8 @@ export const authLimiter = rateLimit({
   handler: rateLimitHandler,
   // Skip successful requests (only count failures)
   skipSuccessfulRequests: true,
-  // Trust Railway proxy
-  validate: { trustProxy: false },
+  // Trust Railway proxy (MUST be true for production)
+  validate: { trustProxy: true },
 });
 
 // Moderate rate limiter for registration/signup
@@ -32,7 +32,7 @@ export const registrationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
 });
 
 // General API rate limiter (for all API endpoints)
@@ -51,7 +51,7 @@ export const apiLimiter = rateLimit({
     const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'DOCTOR', 'PATIENT'];
     return allowedRoles.includes(req.user.role);
   },
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
 });
 
 // Strict rate limiter for file uploads
@@ -62,7 +62,7 @@ export const uploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
 });
 
 // Rate limiter for patient self-registration links
@@ -73,7 +73,7 @@ export const patientRegistrationLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
 });
 
 // Very strict rate limiter for password reset
@@ -84,7 +84,7 @@ export const passwordResetLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
 });
 
 // Moderate rate limiter for creating patients (doctors only)
@@ -95,7 +95,7 @@ export const createPatientLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
 });
 
 // Rate limiter for prescription generation
@@ -106,5 +106,5 @@ export const prescriptionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  validate: { trustProxy: false },
+  validate: { trustProxy: true },
 });

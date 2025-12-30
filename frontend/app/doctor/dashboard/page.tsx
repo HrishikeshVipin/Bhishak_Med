@@ -105,6 +105,13 @@ export default function DoctorDashboard() {
       fetchUnreadChats();
     });
 
+    // Listen for messages marked as read (when doctor opens consultation)
+    socket.on('messages-marked-read', (data: any) => {
+      console.log('Messages marked as read:', data);
+      // Refresh unread chats to remove this consultation from list
+      fetchUnreadChats();
+    });
+
     // Listen for new appointment requests
     socket.on('new-appointment-request', (data: any) => {
       console.log('New appointment request:', data);
@@ -113,6 +120,7 @@ export default function DoctorDashboard() {
 
     return () => {
       socket.off('new-unread-message');
+      socket.off('messages-marked-read');
       socket.off('new-appointment-request');
     };
   }, [isAuthenticated, role, user?.id]);

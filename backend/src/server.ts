@@ -120,6 +120,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Attach Socket.IO instance to all requests (for emitting events from controllers)
+app.use((req, res, next) => {
+  (req as any).io = io;
+  next();
+});
+
 // Apply general rate limiting to all API routes
 app.use('/api', apiLimiter);
 

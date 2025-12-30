@@ -9,6 +9,13 @@ export const initializeChatSocket = (io: SocketIOServer) => {
   io.on('connection', (socket: Socket) => {
     console.log('✅ Client connected:', socket.id);
 
+    // Debug: Log ALL events received by this socket
+    socket.onAny((eventName, ...args) => {
+      if (eventName !== 'typing' && eventName !== 'stop-typing') {
+        console.log(`🔔 Backend socket ${socket.id} received event: ${eventName}`);
+      }
+    });
+
     // Track which consultation this socket is in
     let currentConsultation: string | null = null;
     let currentUserType: 'doctor' | 'patient' | null = null;
@@ -204,6 +211,13 @@ export const initializeChatSocket = (io: SocketIOServer) => {
       senderName: string;
       message: string;
     }) => {
+      console.log(`📥 Backend received 'send-message' from socket ${socket.id}:`, {
+        senderType: data.senderType,
+        senderName: data.senderName,
+        consultationId: data.consultationId,
+        message: data.message?.substring(0, 30)
+      });
+
       try {
         const { consultationId, senderType, senderName, message } = data;
 

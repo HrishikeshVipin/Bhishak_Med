@@ -82,16 +82,24 @@ export default function ChatBox({
       });
 
       setMessages((prev) => {
-        console.log('✅ ChatBox: Adding message', data.id, 'Total:', prev.length + 1);
-        return [...prev, data];
-      });
+        const newMessages = [...prev, data];
+        console.log('✅ ChatBox: Adding message', data.id, 'Total:', newMessages.length);
 
-      // Force scroll when new message arrives
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-      }, 100);
+        // Force scroll to bottom after state update
+        requestAnimationFrame(() => {
+          if (messagesContainerRef.current) {
+            const container = messagesContainerRef.current;
+            container.scrollTop = container.scrollHeight;
+            console.log('📜 Scrolled to bottom after receiving message', {
+              scrollTop: container.scrollTop,
+              scrollHeight: container.scrollHeight,
+              clientHeight: container.clientHeight
+            });
+          }
+        });
+
+        return newMessages;
+      });
     };
 
     // Message sent confirmation - replace temp ID with real ID
@@ -217,11 +225,18 @@ export default function ChatBox({
     socket.emit('stop-typing', { consultationId });
 
     // Force scroll to bottom when user sends a message
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        const container = messagesContainerRef.current;
+        container.scrollTop = container.scrollHeight;
+        console.log('📜 Scrolled to bottom after sending message', {
+          scrollTop: container.scrollTop,
+          scrollHeight: container.scrollHeight,
+          clientHeight: container.clientHeight,
+          messagesCount: messages.length + 1
+        });
       }
-    }, 100);
+    });
   };
 
   return (

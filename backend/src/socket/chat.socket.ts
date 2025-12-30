@@ -305,6 +305,13 @@ export const initializeChatSocket = (io: SocketIOServer) => {
 
         // Broadcast message to all users in the consultation room EXCEPT sender
         // Sender will see their own message via optimistic UI update
+
+        // Debug: Check who's in the room
+        const socketsInRoom = await io.in(consultationId).fetchSockets();
+        console.log(`📊 Sockets in room ${consultationId}:`, socketsInRoom.length, 'sockets');
+        console.log(`   Sender socket: ${socket.id}`);
+        console.log(`   All sockets: ${socketsInRoom.map(s => s.id).join(', ')}`);
+
         socket.to(consultationId).emit('receive-message', {
           id: chatMessage.id,
           consultationId,

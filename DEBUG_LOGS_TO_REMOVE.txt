@@ -1,0 +1,353 @@
+# Debug Logs to Remove Before Production
+
+This file lists all debug/verbose logging added during real-time chat troubleshooting.
+Remove these before final deployment to reduce console noise.
+
+---
+
+## BACKEND: backend/src/socket/chat.socket.ts
+
+### Lines 12-17: Socket-level event logging
+```typescript
+// Debug: Log ALL events received by this socket
+socket.onAny((eventName, ...args) => {
+  if (eventName !== 'typing' && eventName !== 'stop-typing') {
+    console.log(`🔔 Backend socket ${socket.id} received event: ${eventName}`);
+  }
+});
+```
+**Action:** Remove entire socket.onAny() block
+
+---
+
+### Lines 207-212: send-message event received logging
+```typescript
+console.log(`📥 Backend received 'send-message' from socket ${socket.id}:`, {
+  senderType: data.senderType,
+  senderName: data.senderName,
+  consultationId: data.consultationId,
+  message: data.message?.substring(0, 30)
+});
+```
+**Action:** Remove this console.log
+
+---
+
+### Line 223: Step 1 logging
+```typescript
+console.log('   Step 1: Fetching consultation from database...');
+```
+**Action:** Remove
+
+---
+
+### Line 233: Step 2 logging
+```typescript
+console.log('   Step 2: Consultation fetched:', consultation ? 'Found' : 'Not found');
+```
+**Action:** Remove
+
+---
+
+### Line 236: Not found error logging
+```typescript
+console.log('   ❌ Consultation not found, sending error');
+```
+**Action:** Remove (keep the socket.emit error though)
+
+---
+
+### Line 244: Step 3 logging
+```typescript
+console.log('   Step 3: Checking patient status:', consultation.patient.status);
+```
+**Action:** Remove
+
+---
+
+### Lines 246-252: Waitlist checking logs
+```typescript
+console.log('   Patient is waitlisted, checking message count...');
+// ...
+console.log(`   Message count: ${messageCount}/${WAITLIST_MESSAGE_LIMIT}`);
+```
+**Action:** Remove both console.logs
+
+---
+
+### Line 255: Limit reached logging
+```typescript
+console.log('   ❌ Message limit reached, sending limit error');
+```
+**Action:** Remove
+
+---
+
+### Line 266: Step 4 logging
+```typescript
+console.log('   Step 4: Saving message to database...');
+```
+**Action:** Remove
+
+---
+
+### Line 275: Step 5 logging
+```typescript
+console.log('   Step 5: Message saved with ID:', chatMessage.id);
+```
+**Action:** Remove
+
+---
+
+### Lines 336-338: Room participants logging
+```typescript
+const receivers = socketsInRoom.filter(s => s.id !== socket.id);
+console.log(`   📨 Will broadcast to ${receivers.length} sockets:`, receivers.map(s => s.id).join(', '));
+```
+**Action:** Remove the `receivers` variable declaration and console.log
+
+---
+
+### Lines 350: Broadcast confirmation logging
+```typescript
+console.log(`   ✅ Broadcasted 'receive-message' event to room ${consultationId}`);
+```
+**Action:** Remove
+
+---
+
+### KEEP THESE (useful for production):
+- Line 311-313: Socket room debugging (useful for production issues)
+  ```typescript
+  console.log(`📊 Sockets in room ${consultationId}:`, socketsInRoom.length, 'sockets');
+  console.log(`   Sender socket: ${socket.id}`);
+  console.log(`   All sockets: ${socketsInRoom.map(s => s.id).join(', ')}`);
+  ```
+  **Optional:** Could reduce to single line or remove entirely
+
+- Line 309: Notification error logging
+  ```typescript
+  console.error('⚠️ Notification failed (non-blocking):', err.message);
+  ```
+  **Keep:** Important for production monitoring
+
+---
+
+## FRONTEND: frontend/components/ChatBox.tsx
+
+### Lines 74-82: Socket listener setup logging
+```typescript
+console.log('📡 ChatBox: Setting up socket listeners', {
+  userType,
+  consultationId,
+  socketConnected: socket.connected,
+  socketId: socket.id,
+  existingListeners: socket.listeners('receive-message').length,
+  socketRooms: (socket as any).rooms ? Array.from((socket as any).rooms) : 'N/A',
+  timestamp: new Date().toISOString()
+});
+```
+**Action:** Remove or simplify to just `console.log('Setting up chat listeners');`
+
+---
+
+### Lines 85-89: Existing listeners warning
+```typescript
+if (socket.listeners('receive-message').length > 0) {
+  console.log(`⚠️ ChatBox (${userType}): Found ${socket.listeners('receive-message').length} existing listeners, removing them...`);
+  socket.removeAllListeners('receive-message');
+  socket.removeAllListeners('message-sent');
+}
+```
+**Action:** Keep the cleanup logic, remove the console.log only
+
+---
+
+### Lines 93-97: handleReceiveMessage called logging
+```typescript
+console.log(`📨 ChatBox (${userType}): handleReceiveMessage CALLED`, {
+  messageId: data.id,
+  sender: data.senderName,
+  text: data.message
+});
+```
+**Action:** Remove entire console.log
+
+---
+
+### Lines 99-102: Message count logging
+```typescript
+setMessages((prev) => {
+  const newMessages = [...prev, data];
+  console.log('✅ ChatBox: Adding message', data.id, 'Total:', newMessages.length);
+  return newMessages;
+});
+```
+**Action:** Remove the console.log line (Line 101)
+
+---
+
+### Line 109: Scroll logging
+```typescript
+console.log('📜 Scrolled to bottom after receiving message');
+```
+**Action:** Remove
+
+---
+
+### Lines 130-133: Socket onAny event logging
+```typescript
+socket.onAny((eventName, ...args) => {
+  console.log(`🔔 ChatBox (${userType}): Socket received ANY event:`, eventName,
+    eventName === 'receive-message' || eventName === 'message-sent' ? args : '(other event)');
+});
+```
+**Action:** Remove entire socket.onAny() block
+
+---
+
+### Line 136: Attaching receive-message listener
+```typescript
+console.log(`📌 ChatBox (${userType}): Attaching receive-message listener...`);
+```
+**Action:** Remove
+
+---
+
+### Line 138: Attaching message-sent listener
+```typescript
+console.log(`📌 ChatBox (${userType}): Attaching message-sent listener...`);
+```
+**Action:** Remove
+
+---
+
+### Line 140: Listeners attached with count
+```typescript
+console.log('✅ ChatBox: Listeners attached', { userType, listenersCount: socket.listeners('receive-message').length });
+```
+**Action:** Remove
+
+---
+
+### Lines 144-149: Cleanup logging
+```typescript
+console.log('🧹 ChatBox: Removing listeners', {
+  userType,
+  socketId: socket.id,
+  listenersBefore: socket.listeners('receive-message').length,
+  timestamp: new Date().toISOString()
+});
+```
+**Action:** Remove
+
+---
+
+### Lines 156-158: Listeners removed logging
+```typescript
+console.log('🧹 ChatBox: Listeners removed', {
+  listenersAfter: socket.listeners('receive-message').length
+});
+```
+**Action:** Remove
+
+---
+
+### Lines 228-233: Emit send-message logging
+```typescript
+console.log('📡 ChatBox: Emitting send-message event', {
+  userType,
+  consultationId,
+  messageText: messageText.substring(0, 30),
+  socketId: socket.id
+});
+```
+**Action:** Remove
+
+---
+
+### Lines 217-223: Optimistic message logging
+```typescript
+console.log('📤 ChatBox: Adding message optimistically', {
+  tempId,
+  message: messageText.substring(0, 50)
+});
+```
+**Action:** Remove
+
+---
+
+### Lines 249-256: Scroll after sending logging
+```typescript
+console.log('📜 Scrolled to bottom after sending message', {
+  scrollTop: container.scrollTop,
+  scrollHeight: container.scrollHeight,
+  clientHeight: container.clientHeight,
+  messagesCount: messages.length + 1
+});
+```
+**Action:** Remove
+
+---
+
+### Lines 116-119: Message sent confirmation logging
+```typescript
+console.log('✅ ChatBox: Message confirmed by server', {
+  messageId: data.id,
+  timestamp: data.createdAt
+});
+```
+**Action:** Remove
+
+---
+
+### Line 127: Temp ID replacement logging
+```typescript
+console.log('🔄 ChatBox: Replaced temp ID with real ID:', data.id);
+```
+**Action:** Remove
+
+---
+
+## KEEP THESE (useful for production):
+
+### frontend/components/ChatBox.tsx - Lines 46-51
+```typescript
+useEffect(() => {
+  if (!hasInitialized.current && initialMessages.length > 0) {
+    console.log('💬 ChatBox: Initial load with', initialMessages.length, 'messages');
+    setMessages(initialMessages);
+    hasInitialized.current = true;
+  }
+}, [])
+```
+**Action:** Keep or simplify to `console.log('Chat initialized');`
+
+---
+
+### frontend/components/ChatBox.tsx - Line 70
+```typescript
+console.log('⚠️ ChatBox: No socket available', { userType });
+```
+**Action:** Keep (important warning)
+
+---
+
+## Summary
+
+**Total logs to remove:**
+- Backend: ~15 debug console.logs
+- Frontend: ~15 debug console.logs
+
+**Estimated time to clean:** 10-15 minutes
+
+**Recommended approach:**
+1. Test all features thoroughly first
+2. Create a git branch for cleanup: `git checkout -b cleanup-debug-logs`
+3. Remove logs file-by-file
+4. Test again to ensure nothing breaks
+5. Merge to master
+
+---
+
+Last Updated: December 30, 2025

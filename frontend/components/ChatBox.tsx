@@ -34,17 +34,22 @@ export default function ChatBox({
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [limitMessage, setLimitMessage] = useState('');
+  const [, forceUpdate] = useState(0); // Force re-render trigger
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasInitialized = useRef(false); // Track if we've initialized
 
   const WAITLIST_MESSAGE_LIMIT = 10;
 
   // Initialize messages once on mount
   useEffect(() => {
-    console.log('💬 ChatBox initialized with', initialMessages.length, 'messages:', initialMessages);
-    setMessages(initialMessages);
-  }, []); // Only run once on mount - socket handles updates after that
+    if (!hasInitialized.current && initialMessages.length > 0) {
+      console.log('💬 ChatBox: Initial load with', initialMessages.length, 'messages');
+      setMessages(initialMessages);
+      hasInitialized.current = true;
+    }
+  }, [])
 
   const scrollToBottom = (force = false) => {
     if (!messagesContainerRef.current) return;
@@ -81,25 +86,22 @@ export default function ChatBox({
         text: data.message
       });
 
+      // Add message to state
       setMessages((prev) => {
         const newMessages = [...prev, data];
         console.log('✅ ChatBox: Adding message', data.id, 'Total:', newMessages.length);
-
-        // Force scroll to bottom after state update
-        requestAnimationFrame(() => {
-          if (messagesContainerRef.current) {
-            const container = messagesContainerRef.current;
-            container.scrollTop = container.scrollHeight;
-            console.log('📜 Scrolled to bottom after receiving message', {
-              scrollTop: container.scrollTop,
-              scrollHeight: container.scrollHeight,
-              clientHeight: container.clientHeight
-            });
-          }
-        });
-
         return newMessages;
       });
+
+      // Force re-render and scroll after state update
+      setTimeout(() => {
+        forceUpdate(n => n + 1);
+
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          console.log('📜 Scrolled to bottom after receiving message');
+        }
+      }, 100);
     };
 
     // Message sent confirmation - replace temp ID with real ID
@@ -268,7 +270,12 @@ export default function ChatBox({
       )}
 
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4" style={{ maxHeight: '400px' }}>
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+        style={{ maxHeight: '400px' }}
+        key={`messages-${messages.length}`}
+      >
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <p className="text-4xl mb-2">💬</p>

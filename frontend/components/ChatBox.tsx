@@ -76,9 +76,17 @@ export default function ChatBox({
       consultationId,
       socketConnected: socket.connected,
       socketId: socket.id,
+      existingListeners: socket.listeners('receive-message').length,
       socketRooms: (socket as any).rooms ? Array.from((socket as any).rooms) : 'N/A',
       timestamp: new Date().toISOString()
     });
+
+    // CRITICAL: Remove any existing listeners first to prevent stale handlers
+    if (socket.listeners('receive-message').length > 0) {
+      console.log(`⚠️ ChatBox (${userType}): Found ${socket.listeners('receive-message').length} existing listeners, removing them...`);
+      socket.removeAllListeners('receive-message');
+      socket.removeAllListeners('message-sent');
+    }
 
     // Message handler - receives messages from OTHER users
     const handleReceiveMessage = (data: Message) => {
@@ -144,11 +152,18 @@ export default function ChatBox({
       console.log('🧹 ChatBox: Removing listeners', {
         userType,
         socketId: socket.id,
+        listenersBefore: socket.listeners('receive-message').length,
         timestamp: new Date().toISOString()
       });
+
+      // Remove ALL listeners for these events to prevent stale handlers
+      socket.removeAllListeners('receive-message');
+      socket.removeAllListeners('message-sent');
       socket.offAny(); // Remove the onAny listener
-      socket.off('receive-message', handleReceiveMessage);
-      socket.off('message-sent', handleMessageSent);
+
+      console.log('🧹 ChatBox: Listeners removed', {
+        listenersAfter: socket.listeners('receive-message').length
+      });
     };
   }, [socket]); // Only re-run when socket instance changes
 

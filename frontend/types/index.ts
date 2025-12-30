@@ -39,6 +39,7 @@ export interface Doctor {
   aadhaarFrontPhoto?: string;
   aadhaarBackPhoto?: string;
   profilePhoto?: string;
+  digitalSignature?: string;
   bio?: string;
   upiId?: string;
   qrCodeImage?: string;

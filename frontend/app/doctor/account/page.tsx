@@ -66,8 +66,15 @@ export default function DoctorAccountPage() {
 
   useEffect(() => {
     if (isAuthenticated && role === 'DOCTOR' && user) {
-      setDoctor(user as Doctor);
-      setBio((user as Doctor).bio || '');
+      const doctorData = user as Doctor;
+      setDoctor(doctorData);
+      setBio(doctorData.bio || '');
+
+      // Load existing signature if available
+      if (doctorData.digitalSignature) {
+        setSignaturePreview(`${process.env.NEXT_PUBLIC_API_URL}/${doctorData.digitalSignature}`);
+      }
+
       setLoading(false);
     } else {
       setLoading(false);
@@ -236,12 +243,22 @@ export default function DoctorAccountPage() {
 
     try {
       setSignatureUploading(true);
-      // TODO: Call API to upload signature
-      // const formData = new FormData();
-      // formData.append('signature', signatureFile);
-      // await doctorApi.uploadSignature(formData);
-      setSignatureSaved(true);
-      setTimeout(() => setSignatureSaved(false), 3000);
+      const formData = new FormData();
+      formData.append('signature', signatureFile);
+
+      const response = await doctorDiscovery.uploadDigitalSignature(formData);
+
+      if (response.success && response.data?.doctor) {
+        // Update signature in local state
+        if (doctor) {
+          setDoctor({
+            ...doctor,
+            digitalSignature: response.data.doctor.digitalSignature,
+          });
+        }
+        setSignatureSaved(true);
+        setTimeout(() => setSignatureSaved(false), 3000);
+      }
     } catch (error) {
       console.error('Signature upload error:', error);
     } finally {

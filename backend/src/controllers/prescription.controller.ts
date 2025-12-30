@@ -25,6 +25,7 @@ export const createPrescription = async (req: Request, res: Response): Promise<v
             specialization: true,
             registrationNo: true,
             phone: true,
+            digitalSignature: true,
           },
         },
         patient: {
@@ -383,14 +384,40 @@ async function generatePrescriptionPDF(
         .fillColor('#000000')
         .fontSize(9)
         .font('Helvetica')
-        .text('Doctor\'s Signature:', 350, doc.y)
-        .moveDown(0.5)
-        .strokeColor('#000000')
-        .lineWidth(1)
-        .moveTo(350, doc.y)
-        .lineTo(500, doc.y)
-        .stroke()
-        .moveDown(0.3)
+        .text('Doctor\'s Signature:', 350, doc.y);
+
+      // If digital signature exists, embed it
+      if (consultation.doctor.digitalSignature) {
+        const signaturePath = path.join(process.cwd(), consultation.doctor.digitalSignature);
+        if (fs.existsSync(signaturePath)) {
+          doc
+            .moveDown(0.3)
+            .image(signaturePath, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
+            .moveDown(2.5);
+        } else {
+          // Fallback to line if signature file doesn't exist
+          doc
+            .moveDown(0.5)
+            .strokeColor('#000000')
+            .lineWidth(1)
+            .moveTo(350, doc.y)
+            .lineTo(500, doc.y)
+            .stroke()
+            .moveDown(0.3);
+        }
+      } else {
+        // No signature uploaded - show line
+        doc
+          .moveDown(0.5)
+          .strokeColor('#000000')
+          .lineWidth(1)
+          .moveTo(350, doc.y)
+          .lineTo(500, doc.y)
+          .stroke()
+          .moveDown(0.3);
+      }
+
+      doc
         .fillColor('#1e3a8a')
         .fontSize(9)
         .font('Helvetica-Bold')

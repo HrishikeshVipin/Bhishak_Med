@@ -232,3 +232,35 @@ export const uploadProfilePhoto = multer({
     fileSize: MAX_IMAGE_SIZE,
   },
 }).single('profilePhoto');
+
+// Storage configuration for digital signature
+const digitalSignatureStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    cb(null, 'uploads/doctor-kyc/signatures');
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
+    const uniqueId = uuidv4();
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const sanitizedOriginalName = file.originalname
+      .replace(/[^a-zA-Z0-9.]/g, '_')
+      .substring(0, 50);
+
+    cb(null, `signature_${uniqueId}_${timestamp}${ext}`);
+  },
+});
+
+// Upload middleware for digital signature (doctor only)
+export const uploadDigitalSignature = multer({
+  storage: digitalSignatureStorage,
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Digital signature must be an image file (JPG, PNG)'));
+    }
+  },
+  limits: {
+    fileSize: MAX_IMAGE_SIZE,
+  },
+}).single('signature');

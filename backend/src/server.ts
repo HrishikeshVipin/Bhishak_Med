@@ -39,6 +39,7 @@ const uploadDirs = [
   'uploads/doctor-kyc/registration-certificates',
   'uploads/doctor-kyc/aadhaar-photos',
   'uploads/doctor-kyc/profile-photos',
+  'uploads/doctor-kyc/signatures',
   'uploads/reports',
   'uploads/payment-proofs',
   'uploads/qr-codes',

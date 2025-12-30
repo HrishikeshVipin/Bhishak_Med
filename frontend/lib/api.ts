@@ -810,6 +810,15 @@ export const doctorDiscovery = {
       });
       return data;
     },
+
+    uploadDigitalSignature: async (formData: FormData) => {
+      const { data } = await api.put<ApiResponse<{ doctor: any }>>('/doctor/profile/signature', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return data;
+    },
 };
 
 // Appointment API

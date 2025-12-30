@@ -75,6 +75,7 @@ model Doctor {
   aadhaarFrontPhoto       String? // Aadhaar card front photo
   aadhaarBackPhoto        String? // Aadhaar card back photo
   profilePhoto            String? // Doctor's profile photo
+  digitalSignature        String? // Doctor's signature image for prescriptions
 
   // Verification status
   status          String  @default("PENDING_VERIFICATION") // DoctorStatus

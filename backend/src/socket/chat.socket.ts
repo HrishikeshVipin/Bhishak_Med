@@ -220,6 +220,7 @@ export const initializeChatSocket = (io: SocketIOServer) => {
 
       try {
         const { consultationId, senderType, senderName, message } = data;
+        console.log('   Step 1: Fetching consultation from database...');
 
         // Get consultation with patient status
         const consultation = await prisma.consultation.findUnique({
@@ -229,8 +230,10 @@ export const initializeChatSocket = (io: SocketIOServer) => {
             doctor: { select: { id: true, fullName: true, email: true, emailNotifications: true, chatNotifications: true } },
           },
         });
+        console.log('   Step 2: Consultation fetched:', consultation ? 'Found' : 'Not found');
 
         if (!consultation) {
+          console.log('   ❌ Consultation not found, sending error');
           socket.emit('error', {
             message: 'Consultation not found',
           });
@@ -238,14 +241,18 @@ export const initializeChatSocket = (io: SocketIOServer) => {
         }
 
         // Check waitlist message limit (10 messages max for waitlisted patients)
+        console.log('   Step 3: Checking patient status:', consultation.patient.status);
         if (consultation.patient.status === 'WAITLISTED') {
+          console.log('   Patient is waitlisted, checking message count...');
           const messageCount = await prisma.chatMessage.count({
             where: { consultationId },
           });
 
           const WAITLIST_MESSAGE_LIMIT = 10;
+          console.log(`   Message count: ${messageCount}/${WAITLIST_MESSAGE_LIMIT}`);
 
           if (messageCount >= WAITLIST_MESSAGE_LIMIT) {
+            console.log('   ❌ Message limit reached, sending limit error');
             socket.emit('message-limit-reached', {
               message: `Message limit reached (${WAITLIST_MESSAGE_LIMIT} messages). Please wait for doctor to activate your account.`,
               limit: WAITLIST_MESSAGE_LIMIT,
@@ -256,6 +263,7 @@ export const initializeChatSocket = (io: SocketIOServer) => {
         }
 
         // Save message to database
+        console.log('   Step 4: Saving message to database...');
         const chatMessage = await prisma.chatMessage.create({
           data: {
             consultationId,
@@ -264,6 +272,7 @@ export const initializeChatSocket = (io: SocketIOServer) => {
             isRead: false, // Default to unread
           },
         });
+        console.log('   Step 5: Message saved with ID:', chatMessage.id);
 
         // Update consultation tracking and send notifications
         if (consultation) {

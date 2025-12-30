@@ -82,7 +82,7 @@ export default function ChatBox({
 
     // Message handler - receives messages from OTHER users
     const handleReceiveMessage = (data: Message) => {
-      console.log('📨 ChatBox: Received message from other user', {
+      console.log(`📨 ChatBox (${userType}): handleReceiveMessage CALLED`, {
         messageId: data.id,
         sender: data.senderName,
         text: data.message
@@ -133,9 +133,11 @@ export default function ChatBox({
     });
 
     // Attach listeners
+    console.log(`📌 ChatBox (${userType}): Attaching receive-message listener...`);
     socket.on('receive-message', handleReceiveMessage);
+    console.log(`📌 ChatBox (${userType}): Attaching message-sent listener...`);
     socket.on('message-sent', handleMessageSent);
-    console.log('✅ ChatBox: Listeners attached', { userType });
+    console.log('✅ ChatBox: Listeners attached', { userType, listenersCount: socket.listeners('receive-message').length });
 
     // Cleanup ONLY on unmount or when socket changes (not on every render)
     return () => {

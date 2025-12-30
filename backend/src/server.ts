@@ -5,6 +5,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 import prisma from './config/database';
 import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
@@ -31,6 +33,27 @@ import { apiLimiter } from './middleware/rateLimiter';
 
 // Load environment variables
 dotenv.config();
+
+// Ensure upload directories exist (critical for Railway deployment)
+const uploadDirs = [
+  'uploads/doctor-kyc/registration-certificates',
+  'uploads/doctor-kyc/aadhaar-photos',
+  'uploads/doctor-kyc/profile-photos',
+  'uploads/reports',
+  'uploads/payment-proofs',
+  'uploads/qr-codes',
+  'uploads/medical-files',
+];
+
+uploadDirs.forEach((dir) => {
+  const dirPath = path.join(process.cwd(), dir);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`📁 Created upload directory: ${dir}`);
+  }
+});
+
+console.log('✅ All upload directories initialized');
 
 // Initialize Express app
 const app: Application = express();

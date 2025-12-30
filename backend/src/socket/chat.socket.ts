@@ -288,8 +288,8 @@ export const initializeChatSocket = (io: SocketIOServer) => {
 
           // Notify doctor if patient sent message
           if (senderType === 'patient' && consultation.doctor.chatNotifications) {
-            // Create in-app notification
-            await notificationService.createNotification({
+            // Create in-app notification (fire-and-forget to avoid blocking chat)
+            notificationService.createNotification({
               recipientType: 'DOCTOR',
               recipientId: consultation.doctor.id,
               type: 'NEW_CHAT',
@@ -304,6 +304,9 @@ export const initializeChatSocket = (io: SocketIOServer) => {
               },
               sendEmail: consultation.doctor.emailNotifications,
               recipientEmail: consultation.doctor.email,
+            }).catch(err => {
+              // Log but don't block on notification errors
+              console.error('⚠️ Notification failed (non-blocking):', err.message);
             });
 
             // Emit real-time unread notification

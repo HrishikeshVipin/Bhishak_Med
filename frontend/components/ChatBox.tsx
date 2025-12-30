@@ -69,23 +69,19 @@ export default function ChatBox({
     console.log('📡 ChatBox: Setting up socket listeners', {
       consultationId,
       socketConnected: socket.connected,
-      socketId: socket.id
+      socketId: socket.id,
+      timestamp: new Date().toISOString()
     });
 
-    // Message handler
+    // Message handler - receives messages from OTHER users
     const handleReceiveMessage = (data: Message) => {
-      console.log('📨 ChatBox: Received message', {
+      console.log('📨 ChatBox: Received message from other user', {
         messageId: data.id,
         sender: data.senderName,
         text: data.message
       });
 
       setMessages((prev) => {
-        // Prevent duplicates - check if message already exists by ID
-        if (prev.some(msg => msg.id === data.id)) {
-          console.log('⚠️ ChatBox: Duplicate detected, skipping:', data.id);
-          return prev;
-        }
         console.log('✅ ChatBox: Adding message', data.id, 'Total:', prev.length + 1);
         return [...prev, data];
       });
@@ -98,14 +94,39 @@ export default function ChatBox({
       }, 100);
     };
 
-    // Attach listener
+    // Message sent confirmation - replace temp ID with real ID
+    const handleMessageSent = (data: Message) => {
+      console.log('✅ ChatBox: Message confirmed by server', {
+        messageId: data.id,
+        timestamp: data.createdAt
+      });
+
+      setMessages((prev) => {
+        // Find and replace the most recent temp message with the confirmed one
+        const tempIndex = prev.findIndex(msg => msg.id.startsWith('temp-'));
+        if (tempIndex !== -1) {
+          const updated = [...prev];
+          updated[tempIndex] = data;
+          console.log('🔄 ChatBox: Replaced temp ID with real ID:', data.id);
+          return updated;
+        }
+        return prev;
+      });
+    };
+
+    // Attach listeners
     socket.on('receive-message', handleReceiveMessage);
-    console.log('✅ ChatBox: Listener attached');
+    socket.on('message-sent', handleMessageSent);
+    console.log('✅ ChatBox: Listeners attached');
 
     // Cleanup ONLY on unmount or when socket changes (not on every render)
     return () => {
-      console.log('🧹 ChatBox: Removing listener');
+      console.log('🧹 ChatBox: Removing listeners', {
+        socketId: socket.id,
+        timestamp: new Date().toISOString()
+      });
       socket.off('receive-message', handleReceiveMessage);
+      socket.off('message-sent', handleMessageSent);
     };
   }, [socket]); // Only re-run when socket instance changes
 
@@ -164,12 +185,31 @@ export default function ChatBox({
       return;
     }
 
+    const messageText = newMessage.trim();
+    const tempId = `temp-${Date.now()}`; // Temporary ID until server confirms
+
+    // Optimistic UI update - add message immediately
+    const optimisticMessage: Message = {
+      id: tempId,
+      senderType: userType,
+      senderName: userName,
+      message: messageText,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log('📤 ChatBox: Adding message optimistically', {
+      tempId,
+      message: messageText.substring(0, 50)
+    });
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+
     // Emit message to server
     socket.emit('send-message', {
       consultationId,
       senderType: userType,
       senderName: userName,
-      message: newMessage.trim(),
+      message: messageText,
     });
 
     setNewMessage('');

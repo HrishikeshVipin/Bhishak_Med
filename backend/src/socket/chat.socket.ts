@@ -303,8 +303,19 @@ export const initializeChatSocket = (io: SocketIOServer) => {
           }
         }
 
-        // Broadcast message to all users in the consultation room
-        io.to(consultationId).emit('receive-message', {
+        // Broadcast message to all users in the consultation room EXCEPT sender
+        // Sender will see their own message via optimistic UI update
+        socket.to(consultationId).emit('receive-message', {
+          id: chatMessage.id,
+          consultationId,
+          senderType,
+          senderName,
+          message,
+          createdAt: chatMessage.createdAt,
+        });
+
+        // Send confirmation back to sender with the saved message ID
+        socket.emit('message-sent', {
           id: chatMessage.id,
           consultationId,
           senderType,

@@ -388,14 +388,40 @@ async function generatePrescriptionPDF(
 
       // If digital signature exists, embed it
       if (consultation.doctor.digitalSignature) {
-        const signaturePath = path.join(process.cwd(), consultation.doctor.digitalSignature);
-        if (fs.existsSync(signaturePath)) {
-          doc
-            .moveDown(0.3)
-            .image(signaturePath, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
-            .moveDown(2.5);
-        } else {
-          // Fallback to line if signature file doesn't exist
+        try {
+          // Check if it's a Cloudinary URL or local path
+          const signatureUrl = consultation.doctor.digitalSignature;
+          const isCloudinaryUrl = signatureUrl.startsWith('http://') || signatureUrl.startsWith('https://');
+
+          if (isCloudinaryUrl) {
+            // Use Cloudinary URL directly (PDFKit supports URLs)
+            doc
+              .moveDown(0.3)
+              .image(signatureUrl, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
+              .moveDown(2.5);
+          } else {
+            // Local path (backward compatibility)
+            const signaturePath = path.join(process.cwd(), signatureUrl);
+            if (fs.existsSync(signaturePath)) {
+              doc
+                .moveDown(0.3)
+                .image(signaturePath, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
+                .moveDown(2.5);
+            } else {
+              // Fallback to line if file doesn't exist
+              doc
+                .moveDown(0.5)
+                .strokeColor('#000000')
+                .lineWidth(1)
+                .moveTo(350, doc.y)
+                .lineTo(500, doc.y)
+                .stroke()
+                .moveDown(0.3);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading signature:', error);
+          // Fallback to line on error
           doc
             .moveDown(0.5)
             .strokeColor('#000000')

@@ -3,6 +3,45 @@ import prisma from '../config/database';
 import { createAuditLog } from '../middleware/audit.middleware';
 import fs from 'fs';
 import path from 'path';
+import cloudinary from '../config/cloudinary';
+
+// Helper function to delete file from Cloudinary or local filesystem
+const deleteFile = async (filePath: string): Promise<void> => {
+  if (!filePath) return;
+
+  // Check if it's a Cloudinary URL
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    try {
+      // Extract public_id from Cloudinary URL
+      // Format: https://res.cloudinary.com/{cloud_name}/{resource_type}/upload/{version}/{public_id}.{format}
+      const urlParts = filePath.split('/');
+      const uploadIndex = urlParts.findIndex(part => part === 'upload');
+      if (uploadIndex !== -1 && uploadIndex < urlParts.length - 1) {
+        // Get everything after 'upload/' and before the file extension
+        const publicIdWithExtension = urlParts.slice(uploadIndex + 2).join('/');
+        const publicId = publicIdWithExtension.split('.')[0];
+
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`Deleted from Cloudinary: ${publicId}`);
+      }
+    } catch (error) {
+      console.error('Error deleting from Cloudinary:', error);
+      // Don't throw - continue even if deletion fails
+    }
+  } else {
+    // Local file - delete from filesystem
+    try {
+      const localPath = path.join(process.cwd(), filePath);
+      if (fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+        console.log(`Deleted local file: ${localPath}`);
+      }
+    } catch (error) {
+      console.error('Error deleting local file:', error);
+      // Don't throw - continue even if deletion fails
+    }
+  }
+};
 
 /**
  * Update doctor profile photo
@@ -37,14 +76,11 @@ export const updateProfilePhoto = async (req: Request, res: Response): Promise<v
 
     // Delete old profile photo if exists
     if (doctor.profilePhoto) {
-      const oldPhotoPath = path.join(process.cwd(), doctor.profilePhoto);
-      if (fs.existsSync(oldPhotoPath)) {
-        fs.unlinkSync(oldPhotoPath);
-      }
+      await deleteFile(doctor.profilePhoto);
     }
 
-    // Update profile photo path in database
-    const profilePhotoPath = req.file.path.replace(/\\/g, '/');
+    // Update profile photo path in database (Cloudinary returns full URL in file.path)
+    const profilePhotoPath = req.file.path;
 
     const updatedDoctor = await prisma.doctor.update({
       where: { id: doctorId },
@@ -166,14 +202,11 @@ export const uploadDigitalSignature = async (req: Request, res: Response): Promi
 
     // Delete old signature if exists
     if (doctor.digitalSignature) {
-      const oldSignaturePath = path.join(process.cwd(), doctor.digitalSignature);
-      if (fs.existsSync(oldSignaturePath)) {
-        fs.unlinkSync(oldSignaturePath);
-      }
+      await deleteFile(doctor.digitalSignature);
     }
 
-    // Update signature path in database
-    const signaturePath = req.file.path.replace(/\\/g, '/');
+    // Update signature path in database (Cloudinary returns full URL in file.path)
+    const signaturePath = req.file.path;
 
     const updatedDoctor = await prisma.doctor.update({
       where: { id: doctorId },

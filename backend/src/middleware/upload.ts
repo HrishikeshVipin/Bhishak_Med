@@ -1,7 +1,8 @@
 import multer from 'multer';
-import path from 'path';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
+import cloudinary from '../config/cloudinary';
 
 // Allowed file types
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -11,10 +12,11 @@ const ALLOWED_DOCUMENT_TYPES = ['application/pdf', ...ALLOWED_IMAGE_TYPES];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_DOCUMENT_SIZE = 15 * 1024 * 1024; // 15MB
 
-// Storage configuration for doctor KYC documents
-const doctorKYCStorage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb) => {
-    let folder = 'uploads/doctor-kyc/';
+// Cloudinary storage configuration for doctor KYC documents
+const doctorKYCStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
+    let folder = 'mediquory/doctor-kyc/';
 
     if (file.fieldname === 'registrationCertificate') {
       folder += 'registration-certificates';
@@ -24,17 +26,15 @@ const doctorKYCStorage = multer.diskStorage({
       folder += 'profile-photos';
     }
 
-    cb(null, folder);
-  },
-  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
-    const sanitizedOriginalName = file.originalname
-      .replace(/[^a-zA-Z0-9.]/g, '_')
-      .substring(0, 50);
 
-    cb(null, `${uniqueId}_${timestamp}_${sanitizedOriginalName}`);
+    return {
+      folder: folder,
+      public_id: `${uniqueId}_${timestamp}`,
+      resource_type: 'auto', // Automatically detect if it's image or raw (PDF)
+      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+    };
   },
 });
 
@@ -82,20 +82,19 @@ export const uploadDoctorKYC = multer({
   { name: 'profilePhoto', maxCount: 1 },
 ]);
 
-// Storage configuration for medical reports
-const medicalReportStorage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb) => {
-    cb(null, 'uploads/reports');
-  },
-  filename: (req: Request, file: Express.Multer.File, cb) => {
+// Cloudinary storage for medical reports
+const medicalReportStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
-    const sanitizedOriginalName = file.originalname
-      .replace(/[^a-zA-Z0-9.]/g, '_')
-      .substring(0, 50);
 
-    cb(null, `${uniqueId}_${timestamp}_${sanitizedOriginalName}`);
+    return {
+      folder: 'mediquory/reports',
+      public_id: `${uniqueId}_${timestamp}`,
+      resource_type: 'auto',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+    };
   },
 });
 
@@ -121,17 +120,19 @@ export const uploadMedicalReport = multer({
   },
 }).single('medicalReport');
 
-// Storage configuration for payment proofs
-const paymentProofStorage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb) => {
-    cb(null, 'uploads/payment-proofs');
-  },
-  filename: (req: Request, file: Express.Multer.File, cb) => {
+// Cloudinary storage for payment proofs
+const paymentProofStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
 
-    cb(null, `payment_${uniqueId}_${timestamp}${ext}`);
+    return {
+      folder: 'mediquory/payment-proofs',
+      public_id: `payment_${uniqueId}_${timestamp}`,
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+    };
   },
 });
 
@@ -157,17 +158,19 @@ export const uploadPaymentProof = multer({
   },
 }).single('paymentProof');
 
-// Storage configuration for UPI QR codes
-const qrCodeStorage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb) => {
-    cb(null, 'uploads/qr-codes');
-  },
-  filename: (req: Request, file: Express.Multer.File, cb) => {
+// Cloudinary storage for UPI QR codes
+const qrCodeStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
 
-    cb(null, `qr_${uniqueId}_${timestamp}${ext}`);
+    return {
+      folder: 'mediquory/qr-codes',
+      public_id: `qr_${uniqueId}_${timestamp}`,
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+    };
   },
 });
 
@@ -186,20 +189,19 @@ export const uploadQRCode = multer({
   },
 }).single('qrCode');
 
-// Storage configuration for patient medical files
-const medicalFilesStorage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb) => {
-    cb(null, 'uploads/medical-files');
-  },
-  filename: (req: Request, file: Express.Multer.File, cb) => {
+// Cloudinary storage for patient medical files
+const medicalFilesStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
-    const sanitizedOriginalName = file.originalname
-      .replace(/[^a-zA-Z0-9.]/g, '_')
-      .substring(0, 50);
 
-    cb(null, `${uniqueId}_${timestamp}_${sanitizedOriginalName}`);
+    return {
+      folder: 'mediquory/medical-files',
+      public_id: `${uniqueId}_${timestamp}`,
+      resource_type: 'auto',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+    };
   },
 });
 
@@ -218,9 +220,25 @@ export const uploadMedicalFiles = multer({
   },
 });
 
+// Cloudinary storage for profile photo update (doctor only)
+const profilePhotoStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
+    const uniqueId = uuidv4();
+    const timestamp = Date.now();
+
+    return {
+      folder: 'mediquory/doctor-kyc/profile-photos',
+      public_id: `${uniqueId}_${timestamp}`,
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+    };
+  },
+});
+
 // Upload middleware for profile photo update (doctor only)
 export const uploadProfilePhoto = multer({
-  storage: doctorKYCStorage,
+  storage: profilePhotoStorage,
   fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
       cb(null, true);
@@ -233,20 +251,19 @@ export const uploadProfilePhoto = multer({
   },
 }).single('profilePhoto');
 
-// Storage configuration for digital signature
-const digitalSignatureStorage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb) => {
-    cb(null, 'uploads/doctor-kyc/signatures');
-  },
-  filename: (req: Request, file: Express.Multer.File, cb) => {
+// Cloudinary storage for digital signature
+const digitalSignatureStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: Request, file: Express.Multer.File) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
-    const sanitizedOriginalName = file.originalname
-      .replace(/[^a-zA-Z0-9.]/g, '_')
-      .substring(0, 50);
 
-    cb(null, `signature_${uniqueId}_${timestamp}${ext}`);
+    return {
+      folder: 'mediquory/doctor-kyc/signatures',
+      public_id: `signature_${uniqueId}_${timestamp}`,
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+    };
   },
 });
 

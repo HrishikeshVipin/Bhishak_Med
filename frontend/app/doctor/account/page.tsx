@@ -260,9 +260,12 @@ export default function DoctorAccountPage() {
         }
         setSignatureSaved(true);
         setTimeout(() => setSignatureSaved(false), 3000);
+      } else {
+        alert('Signature upload failed: ' + (response.message || 'Unknown error'));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signature upload error:', error);
+      alert('Signature upload error: ' + (error.response?.data?.message || error.message || 'Unknown error'));
     } finally {
       setSignatureUploading(false);
     }

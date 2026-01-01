@@ -249,13 +249,19 @@ export default function DoctorAccountPage() {
       const response = await doctorDiscovery.uploadDigitalSignature(formData);
 
       if (response.success && response.data?.doctor) {
-        // Update signature in local state
-        if (doctor) {
-          setDoctor({
+        // Update signature in the auth store (for persistence across page refreshes)
+        const token = localStorage.getItem('token');
+        if (token && doctor) {
+          const updatedDoctor = {
             ...doctor,
             digitalSignature: response.data.doctor.digitalSignature,
-          });
+          };
+          useAuthStore.getState().setAuth(token, updatedDoctor, 'DOCTOR');
+
+          // Update local doctor state
+          setDoctor(updatedDoctor);
         }
+
         setSignatureSaved(true);
         setTimeout(() => setSignatureSaved(false), 3000);
       } else {

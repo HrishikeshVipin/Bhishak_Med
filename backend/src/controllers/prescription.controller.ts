@@ -205,6 +205,25 @@ async function generatePrescriptionPDF(
   medications: any[],
   instructions: string
 ): Promise<string> {
+  // Pre-fetch signature image if it's a Cloudinary URL
+  let signatureBuffer: Buffer | null = null;
+  if (consultation.doctor.digitalSignature) {
+    const signatureUrl = consultation.doctor.digitalSignature;
+    const isCloudinaryUrl = signatureUrl.startsWith('http://') || signatureUrl.startsWith('https://');
+
+    if (isCloudinaryUrl) {
+      try {
+        console.log('Fetching signature from Cloudinary:', signatureUrl);
+        const response = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
+        signatureBuffer = Buffer.from(response.data, 'binary');
+        console.log('Signature fetched successfully');
+      } catch (error) {
+        console.error('Error fetching signature from Cloudinary:', error);
+        signatureBuffer = null;
+      }
+    }
+  }
+
   return new Promise((resolve, reject) => {
     try {
       // Create uploads/prescriptions directory if it doesn't exist
@@ -390,22 +409,16 @@ async function generatePrescriptionPDF(
       // If digital signature exists, embed it
       if (consultation.doctor.digitalSignature) {
         try {
-          // Check if it's a Cloudinary URL or local path
-          const signatureUrl = consultation.doctor.digitalSignature;
-          const isCloudinaryUrl = signatureUrl.startsWith('http://') || signatureUrl.startsWith('https://');
-
-          if (isCloudinaryUrl) {
-            // Fetch image from Cloudinary and convert to buffer
-            // PDFKit doesn't support URLs directly, needs Buffer or local path
-            const response = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
-            const imageBuffer = Buffer.from(response.data, 'binary');
-
+          // Check if we have a pre-fetched buffer (Cloudinary) or need to load local file
+          if (signatureBuffer) {
+            // Use pre-fetched Cloudinary image
             doc
               .moveDown(0.3)
-              .image(imageBuffer, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
+              .image(signatureBuffer, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
               .moveDown(2.5);
           } else {
             // Local path (backward compatibility)
+            const signatureUrl = consultation.doctor.digitalSignature;
             const signaturePath = path.join(process.cwd(), signatureUrl);
             if (fs.existsSync(signaturePath)) {
               doc

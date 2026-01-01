@@ -101,7 +101,9 @@ const io = new SocketIOServer(httpServer, {
 });
 
 // Trust Railway proxy for rate limiting
-app.set('trust proxy', true);
+// Set to 1 to trust only the first proxy (Railway's proxy layer)
+// This is more secure than 'true' which trusts ALL proxies
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet({

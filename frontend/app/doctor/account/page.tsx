@@ -8,7 +8,7 @@ import { authApi, appointmentApi, doctorDiscovery } from '../../../lib/api';
 import AnimatedBackground from '../../../components/AnimatedBackground';
 import NotificationBell from '../../../components/NotificationBell';
 import { NotificationProvider } from '../../../context/NotificationContext';
-import { formatDoctorName } from '../../../utils/format';
+import { formatDoctorName, formatImageUrl } from '../../../utils/format';
 import type { Doctor, DoctorAvailability } from '../../../types';
 
 export default function DoctorAccountPage() {
@@ -72,9 +72,7 @@ export default function DoctorAccountPage() {
 
       // Load existing signature if available
       if (doctorData.digitalSignature) {
-        // Check if it's already a full URL (Cloudinary) or a local path
-        const isFullUrl = doctorData.digitalSignature.startsWith('http://') || doctorData.digitalSignature.startsWith('https://');
-        setSignaturePreview(isFullUrl ? doctorData.digitalSignature : `${process.env.NEXT_PUBLIC_API_URL}/${doctorData.digitalSignature}`);
+        setSignaturePreview(formatImageUrl(doctorData.digitalSignature));
       }
 
       setLoading(false);
@@ -476,11 +474,7 @@ export default function DoctorAccountPage() {
                   />
                 ) : doctor.profilePhoto ? (
                   <img
-                    src={
-                      doctor.profilePhoto.startsWith('http://') || doctor.profilePhoto.startsWith('https://')
-                        ? doctor.profilePhoto
-                        : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${doctor.profilePhoto}`
-                    }
+                    src={formatImageUrl(doctor.profilePhoto)}
                     alt="Current profile photo"
                     className="w-40 h-40 rounded-full object-cover border-4 border-white shadow-lg"
                   />

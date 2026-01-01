@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { patientApi } from '@/lib/api';
+import { formatImageUrl } from '@/utils/format';
 
 export default function PatientSelfRegisterPage() {
   const params = useParams();
@@ -104,7 +105,7 @@ export default function PatientSelfRegisterPage() {
         <div className="text-center mb-6">
           {doctor.profilePhoto && (
             <img
-              src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${doctor.profilePhoto}`}
+              src={formatImageUrl(doctor.profilePhoto)}
               alt={doctor.fullName}
               className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-blue-100"
               onError={(e) => {

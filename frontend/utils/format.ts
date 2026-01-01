@@ -21,3 +21,21 @@ export function formatDoctorName(name: string): string {
 
   return `Dr. ${trimmedName}`;
 }
+
+/**
+ * Formats an image URL - handles both Cloudinary URLs and local file paths
+ * @param imagePath The image path (can be a full URL or relative path)
+ * @returns The complete image URL
+ */
+export function formatImageUrl(imagePath: string | null | undefined): string {
+  if (!imagePath) return '';
+
+  // If it's already a full URL (Cloudinary), return as-is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+
+  // Otherwise, it's a local file path - prepend the API URL
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  return `${apiUrl}/${imagePath.replace(/\\/g, '/')}`;
+}

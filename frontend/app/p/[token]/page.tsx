@@ -9,7 +9,7 @@ import VideoRoom from '../../../components/VideoRoom';
 import VitalsForm from '../../../components/VitalsForm';
 import FileUpload from '../../../components/FileUpload';
 import PaymentSection from '../../../components/PaymentSection';
-import { formatDoctorName } from '../../../utils/format';
+import { formatDoctorName, formatImageUrl } from '../../../utils/format';
 import type { Socket } from 'socket.io-client';
 
 interface Consultation {
@@ -369,7 +369,7 @@ export default function PatientAccessPage() {
             <div className="flex items-start gap-4">
               {consultation.doctor.profilePhoto ? (
                 <img
-                  src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${consultation.doctor.profilePhoto.replace(/\\/g, '/')}`}
+                  src={formatImageUrl(consultation.doctor.profilePhoto)}
                   alt={consultation.doctor.fullName}
                   className="w-20 h-20 rounded-full object-cover"
                   onError={(e) => {

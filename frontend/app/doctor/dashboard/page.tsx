@@ -9,7 +9,7 @@ import { connectSocket } from '../../../lib/socket';
 import { NotificationProvider } from '../../../context/NotificationContext';
 import NotificationBell from '../../../components/NotificationBell';
 import AnimatedBackground from '../../../components/AnimatedBackground';
-import { formatDoctorName } from '../../../utils/format';
+import { formatDoctorName, formatImageUrl } from '../../../utils/format';
 import type { Doctor, SubscriptionInfo } from '../../../types';
 
 export default function DoctorDashboard() {
@@ -220,7 +220,7 @@ export default function DoctorDashboard() {
               <div className="flex items-center gap-2">
                 {doctor.profilePhoto ? (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/${doctor.profilePhoto}`}
+                    src={formatImageUrl(doctor.profilePhoto)}
                     alt={doctor.fullName}
                     className="w-10 h-10 rounded-full object-cover border-2 border-cyan-200 hidden sm:block"
                   />

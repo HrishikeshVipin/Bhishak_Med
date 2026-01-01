@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import axios from 'axios';
 import { socketService } from '../services/socket.service';
 import { encrypt, decrypt } from '../utils/encryption';
 import { createAuditLog } from '../middleware/audit.middleware';
@@ -394,10 +395,14 @@ async function generatePrescriptionPDF(
           const isCloudinaryUrl = signatureUrl.startsWith('http://') || signatureUrl.startsWith('https://');
 
           if (isCloudinaryUrl) {
-            // Use Cloudinary URL directly (PDFKit supports URLs)
+            // Fetch image from Cloudinary and convert to buffer
+            // PDFKit doesn't support URLs directly, needs Buffer or local path
+            const response = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
+            const imageBuffer = Buffer.from(response.data, 'binary');
+
             doc
               .moveDown(0.3)
-              .image(signatureUrl, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
+              .image(imageBuffer, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
               .moveDown(2.5);
           } else {
             // Local path (backward compatibility)

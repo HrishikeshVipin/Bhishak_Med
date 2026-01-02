@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import { z } from 'zod';
 import { generateConsultationTokens } from '../services/agora.service';
 import { createAuditLog } from '../middleware/audit.middleware';
+import { decrypt } from '../utils/encryption';
 
 // Create or get active consultation
 export const startConsultation = async (req: Request, res: Response): Promise<void> => {
@@ -160,9 +161,17 @@ export const startConsultation = async (req: Request, res: Response): Promise<vo
       });
     }
 
-    // Parse medications JSON if prescription exists
+    // Decrypt and parse medications JSON if prescription exists
     if (consultation.prescription && consultation.prescription.medications) {
-      consultation.prescription.medications = JSON.parse(consultation.prescription.medications as any);
+      try {
+        // Medications are stored encrypted - decrypt first, then parse JSON
+        const decryptedMedications = decrypt(consultation.prescription.medications as string);
+        consultation.prescription.medications = JSON.parse(decryptedMedications);
+      } catch (error) {
+        console.error('Error decrypting/parsing medications:', error);
+        // If decryption fails, set to empty array to prevent crash
+        consultation.prescription.medications = [];
+      }
     }
 
     // Determine warning level based on available minutes
@@ -234,9 +243,17 @@ export const getConsultation = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Parse medications JSON if prescription exists
+    // Decrypt and parse medications JSON if prescription exists
     if (consultation.prescription && consultation.prescription.medications) {
-      consultation.prescription.medications = JSON.parse(consultation.prescription.medications as any);
+      try {
+        // Medications are stored encrypted - decrypt first, then parse JSON
+        const decryptedMedications = decrypt(consultation.prescription.medications as string);
+        consultation.prescription.medications = JSON.parse(decryptedMedications);
+      } catch (error) {
+        console.error('Error decrypting/parsing medications:', error);
+        // If decryption fails, set to empty array to prevent crash
+        consultation.prescription.medications = [];
+      }
     }
 
     res.status(200).json({

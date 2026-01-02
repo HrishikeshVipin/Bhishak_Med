@@ -177,10 +177,19 @@ export const getPrescription = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Parse medications JSON string back to array
+    // Decrypt and parse medications JSON string back to array
+    let parsedMedications = [];
+    try {
+      const decryptedMedications = decrypt(prescription.medications);
+      parsedMedications = JSON.parse(decryptedMedications);
+    } catch (error) {
+      console.error('Error decrypting/parsing medications:', error);
+      parsedMedications = [];
+    }
+
     const prescriptionWithParsedData = {
       ...prescription,
-      medications: JSON.parse(prescription.medications),
+      medications: parsedMedications,
     };
 
     res.status(200).json({
@@ -626,25 +635,36 @@ export const getPatientConsultationHistory = async (req: Request, res: Response)
       },
     });
 
-    // Filter consultations that have prescriptions and parse medications
+    // Filter consultations that have prescriptions and decrypt/parse medications
     const consultationsWithPrescriptions = consultations
       .filter((c) => c.prescription)
-      .map((consultation) => ({
-        id: consultation.id,
-        date: consultation.createdAt,
-        completedAt: consultation.completedAt,
-        duration: consultation.duration,
-        prescription: {
-          id: consultation.prescription!.id,
-          serialNumber: consultation.prescription!.serialNumber,
-          diagnosis: consultation.prescription!.diagnosis,
-          medications: JSON.parse(consultation.prescription!.medications),
-          instructions: consultation.prescription!.instructions,
-          createdAt: consultation.prescription!.createdAt,
-          doctor: consultation.prescription!.doctor,
-        },
-        paymentConfirmed: consultation.paymentConfirmation?.confirmedByDoctor || false,
-      }));
+      .map((consultation) => {
+        let parsedMedications = [];
+        try {
+          const decryptedMedications = decrypt(consultation.prescription!.medications);
+          parsedMedications = JSON.parse(decryptedMedications);
+        } catch (error) {
+          console.error('Error decrypting/parsing medications in history:', error);
+          parsedMedications = [];
+        }
+
+        return {
+          id: consultation.id,
+          date: consultation.createdAt,
+          completedAt: consultation.completedAt,
+          duration: consultation.duration,
+          prescription: {
+            id: consultation.prescription!.id,
+            serialNumber: consultation.prescription!.serialNumber,
+            diagnosis: consultation.prescription!.diagnosis,
+            medications: parsedMedications,
+            instructions: consultation.prescription!.instructions,
+            createdAt: consultation.prescription!.createdAt,
+            doctor: consultation.prescription!.doctor,
+          },
+          paymentConfirmed: consultation.paymentConfirmation?.confirmedByDoctor || false,
+        };
+      });
 
     res.status(200).json({
       success: true,
@@ -705,6 +725,16 @@ export const copyPrescriptionMedications = async (req: Request, res: Response): 
       return;
     }
 
+    // Decrypt and parse medications for copying
+    let parsedMedications = [];
+    try {
+      const decryptedMedications = decrypt(prescription.medications);
+      parsedMedications = JSON.parse(decryptedMedications);
+    } catch (error) {
+      console.error('Error decrypting/parsing medications for copy:', error);
+      parsedMedications = [];
+    }
+
     // Return medications and diagnosis for copying
     res.status(200).json({
       success: true,
@@ -714,7 +744,7 @@ export const copyPrescriptionMedications = async (req: Request, res: Response): 
           id: prescription.id,
           serialNumber: prescription.serialNumber,
           diagnosis: prescription.diagnosis,
-          medications: JSON.parse(prescription.medications),
+          medications: parsedMedications,
           instructions: prescription.instructions,
           patientName: prescription.consultation.patient.fullName,
           createdAt: prescription.createdAt,

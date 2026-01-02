@@ -349,9 +349,17 @@ export const getPatientConsultation = async (req: Request, res: Response): Promi
       });
     }
 
-    // Parse medications JSON if prescription exists
+    // Decrypt and parse medications JSON if prescription exists
     if (consultation?.prescription && consultation.prescription.medications) {
-      consultation.prescription.medications = JSON.parse(consultation.prescription.medications as any);
+      try {
+        // Medications are stored encrypted - decrypt first, then parse JSON
+        const decryptedMedications = decrypt(consultation.prescription.medications as string);
+        (consultation.prescription.medications as any) = JSON.parse(decryptedMedications);
+      } catch (error) {
+        console.error('Error decrypting/parsing medications in patient consultation:', error);
+        // If decryption fails, set to empty array to prevent crash
+        (consultation.prescription.medications as any) = [];
+      }
     }
 
     res.status(200).json({

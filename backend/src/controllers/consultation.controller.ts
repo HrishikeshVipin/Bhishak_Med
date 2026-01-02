@@ -166,11 +166,11 @@ export const startConsultation = async (req: Request, res: Response): Promise<vo
       try {
         // Medications are stored encrypted - decrypt first, then parse JSON
         const decryptedMedications = decrypt(consultation.prescription.medications as string);
-        consultation.prescription.medications = JSON.parse(decryptedMedications);
+        (consultation.prescription.medications as any) = JSON.parse(decryptedMedications);
       } catch (error) {
         console.error('Error decrypting/parsing medications:', error);
         // If decryption fails, set to empty array to prevent crash
-        consultation.prescription.medications = [];
+        (consultation.prescription.medications as any) = [];
       }
     }
 
@@ -248,11 +248,11 @@ export const getConsultation = async (req: Request, res: Response): Promise<void
       try {
         // Medications are stored encrypted - decrypt first, then parse JSON
         const decryptedMedications = decrypt(consultation.prescription.medications as string);
-        consultation.prescription.medications = JSON.parse(decryptedMedications);
+        (consultation.prescription.medications as any) = JSON.parse(decryptedMedications);
       } catch (error) {
         console.error('Error decrypting/parsing medications:', error);
         // If decryption fails, set to empty array to prevent crash
-        consultation.prescription.medications = [];
+        (consultation.prescription.medications as any) = [];
       }
     }
 

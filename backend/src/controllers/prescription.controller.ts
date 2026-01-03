@@ -236,44 +236,34 @@ async function generatePrescriptionPDF(
 
   return new Promise((resolve, reject) => {
     try {
-      const fileName = `prescription_${prescription.id}_${Date.now()}.pdf`;
-
       // Create PDF document
       const doc = new PDFDocument({ margin: 50 });
 
-      // Collect PDF data in buffers for Cloudinary upload
-      const buffers: Buffer[] = [];
-      doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', async () => {
-        try {
-          // Combine all buffers into single buffer
-          const pdfBuffer = Buffer.concat(buffers);
+      // Save to persistent volume (Railway) or local filesystem (development)
+      // In production (Railway), files are stored in mounted volume at /app/uploads
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'prescriptions');
 
-          // Upload to Cloudinary as public asset (not authenticated)
-          const uploadResult = await new Promise<any>((resolveUpload, rejectUpload) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-              {
-                folder: 'mediquory/prescriptions',
-                resource_type: 'raw',
-                public_id: `prescription_${prescription.id}_${Date.now()}`,
-                format: 'pdf',
-                type: 'upload', // Use 'upload' type for public access
-                invalidate: true, // Invalidate CDN cache
-              },
-              (error, result) => {
-                if (error) rejectUpload(error);
-                else resolveUpload(result);
-              }
-            );
-            uploadStream.end(pdfBuffer);
-          });
+      // Ensure directory exists
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
 
-          console.log('✅ Prescription PDF uploaded to Cloudinary:', uploadResult.secure_url);
-          resolve(uploadResult.secure_url);
-        } catch (uploadError) {
-          console.error('❌ Error uploading prescription to Cloudinary:', uploadError);
-          reject(uploadError);
-        }
+      const fileName = `prescription_${prescription.id}_${Date.now()}.pdf`;
+      const filePath = path.join(uploadsDir, fileName);
+      const relativePath = `uploads/prescriptions/${fileName}`;
+
+      // Create write stream to save PDF
+      const writeStream = fs.createWriteStream(filePath);
+      doc.pipe(writeStream);
+
+      writeStream.on('finish', () => {
+        console.log('✅ Prescription PDF saved locally:', relativePath);
+        resolve(relativePath);
+      });
+
+      writeStream.on('error', (error) => {
+        console.error('❌ Error saving prescription PDF:', error);
+        reject(error);
       });
 
       // App Header with Branding
@@ -566,108 +556,7 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
       return;
     }
 
-    // Check if pdfPath is a Cloudinary URL
-    const isCloudinaryUrl = prescription.pdfPath.startsWith('http://') || prescription.pdfPath.startsWith('https://');
-
-    if (isCloudinaryUrl) {
-      try {
-        console.log('📄 Downloading PDF from Cloudinary:', prescription.pdfPath);
-
-        // Try direct download first (works for public files)
-        const response = await axios.get(prescription.pdfPath, {
-          responseType: 'arraybuffer',
-          timeout: 30000,
-          validateStatus: (status) => status < 500, // Don't throw on 4xx errors
-        });
-
-        // If we got a 401/403, this is an old private file - use authenticated download
-        if (response.status === 401 || response.status === 403) {
-          console.log('⚠️ File is private (401/403), using Cloudinary authenticated URL');
-
-          try {
-            // Extract public_id from URL
-            const urlMatch = prescription.pdfPath.match(/\/upload\/v\d+\/(.+)\.pdf$/);
-            if (!urlMatch) {
-              throw new Error('Could not parse public_id from URL');
-            }
-
-            const publicId = urlMatch[1];
-            console.log('📋 Extracted public_id:', publicId);
-
-            // Generate signed URL using Cloudinary SDK
-            // This creates an authenticated URL that includes API signature
-            const signedUrl = cloudinary.url(publicId + '.pdf', {
-              resource_type: 'raw',
-              type: 'upload',
-              sign_url: true,
-              secure: true,
-            });
-
-            console.log('🔐 Generated signed URL');
-
-            // Download using signed URL
-            const authResponse = await axios.get(signedUrl, {
-              responseType: 'arraybuffer',
-              timeout: 30000,
-            });
-
-            console.log('✅ Downloaded with signed URL, size:', authResponse.data.length);
-
-            // Stream to client
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename="prescription_${prescription.serialNumber || prescriptionId}.pdf"`);
-            res.setHeader('Content-Length', authResponse.data.length);
-            res.setHeader('Cache-Control', 'no-cache');
-
-            res.send(Buffer.from(authResponse.data));
-            console.log('✅ Successfully downloaded private file');
-            return;
-          } catch (authError: any) {
-            console.error('❌ Failed to download private file:', authError);
-            console.error('Auth error status:', authError.response?.status);
-            console.error('Auth error data:', authError.response?.data);
-
-            res.status(500).json({
-              success: false,
-              message: 'Error downloading private prescription file',
-              error: authError.message,
-              status: authError.response?.status,
-            });
-            return;
-          }
-        }
-
-        if (response.status !== 200) {
-          throw new Error(`Cloudinary returned status ${response.status}`);
-        }
-
-        // Set response headers for PDF download
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="prescription_${prescription.serialNumber || prescriptionId}.pdf"`);
-        res.setHeader('Content-Length', response.data.length);
-        res.setHeader('Cache-Control', 'no-cache');
-
-        // Send the PDF buffer to client
-        res.send(Buffer.from(response.data));
-
-        console.log('✅ PDF downloaded successfully');
-        return;
-      } catch (error: any) {
-        console.error('❌ Error downloading from Cloudinary:', error);
-        console.error('Response status:', error.response?.status);
-        console.error('Response data:', error.response?.data?.toString().substring(0, 200));
-
-        res.status(500).json({
-          success: false,
-          message: 'Error downloading prescription from cloud storage',
-          error: error.message,
-          details: error.response?.status ? `HTTP ${error.response.status}` : 'Network error',
-        });
-        return;
-      }
-    }
-
-    // Legacy: Handle local filesystem (backward compatibility)
+    // Handle local filesystem storage
     const filePath = path.join(process.cwd(), prescription.pdfPath);
 
     if (!fs.existsSync(filePath)) {

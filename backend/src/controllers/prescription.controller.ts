@@ -249,7 +249,7 @@ async function generatePrescriptionPDF(
           // Combine all buffers into single buffer
           const pdfBuffer = Buffer.concat(buffers);
 
-          // Upload to Cloudinary
+          // Upload to Cloudinary as public asset (not authenticated)
           const uploadResult = await new Promise<any>((resolveUpload, rejectUpload) => {
             const uploadStream = cloudinary.uploader.upload_stream(
               {
@@ -257,6 +257,8 @@ async function generatePrescriptionPDF(
                 resource_type: 'raw',
                 public_id: `prescription_${prescription.id}_${Date.now()}`,
                 format: 'pdf',
+                type: 'upload', // Use 'upload' type for public access
+                invalidate: true, // Invalidate CDN cache
               },
               (error, result) => {
                 if (error) rejectUpload(error);
@@ -571,34 +573,29 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
       try {
         console.log('📄 Downloading PDF from Cloudinary:', prescription.pdfPath);
 
-        // Extract public_id from Cloudinary URL
-        // Format: https://res.cloudinary.com/{cloud_name}/raw/upload/v{version}/{folder}/{public_id}.pdf
-        const urlMatch = prescription.pdfPath.match(/\/upload\/v\d+\/(.+)\.pdf$/);
+        // Try direct download first (works for public files)
+        const response = await axios.get(prescription.pdfPath, {
+          responseType: 'arraybuffer',
+          timeout: 30000,
+          validateStatus: (status) => status < 500, // Don't throw on 4xx errors
+        });
 
-        if (!urlMatch) {
-          console.error('❌ Could not parse Cloudinary URL');
-          res.status(500).json({
+        // If we got a 401/403, this is an old private file
+        if (response.status === 401 || response.status === 403) {
+          console.log('⚠️ File is private (401/403), need to make it public or use authenticated URL');
+
+          // For now, return error - old files need to be re-uploaded or made public manually
+          res.status(403).json({
             success: false,
-            message: 'Invalid Cloudinary URL format',
+            message: 'This prescription was created with old storage settings. Please contact support.',
+            isOldFile: true,
           });
           return;
         }
 
-        const publicId = urlMatch[1]; // e.g., "mediquory/prescriptions/prescription_xxx_123"
-        console.log('📋 Public ID:', publicId);
-
-        // Use Cloudinary API to get the resource
-        const resourceInfo = await cloudinary.api.resource(publicId, {
-          resource_type: 'raw',
-        });
-
-        console.log('✅ Found resource:', resourceInfo.public_id);
-
-        // Download the file from Cloudinary
-        const response = await axios.get(resourceInfo.secure_url, {
-          responseType: 'arraybuffer',
-          timeout: 30000,
-        });
+        if (response.status !== 200) {
+          throw new Error(`Cloudinary returned status ${response.status}`);
+        }
 
         // Set response headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
@@ -612,31 +609,15 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
         console.log('✅ PDF downloaded successfully');
         return;
       } catch (error: any) {
-        console.error('❌ Error downloading from Cloudinary:', error.message);
-
-        // If Cloudinary API fails, try direct URL as fallback
-        try {
-          console.log('⚠️ Trying direct download as fallback...');
-          const response = await axios.get(prescription.pdfPath, {
-            responseType: 'arraybuffer',
-            timeout: 30000,
-          });
-
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="prescription_${prescription.serialNumber || prescriptionId}.pdf"`);
-          res.setHeader('Content-Length', response.data.length);
-
-          res.send(Buffer.from(response.data));
-          console.log('✅ PDF downloaded via fallback');
-          return;
-        } catch (fallbackError: any) {
-          console.error('❌ Fallback also failed:', fallbackError.message);
-        }
+        console.error('❌ Error downloading from Cloudinary:', error);
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data?.toString().substring(0, 200));
 
         res.status(500).json({
           success: false,
           message: 'Error downloading prescription from cloud storage',
           error: error.message,
+          details: error.response?.status ? `HTTP ${error.response.status}` : 'Network error',
         });
         return;
       }

@@ -3,43 +3,20 @@ import prisma from '../config/database';
 import { createAuditLog } from '../middleware/audit.middleware';
 import fs from 'fs';
 import path from 'path';
-import cloudinary from '../config/cloudinary';
 
-// Helper function to delete file from Cloudinary or local filesystem
+// Helper function to delete file from local filesystem
 const deleteFile = async (filePath: string): Promise<void> => {
   if (!filePath) return;
 
-  // Check if it's a Cloudinary URL
-  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-    try {
-      // Extract public_id from Cloudinary URL
-      // Format: https://res.cloudinary.com/{cloud_name}/{resource_type}/upload/{version}/{public_id}.{format}
-      const urlParts = filePath.split('/');
-      const uploadIndex = urlParts.findIndex(part => part === 'upload');
-      if (uploadIndex !== -1 && uploadIndex < urlParts.length - 1) {
-        // Get everything after 'upload/' and before the file extension
-        const publicIdWithExtension = urlParts.slice(uploadIndex + 2).join('/');
-        const publicId = publicIdWithExtension.split('.')[0];
-
-        await cloudinary.uploader.destroy(publicId);
-        console.log(`Deleted from Cloudinary: ${publicId}`);
-      }
-    } catch (error) {
-      console.error('Error deleting from Cloudinary:', error);
-      // Don't throw - continue even if deletion fails
+  try {
+    const localPath = path.join(process.cwd(), filePath);
+    if (fs.existsSync(localPath)) {
+      fs.unlinkSync(localPath);
+      console.log(`Deleted local file: ${localPath}`);
     }
-  } else {
-    // Local file - delete from filesystem
-    try {
-      const localPath = path.join(process.cwd(), filePath);
-      if (fs.existsSync(localPath)) {
-        fs.unlinkSync(localPath);
-        console.log(`Deleted local file: ${localPath}`);
-      }
-    } catch (error) {
-      console.error('Error deleting local file:', error);
-      // Don't throw - continue even if deletion fails
-    }
+  } catch (error) {
+    console.error('Error deleting local file:', error);
+    // Don't throw - continue even if deletion fails
   }
 };
 

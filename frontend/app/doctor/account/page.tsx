@@ -701,8 +701,16 @@ export default function DoctorAccountPage() {
           </div>
 
           <p className="text-sm text-gray-600 mb-4">
-            Upload your signature image to be included in prescriptions. Recommended size: 200x80 pixels (PNG or JPG).
+            Upload your signature image to be included in prescriptions.
           </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+            <p className="text-sm font-medium text-blue-900 mb-1">📏 Recommended Size:</p>
+            <ul className="text-xs text-blue-800 space-y-1 ml-4">
+              <li>• <strong>180 × 80 pixels</strong></li>
+              <li>• Approximately <strong>4.8 cm × 2.1 cm</strong> (at 96 DPI)</li>
+              <li>• Format: PNG or JPG with transparent/white background</li>
+            </ul>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Upload Section */}

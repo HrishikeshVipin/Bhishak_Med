@@ -385,13 +385,13 @@ export default function PatientAccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-white via-cyan-50/30 to-blue-50/40">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white/70 backdrop-blur-xl border-b border-cyan-200/50 shadow-lg shadow-cyan-500/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                 Patient Consultation Portal
               </h1>
               <p className="text-sm text-gray-600">Chat with your doctor in real-time</p>

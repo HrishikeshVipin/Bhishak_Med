@@ -3,8 +3,6 @@ import prisma from '../config/database';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
-import axios from 'axios';
-import cloudinary from '../config/cloudinary';
 import { socketService } from '../services/socket.service';
 import { encrypt, decrypt } from '../utils/encryption';
 import { createAuditLog } from '../middleware/audit.middleware';
@@ -215,25 +213,6 @@ async function generatePrescriptionPDF(
   medications: any[],
   instructions: string
 ): Promise<string> {
-  // Pre-fetch signature image if it's a Cloudinary URL
-  let signatureBuffer: Buffer | null = null;
-  if (consultation.doctor.digitalSignature) {
-    const signatureUrl = consultation.doctor.digitalSignature;
-    const isCloudinaryUrl = signatureUrl.startsWith('http://') || signatureUrl.startsWith('https://');
-
-    if (isCloudinaryUrl) {
-      try {
-        console.log('Fetching signature from Cloudinary:', signatureUrl);
-        const response = await axios.get(signatureUrl, { responseType: 'arraybuffer' });
-        signatureBuffer = Buffer.from(response.data, 'binary');
-        console.log('Signature fetched successfully');
-      } catch (error) {
-        console.error('Error fetching signature from Cloudinary:', error);
-        signatureBuffer = null;
-      }
-    }
-  }
-
   return new Promise((resolve, reject) => {
     try {
       // Create PDF document
@@ -449,33 +428,22 @@ async function generatePrescriptionPDF(
       // If digital signature exists, embed it
       if (consultation.doctor.digitalSignature) {
         try {
-          // Check if we have a pre-fetched buffer (Cloudinary) or need to load local file
-          if (signatureBuffer) {
-            // Use pre-fetched Cloudinary image
+          const signaturePath = path.join(process.cwd(), consultation.doctor.digitalSignature);
+          if (fs.existsSync(signaturePath)) {
             doc
               .moveDown(0.5)
-              .image(signatureBuffer, 350, doc.y, { width: 180, height: 80, fit: [180, 80] })
+              .image(signaturePath, 350, doc.y, { width: 180, height: 80, fit: [180, 80] })
               .moveDown(3);
           } else {
-            // Local path (backward compatibility)
-            const signatureUrl = consultation.doctor.digitalSignature;
-            const signaturePath = path.join(process.cwd(), signatureUrl);
-            if (fs.existsSync(signaturePath)) {
-              doc
-                .moveDown(0.5)
-                .image(signaturePath, 350, doc.y, { width: 180, height: 80, fit: [180, 80] })
-                .moveDown(3);
-            } else {
-              // Fallback to line if file doesn't exist
-              doc
-                .moveDown(0.5)
-                .strokeColor('#000000')
-                .lineWidth(1)
-                .moveTo(350, doc.y)
-                .lineTo(500, doc.y)
-                .stroke()
-                .moveDown(0.3);
-            }
+            // Fallback to line if file doesn't exist
+            doc
+              .moveDown(0.5)
+              .strokeColor('#000000')
+              .lineWidth(1)
+              .moveTo(350, doc.y)
+              .lineTo(500, doc.y)
+              .stroke()
+              .moveDown(0.3);
           }
         } catch (error) {
           console.error('Error loading signature:', error);

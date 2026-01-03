@@ -580,17 +580,53 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
           validateStatus: (status) => status < 500, // Don't throw on 4xx errors
         });
 
-        // If we got a 401/403, this is an old private file
+        // If we got a 401/403, this is an old private file - use authenticated download
         if (response.status === 401 || response.status === 403) {
-          console.log('⚠️ File is private (401/403), need to make it public or use authenticated URL');
+          console.log('⚠️ File is private (401/403), generating authenticated URL');
 
-          // For now, return error - old files need to be re-uploaded or made public manually
-          res.status(403).json({
-            success: false,
-            message: 'This prescription was created with old storage settings. Please contact support.',
-            isOldFile: true,
-          });
-          return;
+          try {
+            // Extract public_id from URL
+            const urlMatch = prescription.pdfPath.match(/\/upload\/v\d+\/(.+)\.pdf$/);
+            if (!urlMatch) {
+              throw new Error('Could not parse public_id from URL');
+            }
+
+            const publicId = urlMatch[1];
+            console.log('📋 Extracted public_id:', publicId);
+
+            // Generate authenticated download URL (valid for 1 hour)
+            const authenticatedUrl = cloudinary.utils.private_download_url(publicId, 'pdf', {
+              resource_type: 'raw',
+              expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+              attachment: true,
+            });
+
+            console.log('🔐 Generated authenticated URL');
+
+            // Download using authenticated URL
+            const authResponse = await axios.get(authenticatedUrl, {
+              responseType: 'arraybuffer',
+              timeout: 30000,
+            });
+
+            // Stream to client
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="prescription_${prescription.serialNumber || prescriptionId}.pdf"`);
+            res.setHeader('Content-Length', authResponse.data.length);
+            res.setHeader('Cache-Control', 'no-cache');
+
+            res.send(Buffer.from(authResponse.data));
+            console.log('✅ Downloaded private file with authentication');
+            return;
+          } catch (authError: any) {
+            console.error('❌ Failed to download private file:', authError.message);
+            res.status(500).json({
+              success: false,
+              message: 'Error downloading private prescription file',
+              error: authError.message,
+            });
+            return;
+          }
         }
 
         if (response.status !== 200) {

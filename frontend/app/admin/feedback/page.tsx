@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { feedbackApi } from '@/lib/api';
-import { useAdminAuth } from '@/store/adminAuthStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface Feedback {
   id: string;
@@ -28,7 +28,7 @@ interface Feedback {
 
 export default function AdminFeedbackPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAdminAuth();
+  const { isAuthenticated } = useAuthStore();
 
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [stats, setStats] = useState<any>(null);

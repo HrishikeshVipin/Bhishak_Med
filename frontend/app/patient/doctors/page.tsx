@@ -59,14 +59,6 @@ export default function DoctorSearchPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [specializations, setSpecializations] = useState<string[]>([]);
 
-  // Check if patient signup is enabled
-  useEffect(() => {
-    const isPatientSignupEnabled = process.env.NEXT_PUBLIC_ENABLE_PATIENT_SIGNUP === 'true';
-    if (!isPatientSignupEnabled) {
-      router.replace('/patient/coming-soon');
-    }
-  }, [router]);
-
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/patient/login');

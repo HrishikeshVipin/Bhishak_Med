@@ -1,8 +1,8 @@
 import multer from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
-import cloudinary from '../config/cloudinary';
+import path from 'path';
+import fs from 'fs';
 
 // Allowed file types
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -11,6 +11,13 @@ const ALLOWED_DOCUMENT_TYPES = ['application/pdf', ...ALLOWED_IMAGE_TYPES];
 // File size limits (in bytes)
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_DOCUMENT_SIZE = 15 * 1024 * 1024; // 15MB
+
+// Helper function to ensure upload directories exist
+const ensureUploadDir = (dirPath: string) => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+};
 
 // Cloudinary storage configuration for doctor KYC documents
 const doctorKYCStorage = new CloudinaryStorage({
@@ -82,19 +89,18 @@ export const uploadDoctorKYC = multer({
   { name: 'profilePhoto', maxCount: 1 },
 ]);
 
-// Cloudinary storage for medical reports
-const medicalReportStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
+// Local disk storage for medical reports
+const medicalReportStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'reports');
+    ensureUploadDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-
-    return {
-      folder: 'mediquory/reports',
-      public_id: `${uniqueId}_${timestamp}`,
-      resource_type: 'auto',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-    };
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueId}_${timestamp}${ext}`);
   },
 });
 
@@ -220,19 +226,18 @@ export const uploadMedicalFiles = multer({
   },
 });
 
-// Cloudinary storage for profile photo update (doctor only)
-const profilePhotoStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
+// Local disk storage for profile photo update (doctor only)
+const profilePhotoStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'profile-photos');
+    ensureUploadDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-
-    return {
-      folder: 'mediquory/doctor-kyc/profile-photos',
-      public_id: `${uniqueId}_${timestamp}`,
-      resource_type: 'image',
-      allowed_formats: ['jpg', 'jpeg', 'png'],
-    };
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueId}_${timestamp}${ext}`);
   },
 });
 
@@ -251,19 +256,18 @@ export const uploadProfilePhoto = multer({
   },
 }).single('profilePhoto');
 
-// Cloudinary storage for digital signature
-const digitalSignatureStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
+// Local disk storage for digital signature
+const digitalSignatureStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'signatures');
+    ensureUploadDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-
-    return {
-      folder: 'mediquory/doctor-kyc/signatures',
-      public_id: `signature_${uniqueId}_${timestamp}`,
-      resource_type: 'image',
-      allowed_formats: ['jpg', 'jpeg', 'png'],
-    };
+    const ext = path.extname(file.originalname);
+    cb(null, `signature_${uniqueId}_${timestamp}${ext}`);
   },
 });
 

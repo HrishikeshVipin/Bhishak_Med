@@ -18,10 +18,14 @@ uploads/vitals/*
 uploads/reports/*
 uploads/prescriptions/*
 uploads/qr-codes/*
+uploads/profile-photos/*
+uploads/signatures/*
 !uploads/vitals/.gitkeep
 !uploads/reports/.gitkeep
 !uploads/prescriptions/.gitkeep
 !uploads/qr-codes/.gitkeep
+!uploads/profile-photos/.gitkeep
+!uploads/signatures/.gitkeep
 
 # IDE
 .vscode/

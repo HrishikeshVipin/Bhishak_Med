@@ -79,8 +79,11 @@ export const updateProfilePhoto = async (req: Request, res: Response): Promise<v
       await deleteFile(doctor.profilePhoto);
     }
 
-    // Update profile photo path in database (Cloudinary returns full URL in file.path)
-    const profilePhotoPath = req.file.path;
+    // Update profile photo path in database (use relative path for local storage)
+    // req.file.path is absolute, convert to relative from project root
+    const absolutePath = req.file.path;
+    const relativePath = path.relative(process.cwd(), absolutePath);
+    const profilePhotoPath = relativePath.replace(/\\/g, '/'); // Normalize path separators
 
     const updatedDoctor = await prisma.doctor.update({
       where: { id: doctorId },
@@ -205,8 +208,10 @@ export const uploadDigitalSignature = async (req: Request, res: Response): Promi
       await deleteFile(doctor.digitalSignature);
     }
 
-    // Update signature path in database (Cloudinary returns full URL in file.path)
-    const signaturePath = req.file.path;
+    // Update signature path in database (use relative path for local storage)
+    const absolutePath = req.file.path;
+    const relativePath = path.relative(process.cwd(), absolutePath);
+    const signaturePath = relativePath.replace(/\\/g, '/'); // Normalize path separators
 
     const updatedDoctor = await prisma.doctor.update({
       where: { id: doctorId },

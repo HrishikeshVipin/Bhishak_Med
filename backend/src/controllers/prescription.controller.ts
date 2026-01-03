@@ -4,6 +4,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import cloudinary from '../config/cloudinary';
 import { socketService } from '../services/socket.service';
 import { encrypt, decrypt } from '../utils/encryption';
 import { createAuditLog } from '../middleware/audit.middleware';
@@ -235,21 +236,43 @@ async function generatePrescriptionPDF(
 
   return new Promise((resolve, reject) => {
     try {
-      // Create uploads/prescriptions directory if it doesn't exist
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'prescriptions');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-
       const fileName = `prescription_${prescription.id}_${Date.now()}.pdf`;
-      const filePath = path.join(uploadsDir, fileName);
-      const relativePath = `uploads/prescriptions/${fileName}`;
 
       // Create PDF document
       const doc = new PDFDocument({ margin: 50 });
-      const stream = fs.createWriteStream(filePath);
 
-      doc.pipe(stream);
+      // Collect PDF data in buffers for Cloudinary upload
+      const buffers: Buffer[] = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', async () => {
+        try {
+          // Combine all buffers into single buffer
+          const pdfBuffer = Buffer.concat(buffers);
+
+          // Upload to Cloudinary
+          const uploadResult = await new Promise<any>((resolveUpload, rejectUpload) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+              {
+                folder: 'mediquory/prescriptions',
+                resource_type: 'raw',
+                public_id: `prescription_${prescription.id}_${Date.now()}`,
+                format: 'pdf',
+              },
+              (error, result) => {
+                if (error) rejectUpload(error);
+                else resolveUpload(result);
+              }
+            );
+            uploadStream.end(pdfBuffer);
+          });
+
+          console.log('✅ Prescription PDF uploaded to Cloudinary:', uploadResult.secure_url);
+          resolve(uploadResult.secure_url);
+        } catch (uploadError) {
+          console.error('❌ Error uploading prescription to Cloudinary:', uploadError);
+          reject(uploadError);
+        }
+      });
 
       // App Header with Branding
       doc
@@ -492,16 +515,10 @@ async function generatePrescriptionPDF(
         .font('Helvetica')
         .text('This is a digitally generated prescription', { align: 'center' });
 
+      // Finalize PDF
       doc.end();
-
-      stream.on('finish', () => {
-        resolve(relativePath);
-      });
-
-      stream.on('error', (error) => {
-        reject(error);
-      });
     } catch (error) {
+      console.error('❌ Error generating PDF:', error);
       reject(error);
     }
   });
@@ -511,6 +528,7 @@ async function generatePrescriptionPDF(
 export const downloadPrescription = async (req: Request, res: Response): Promise<void> => {
   try {
     const { prescriptionId } = req.params;
+    const user = (req as any).user; // May be undefined if accessed without auth (public link)
 
     const prescription = await prisma.prescription.findUnique({
       where: { id: prescriptionId },
@@ -518,6 +536,9 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
         consultation: {
           include: {
             paymentConfirmation: true,
+            doctor: {
+              select: { id: true },
+            },
           },
         },
       },
@@ -531,8 +552,11 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
       return;
     }
 
-    // Check if payment is confirmed
-    if (!prescription.consultation.paymentConfirmation?.confirmedByDoctor) {
+    // Check if requester is the doctor who created the prescription
+    const isDoctor = user && user.role === 'DOCTOR' && user.id === prescription.consultation.doctor.id;
+
+    // Doctors can view anytime, patients/public need payment confirmation
+    if (!isDoctor && !prescription.consultation.paymentConfirmation?.confirmedByDoctor) {
       res.status(403).json({
         success: false,
         message: 'Prescription can only be downloaded after payment confirmation',
@@ -540,6 +564,16 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
       return;
     }
 
+    // Check if pdfPath is a Cloudinary URL
+    const isCloudinaryUrl = prescription.pdfPath.startsWith('http://') || prescription.pdfPath.startsWith('https://');
+
+    if (isCloudinaryUrl) {
+      // Redirect to Cloudinary URL
+      res.redirect(prescription.pdfPath);
+      return;
+    }
+
+    // Legacy: Handle local filesystem (backward compatibility)
     const filePath = path.join(process.cwd(), prescription.pdfPath);
 
     if (!fs.existsSync(filePath)) {
@@ -551,7 +585,6 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
     }
 
     // Log prescription download in audit log
-    const user = (req as any).user;
     if (user) {
       await createAuditLog(req, {
         actorType: user.role === 'DOCTOR' ? 'DOCTOR' : 'PATIENT',

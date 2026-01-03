@@ -1078,9 +1078,35 @@ export default function DoctorConsultationPage() {
             <div className="mt-6">
               <PaymentConfirmation
                 consultationId={consultation.id}
-                onPaymentConfirmed={startOrGetConsultation}
+                onPaymentConfirmed={() => {
+                  // Just update the consultation status to COMPLETED, don't start new consultation
+                  setConsultation((prev) => {
+                    if (!prev) return prev;
+                    return { ...prev, status: 'COMPLETED' };
+                  });
+                }}
               />
             </div>
+
+            {/* Start New Consultation Button (after completion) */}
+            {consultation.status === 'COMPLETED' && (
+              <div className="mt-6 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-3xl shadow-lg shadow-blue-500/10 p-6 text-center">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">Consultation Completed</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  This consultation has been completed. You can start a new consultation with this patient.
+                </p>
+                <button
+                  onClick={() => {
+                    if (confirm('Start a new consultation with this patient?')) {
+                      startOrGetConsultation();
+                    }
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-medium transition-all hover:scale-105"
+                >
+                  Start New Consultation
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </main>

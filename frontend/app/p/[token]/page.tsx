@@ -245,19 +245,29 @@ export default function PatientAccessPage() {
       console.log('📡 Payment confirmed by doctor:', data.payment);
 
       // Refresh consultation first to ensure we have prescription data
-      await fetchConsultation();
+      try {
+        const response = await consultationApi.getPatientConsultation(token);
+        if (response.success && response.data) {
+          const updatedConsultation = response.data.consultation;
 
-      // Then show download popup
-      setShowDownloadPopup(true);
+          // Update state with fresh data
+          setConsultation({
+            ...updatedConsultation,
+            status: 'COMPLETED',
+          });
 
-      // Update consultation state to completed
-      setConsultation((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          status: 'COMPLETED',
-        };
-      });
+          console.log('✅ Consultation refreshed, prescription:', updatedConsultation.prescription);
+
+          // Small delay to ensure state is updated
+          setTimeout(() => {
+            setShowDownloadPopup(true);
+          }, 100);
+        }
+      } catch (err) {
+        console.error('❌ Error refreshing consultation:', err);
+        // Show popup anyway
+        setShowDownloadPopup(true);
+      }
     });
 
     // Listen for consultation completed
@@ -737,7 +747,8 @@ export default function PatientAccessPage() {
 
       {/* Download Prescription Popup - After Payment Confirmed */}
       {showDownloadPopup && (
-        consultation?.prescription ? (
+        <>
+          {consultation?.prescription ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-8 sm:p-10 max-w-lg w-full shadow-2xl">
             <div className="text-center">
@@ -803,9 +814,19 @@ export default function PatientAccessPage() {
               <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
               <p className="text-lg text-gray-700">Loading prescription...</p>
               <p className="text-sm text-gray-500 mt-2">Please wait</p>
+              <button
+                onClick={() => {
+                  setShowDownloadPopup(false);
+                  window.location.reload();
+                }}
+                className="mt-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm"
+              >
+                Cancel / Refresh
+              </button>
             </div>
           </div>
-        )
+        )}
+        </>
       )}
 
       {/* Incoming Video Call Modal - Senior Friendly */}

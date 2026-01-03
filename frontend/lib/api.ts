@@ -539,6 +539,49 @@ export const reviewApi = {
   },
 };
 
+// Feedback API (App Feedback from Doctors)
+export const feedbackApi = {
+  // Submit app feedback (doctor)
+  submitFeedback: async (feedbackData: {
+    type: 'FEATURE_REQUEST' | 'BUG_REPORT' | 'GENERAL_FEEDBACK' | 'RATING';
+    rating?: number;
+    title?: string;
+    description: string;
+    category?: 'UI/UX' | 'PERFORMANCE' | 'FEATURES' | 'BUGS' | 'OTHER';
+    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    deviceInfo?: string;
+  }) => {
+    const { data} = await api.post<ApiResponse<any>>('/feedback/submit', feedbackData);
+    return data;
+  },
+
+  // Get doctor's own feedback history
+  getMyFeedback: async (limit?: number, offset?: number) => {
+    const { data } = await api.get<ApiResponse<{ feedback: any[]; pagination: any }>>('/feedback/my-feedback', {
+      params: { limit, offset },
+    });
+    return data;
+  },
+
+  // Check if should prompt for feedback
+  shouldPromptFeedback: async () => {
+    const { data } = await api.get<ApiResponse<{ shouldPrompt: boolean; daysSinceLastFeedback: number; lastFeedbackType: string | null }>>('/feedback/should-prompt');
+    return data;
+  },
+
+  // Admin: Get all feedback
+  getAllFeedback: async (params?: { status?: string; type?: string; priority?: string; limit?: number; offset?: number }) => {
+    const { data } = await api.get<ApiResponse<{ feedback: any[]; stats: any; pagination: any }>>('/feedback/all', { params });
+    return data;
+  },
+
+  // Admin: Update feedback status
+  updateFeedbackStatus: async (id: string, status: string, adminResponse?: string) => {
+    const { data } = await api.put<ApiResponse<{ feedback: any }>>(`/feedback/${id}/status`, { status, adminResponse });
+    return data;
+  },
+};
+
 // Medicine API
 export const medicineApi = {
   // Admin endpoints

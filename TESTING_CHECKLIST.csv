@@ -1,0 +1,201 @@
+Category,Test ID,Test Description,Expected Result,Status,Priority,Notes
+Pre-Testing Setup,1,Railway Volume mounted at /app/uploads (5GB minimum),Volume configured and accessible,Pending,CRITICAL,"Without this, files will be deleted on redeploy"
+Pre-Testing Setup,2,Delete all old Cloudinary patients,Old data removed,Pending,HIGH,Fresh start - no backward compatibility
+Pre-Testing Setup,3,Backend deployed and running,Service running without errors,Pending,CRITICAL,Check Railway logs for errors
+Pre-Testing Setup,4,Frontend deployed and running,Build successful and serving,Pending,CRITICAL,Check build status
+Pre-Testing Setup,5,Database migrations applied,Prisma migrations up to date,Pending,CRITICAL,Check Prisma migrations
+
+Admin Tests - Login,A1,Login with admin credentials,Successfully logged in,Pending,HIGH,
+Admin Tests - Login,A2,Dashboard loads,Shows stats and navigation,Pending,HIGH,
+Admin Tests - Login,A3,Can access all admin sections,"Doctors, Patients, Subscriptions",Pending,MEDIUM,
+
+Admin Tests - Doctor Management,A4,View pending doctor signups,List displayed,Pending,MEDIUM,
+Admin Tests - Doctor Management,A5,Approve a doctor,Status changes to VERIFIED,Pending,HIGH,
+Admin Tests - Doctor Management,A6,Reject a doctor,Status changes to REJECTED,Pending,HIGH,
+Admin Tests - Doctor Management,A7,View doctor details,All KYC documents visible,Pending,MEDIUM,
+
+Admin Tests - Subscription Management,A8,View subscription plans,Plans displayed,Pending,MEDIUM,
+Admin Tests - Subscription Management,A9,Edit subscription plan,Changes saved,Pending,MEDIUM,
+Admin Tests - Subscription Management,A10,Assign plan to doctor,Doctor's plan updated,Pending,MEDIUM,
+
+Doctor Tests - Signup,D1,Fill signup form with all fields,Form validates,Pending,HIGH,
+Doctor Tests - Signup,D2,Upload registration certificate,File uploaded,Pending,HIGH,Check uploads/doctor-kyc/
+Doctor Tests - Signup,D3,Upload Aadhaar photos (front & back),Files uploaded,Pending,HIGH,
+Doctor Tests - Signup,D4,Upload profile photo,File uploaded to uploads/profile-photos/,Pending,MEDIUM,NEW: Local storage
+Doctor Tests - Signup,D5,Submit signup,Pending approval message,Pending,HIGH,
+Doctor Tests - Signup,D6,Try login before approval,Denied with pending message,Pending,MEDIUM,
+
+Doctor Tests - Login (After Approval),D7,Login with approved credentials,Dashboard loads,Pending,HIGH,
+Doctor Tests - Login (After Approval),D8,View subscription status,Shows current plan,Pending,MEDIUM,
+Doctor Tests - Login (After Approval),D9,View patient limit,Shows remaining slots,Pending,MEDIUM,
+
+Doctor Tests - Profile Management,D10,Update bio,Saved successfully,Pending,LOW,
+Doctor Tests - Profile Management,D11,Upload new profile photo,Photo updated in uploads/profile-photos/,Pending,MEDIUM,NEW: Local storage
+Doctor Tests - Profile Management,D12,Upload digital signature (180×80px),Signature uploaded to uploads/signatures/,Pending,HIGH,NEW: Local storage + size guide
+Doctor Tests - Profile Management,D13,View signature size guide,Shows pixels AND cm measurements,Pending,LOW,NEW: 4.8cm × 2.1cm
+Doctor Tests - Profile Management,D14,Signature persists after page refresh,Still visible,Pending,MEDIUM,
+Doctor Tests - Profile Management,D15,Update UPI ID,Saved successfully,Pending,MEDIUM,
+Doctor Tests - Profile Management,D16,Upload QR code,Uploaded successfully,Pending,MEDIUM,
+
+Doctor Tests - Patient Management,D17,Create new patient with details,Patient created,Pending,HIGH,
+Doctor Tests - Patient Management,D18,View patient registration link,Link generated,Pending,HIGH,
+Doctor Tests - Patient Management,D19,Copy patient link,Link copied to clipboard,Pending,LOW,
+Doctor Tests - Patient Management,D20,View patient list,All patients displayed,Pending,MEDIUM,
+Doctor Tests - Patient Management,D21,Search for patient,Search works,Pending,MEDIUM,
+Doctor Tests - Patient Management,D22,Filter by status (Active/Waitlisted),Filters work,Pending,MEDIUM,
+
+Doctor Tests - Consultation Flow,D23,Click Consult on active patient,Consultation page loads,Pending,HIGH,
+Doctor Tests - Consultation Flow,D24,View patient vitals,Vitals displayed if submitted,Pending,MEDIUM,
+Doctor Tests - Consultation Flow,D25,View patient medical reports,Reports displayed if uploaded,Pending,MEDIUM,NEW: From uploads/reports/
+Doctor Tests - Consultation Flow,D26,Send chat message,Message appears,Pending,HIGH,
+Doctor Tests - Consultation Flow,D27,Start video call,Video room opens,Pending,HIGH,
+Doctor Tests - Consultation Flow,D28,Video call connects,Can see/hear patient,Pending,HIGH,
+Doctor Tests - Consultation Flow,D29,End video call,Call ends gracefully,Pending,MEDIUM,
+
+Doctor Tests - Prescription Creation,D30,Fill prescription form,Form accepts input,Pending,HIGH,
+Doctor Tests - Prescription Creation,D31,Add multiple medications,All added,Pending,MEDIUM,
+Doctor Tests - Prescription Creation,D32,Submit prescription,PDF generated in uploads/prescriptions/,Pending,CRITICAL,NEW: Local storage
+Doctor Tests - Prescription Creation,D33,View prescription PDF,PDF opens with logo,Pending,MEDIUM,NEW: Logo at top
+Doctor Tests - Prescription Creation,D34,Check signature in PDF,Signature visible (180×80px space),Pending,MEDIUM,NEW: Larger space
+Doctor Tests - Prescription Creation,D35,Download prescription BEFORE payment,Works (doctor can view anytime),Pending,HIGH,NEW: No payment needed
+
+Doctor Tests - Payment Confirmation,D36,View payment proof from patient,Image displayed,Pending,MEDIUM,
+Doctor Tests - Payment Confirmation,D37,Confirm payment,Status updates,Pending,HIGH,
+Doctor Tests - Payment Confirmation,D38,Patient gets download popup,Socket event sent,Pending,HIGH,NEW: Real-time popup
+Doctor Tests - Payment Confirmation,D39,Consultation marked as completed,Status = COMPLETED,Pending,HIGH,
+
+Doctor Tests - History,D40,View consultation history,Past consultations listed,Pending,MEDIUM,
+Doctor Tests - History,D41,Download old prescription,PDF downloads,Pending,MEDIUM,From uploads/
+Doctor Tests - History,D42,Prescription survives redeploy,Still accessible after Railway redeploy,Pending,CRITICAL,Tests volume persistence
+
+Patient Tests - Access Link,P1,Open patient link /p/{token},Portal loads,Pending,HIGH,
+Patient Tests - Access Link,P2,View doctor information,Doctor details displayed,Pending,MEDIUM,
+Patient Tests - Access Link,P3,UI matches theme,"Gradient background, glassmorphism header",Pending,LOW,NEW: Updated theme
+
+Patient Tests - Registration,P4,Fill patient details form,Form accepts input,Pending,HIGH,
+Patient Tests - Registration,P5,Submit vitals,Vitals saved,Pending,MEDIUM,
+Patient Tests - Registration,P6,Upload medical report (PDF/Image),File uploaded to uploads/reports/,Pending,MEDIUM,NEW: Local storage
+Patient Tests - Registration,P7,Multiple reports uploaded,All saved,Pending,MEDIUM,
+
+Patient Tests - Chat & Video,P8,Send chat message,Message appears,Pending,HIGH,
+Patient Tests - Chat & Video,P9,Receive message from doctor,Appears in real-time,Pending,HIGH,
+Patient Tests - Chat & Video,P10,Join video call (when doctor calls),Video room opens,Pending,HIGH,
+Patient Tests - Chat & Video,P11,Video/audio works,Can see/hear doctor,Pending,HIGH,
+Patient Tests - Chat & Video,P12,Leave video call,Disconnects cleanly,Pending,MEDIUM,
+
+Patient Tests - Payment Flow,P13,View payment section after prescription,UPI ID and QR code displayed,Pending,HIGH,
+Patient Tests - Payment Flow,P14,Upload payment proof,Screenshot uploaded,Pending,HIGH,
+Patient Tests - Payment Flow,P15,Payment submitted,Waiting for doctor confirmation,Pending,HIGH,
+
+Patient Tests - Download After Payment,P16,Doctor confirms payment,Download popup appears automatically,Pending,CRITICAL,NEW: Auto-popup
+Patient Tests - Download After Payment,P17,Popup shows Payment Confirmed!,Clear messaging,Pending,MEDIUM,NEW
+Patient Tests - Download After Payment,P18,Click Download Prescription,PDF downloads from /uploads/,Pending,CRITICAL,NEW: Local file
+Patient Tests - Download After Payment,P19,Click Skip button,"Popup closes, consultation ends",Pending,MEDIUM,NEW
+Patient Tests - Download After Payment,P20,Can download later from history,Still accessible,Pending,MEDIUM,NEW
+
+Patient Tests - Consultation History,P21,Click Past Consultations,Section expands,Pending,MEDIUM,
+Patient Tests - Consultation History,P22,View past consultation list,All completed consultations,Pending,MEDIUM,
+Patient Tests - Consultation History,P23,See diagnosis and medications,Data decrypted and displayed,Pending,MEDIUM,
+Patient Tests - Consultation History,P24,Download old prescription,PDF downloads successfully,Pending,MEDIUM,
+
+Patient Tests - Complete State,P25,After download/skip see completion message,Consultation Completed! displayed,Pending,MEDIUM,NEW
+Patient Tests - Complete State,P26,Download button in completion message,Scrolls to Past Consultations,Pending,LOW,NEW
+Patient Tests - Complete State,P27,Chat/video disabled after completion,Cannot send new messages,Pending,MEDIUM,
+
+Patient Tests - Review System,P28,See Rate Your Consultation button,Button visible after completion,Pending,HIGH,NEW: Review integration
+Patient Tests - Review System,P29,Click Rate button,Opens review page in new tab,Pending,HIGH,NEW
+Patient Tests - Review System,P30,Submit rating (1-5 stars),Rating saved,Pending,HIGH,NEW
+Patient Tests - Review System,P31,Add optional review comment,Comment saved with rating,Pending,MEDIUM,NEW
+
+Patient Account Tests - Login,PA1,Login with patient credentials,Dashboard loads,Pending,MEDIUM,For patients with accounts
+Patient Account Tests - Login,PA2,View consultation history,/patient/consultations,Pending,MEDIUM,
+Patient Account Tests - Login,PA3,Download prescription,Works after payment confirmation,Pending,MEDIUM,
+
+Security Tests,S1,Try accessing doctor route as patient,Denied (403),Pending,CRITICAL,
+Security Tests,S2,Try accessing admin route as doctor,Denied (403),Pending,CRITICAL,
+Security Tests,S3,Try downloading prescription before payment (as patient),Denied until doctor confirms,Pending,HIGH,
+Security Tests,S4,Doctor can download anytime,Works even before payment,Pending,HIGH,NEW
+Security Tests,S5,Files in /uploads/ not directly accessible,Must go through API,Pending,CRITICAL,NEW: Volume security
+Security Tests,S6,Invalid patient token,Error page displayed,Pending,MEDIUM,
+Security Tests,S7,Expired session,Redirected to login,Pending,MEDIUM,
+
+File Storage Tests,F1,Profile photo saved in uploads/profile-photos/,File exists,Pending,CRITICAL,NEW: Local storage
+File Storage Tests,F2,Digital signature saved in uploads/signatures/,File exists,Pending,CRITICAL,NEW: Local storage
+File Storage Tests,F3,Medical report saved in uploads/reports/,File exists,Pending,CRITICAL,NEW: Local storage
+File Storage Tests,F4,Prescription PDF saved in uploads/prescriptions/,File exists,Pending,CRITICAL,NEW: Local storage
+File Storage Tests,F5,Files persist after Railway redeploy,All files still accessible,Pending,CRITICAL,CRITICAL: Tests volume
+File Storage Tests,F6,No Cloudinary URLs in database,All paths are relative (uploads/...),Pending,HIGH,NEW: Clean migration
+
+UI/UX Tests,U1,Logo appears on prescription PDF,Centered at top,Pending,MEDIUM,NEW
+UI/UX Tests,U2,Digital signature shows proper size,180×80px space,Pending,MEDIUM,NEW: 20% larger
+UI/UX Tests,U3,Signature upload shows size guide,Pixels AND cm measurements,Pending,LOW,NEW
+UI/UX Tests,U4,Patient portal matches theme,Gradient background,Pending,LOW,NEW
+UI/UX Tests,U5,Glassmorphism effects visible,Header has blur effect,Pending,LOW,NEW
+UI/UX Tests,U6,Gradient text on titles,Blue to cyan gradient,Pending,LOW,NEW
+UI/UX Tests,U7,Download popup is senior-friendly,"Large buttons, clear text",Pending,MEDIUM,NEW
+UI/UX Tests,U8,Loading states show properly,Spinners during async operations,Pending,LOW,
+UI/UX Tests,U9,Responsive on mobile,Works on phone screens,Pending,MEDIUM,
+
+Performance Tests,PR1,PDF generation time,< 3 seconds,Pending,MEDIUM,With signature
+Performance Tests,PR2,Image upload time,< 5 seconds,Pending,MEDIUM,To local volume
+Performance Tests,PR3,File download speed,Fast (local serving),Pending,MEDIUM,Should be faster than Cloudinary
+Performance Tests,PR4,Chat message latency,< 500ms,Pending,MEDIUM,Socket.io real-time
+Performance Tests,PR5,Video call quality,"Smooth, low latency",Pending,MEDIUM,
+
+Error Handling Tests,E1,Upload oversized file (>10MB),Error message displayed,Pending,MEDIUM,
+Error Handling Tests,E2,Upload invalid file type,Rejected with message,Pending,MEDIUM,
+Error Handling Tests,E3,Network error during upload,Graceful error message,Pending,MEDIUM,
+Error Handling Tests,E4,Missing required form fields,Validation errors shown,Pending,MEDIUM,
+Error Handling Tests,E5,Invalid patient token,Clear error page,Pending,MEDIUM,
+Error Handling Tests,E6,Socket disconnection,Auto-reconnect,Pending,MEDIUM,
+
+Data Integrity Tests,D1,Prescription data encrypted,"Diagnosis, medications encrypted in DB",Pending,HIGH,
+Data Integrity Tests,D2,Decryption works correctly,Data readable in consultation,Pending,HIGH,
+Data Integrity Tests,D3,Old prescriptions still accessible,After 1 week+,Pending,MEDIUM,
+Data Integrity Tests,D4,Patient count accurate,Matches actual patients created,Pending,MEDIUM,
+Data Integrity Tests,D5,Video minutes tracking,Accurately tracked,Pending,MEDIUM,
+
+Deployment Tests,DP1,Push code to GitHub,Triggers Railway deployment,Pending,CRITICAL,
+Deployment Tests,DP2,Backend builds successfully,No build errors,Pending,CRITICAL,
+Deployment Tests,DP3,Frontend builds successfully,No build errors,Pending,CRITICAL,
+Deployment Tests,DP4,Database migrations run,Schema up to date,Pending,CRITICAL,
+Deployment Tests,DP5,Environment variables set,All required vars present,Pending,CRITICAL,
+Deployment Tests,DP6,Files persist after redeploy,Volume working correctly,Pending,CRITICAL,CRITICAL
+
+Regression Tests,R1,Waitlist system works,Waitlisted patients have limited access,Pending,MEDIUM,
+Regression Tests,R2,Trial subscription (2 patients),Limits enforced,Pending,MEDIUM,
+Regression Tests,R3,Subscription upgrade,Plan changes applied,Pending,MEDIUM,
+Regression Tests,R4,Notification system,Unread counts work,Pending,MEDIUM,
+Regression Tests,R5,Real-time presence,Online/offline status,Pending,MEDIUM,
+
+Feedback Tests - Patient Reviews,FR1,Patient sees review button after consultation,Rate Your Consultation button visible,Pending,HIGH,NEW: Feedback feature
+Feedback Tests - Patient Reviews,FR2,Click review button,Opens /review/{consultationId} in new tab,Pending,HIGH,NEW
+Feedback Tests - Patient Reviews,FR3,Submit rating without comment,Rating saved (1-5 stars),Pending,HIGH,NEW
+Feedback Tests - Patient Reviews,FR4,Submit rating with comment,Both rating and comment saved,Pending,MEDIUM,NEW
+Feedback Tests - Patient Reviews,FR5,Try to review same consultation twice,Error: Already reviewed,Pending,MEDIUM,NEW
+Feedback Tests - Patient Reviews,FR6,Doctor can view patient reviews,Reviews visible in doctor dashboard,Pending,MEDIUM,NEW
+
+Feedback Tests - Doctor App Feedback,FR7,Doctor sees feedback prompt,Modal appears after 7 days,Pending,MEDIUM,NEW: Periodic prompts
+Feedback Tests - Doctor App Feedback,FR8,Submit quick rating,1-5 stars saved,Pending,HIGH,NEW
+Feedback Tests - Doctor App Feedback,FR9,Submit feature request,Saved with category and priority,Pending,MEDIUM,NEW
+Feedback Tests - Doctor App Feedback,FR10,Submit bug report,Saved with CRITICAL priority option,Pending,HIGH,NEW
+Feedback Tests - Doctor App Feedback,FR11,View feedback history,All submitted feedback visible,Pending,MEDIUM,NEW
+Feedback Tests - Doctor App Feedback,FR12,Check shouldPrompt API,Returns correct prompt timing,Pending,LOW,NEW
+
+Feedback Tests - Admin Viewer,FR13,Access admin feedback page,/admin/feedback loads,Pending,HIGH,NEW: Admin dashboard
+Feedback Tests - Admin Viewer,FR14,View statistics dashboard,"Total, average rating, breakdowns",Pending,MEDIUM,NEW
+Feedback Tests - Admin Viewer,FR15,Filter by type,Shows only selected type,Pending,MEDIUM,NEW
+Feedback Tests - Admin Viewer,FR16,Filter by status,Shows only selected status,Pending,MEDIUM,NEW
+Feedback Tests - Admin Viewer,FR17,Filter by priority,Shows only selected priority,Pending,MEDIUM,NEW
+Feedback Tests - Admin Viewer,FR18,Clear all filters,Resets to show all feedback,Pending,LOW,NEW
+Feedback Tests - Admin Viewer,FR19,Click Update Status,Modal opens with current data,Pending,HIGH,NEW
+Feedback Tests - Admin Viewer,FR20,Change feedback status,Status updates in database,Pending,HIGH,NEW
+Feedback Tests - Admin Viewer,FR21,Add admin response,Response saved and displayed,Pending,MEDIUM,NEW
+Feedback Tests - Admin Viewer,FR22,Verify color-coded badges,Priority and status colors correct,Pending,LOW,NEW
+Feedback Tests - Admin Viewer,FR23,View doctor information,Name and specialization shown,Pending,LOW,NEW
+
+Final Checklist,FINAL1,All CRITICAL tests passed,"Volume, file storage, redeploy",Pending,CRITICAL,
+Final Checklist,FINAL2,All HIGH priority tests passed,"Authentication, payments, prescriptions",Pending,CRITICAL,
+Final Checklist,FINAL3,No console errors,Check browser and server logs,Pending,HIGH,
+Final Checklist,FINAL4,No broken images/files,All uploads display correctly,Pending,HIGH,
+Final Checklist,FINAL5,Ready for production use,Final sign-off,Pending,CRITICAL,

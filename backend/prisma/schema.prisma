@@ -161,6 +161,7 @@ model Doctor {
   referralsGiven        Referral[]                 @relation("ReferralsGiven")
   referralsReceived     Referral[]                 @relation("ReferralsReceived")
   referralIncentives    ReferralIncentive[]
+  appFeedback           AppFeedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -760,4 +761,47 @@ model TermsAcceptance {
 
   @@index([userId, termsType])
   @@index([userType, acceptedAt])
+}
+
+// App Feedback from Doctors
+// Doctors can submit feedback about the app to help us improve
+model AppFeedback {
+  id             String   @id @default(uuid())
+
+  // Doctor who submitted feedback
+  doctorId       String
+  doctor         Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  // Feedback type
+  type           String   // "FEATURE_REQUEST" | "BUG_REPORT" | "GENERAL_FEEDBACK" | "RATING"
+
+  // Rating (1-5 stars)
+  rating         Int?     // Optional for non-rating feedback
+
+  // Feedback content
+  title          String?  // Short title/subject
+  description    String   @db.Text // Detailed feedback
+
+  // Categories for better organization
+  category       String?  // "UI/UX" | "PERFORMANCE" | "FEATURES" | "BUGS" | "OTHER"
+
+  // Priority (if it's a bug/feature request)
+  priority       String   @default("MEDIUM") // "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+
+  // Status tracking
+  status         String   @default("PENDING") // "PENDING" | "ACKNOWLEDGED" | "IN_PROGRESS" | "RESOLVED" | "WONT_FIX"
+  adminResponse  String?  @db.Text // Admin's response to the feedback
+
+  // Metadata
+  userAgent      String?  @db.Text
+  deviceInfo     String?  @db.Text
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  resolvedAt     DateTime?
+
+  @@index([doctorId, createdAt])
+  @@index([type, status])
+  @@index([status, createdAt])
+  @@index([priority, status])
 }

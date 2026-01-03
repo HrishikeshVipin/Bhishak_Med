@@ -187,6 +187,14 @@ export default function AdminDashboard() {
             </Link>
 
             <Link
+              href="/admin/feedback"
+              className="p-4 border-2 border-orange-300/50 rounded-2xl hover:bg-orange-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+            >
+              <h3 className="font-semibold text-orange-800">App Feedback</h3>
+              <p className="text-sm text-gray-700 mt-1">View doctor feedback & ratings</p>
+            </Link>
+
+            <Link
               href="/admin/subscriptions"
               className="p-4 border-2 border-purple-300/50 rounded-2xl hover:bg-purple-50/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
             >

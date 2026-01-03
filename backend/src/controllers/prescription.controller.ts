@@ -582,7 +582,7 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
 
         // If we got a 401/403, this is an old private file - use authenticated download
         if (response.status === 401 || response.status === 403) {
-          console.log('⚠️ File is private (401/403), generating authenticated URL');
+          console.log('⚠️ File is private (401/403), using Cloudinary authenticated URL');
 
           try {
             // Extract public_id from URL
@@ -594,20 +594,24 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
             const publicId = urlMatch[1];
             console.log('📋 Extracted public_id:', publicId);
 
-            // Generate authenticated download URL (valid for 1 hour)
-            const authenticatedUrl = cloudinary.utils.private_download_url(publicId, 'pdf', {
+            // Generate signed URL using Cloudinary SDK
+            // This creates an authenticated URL that includes API signature
+            const signedUrl = cloudinary.url(publicId + '.pdf', {
               resource_type: 'raw',
-              expires_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-              attachment: true,
+              type: 'upload',
+              sign_url: true,
+              secure: true,
             });
 
-            console.log('🔐 Generated authenticated URL');
+            console.log('🔐 Generated signed URL');
 
-            // Download using authenticated URL
-            const authResponse = await axios.get(authenticatedUrl, {
+            // Download using signed URL
+            const authResponse = await axios.get(signedUrl, {
               responseType: 'arraybuffer',
               timeout: 30000,
             });
+
+            console.log('✅ Downloaded with signed URL, size:', authResponse.data.length);
 
             // Stream to client
             res.setHeader('Content-Type', 'application/pdf');
@@ -616,14 +620,18 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
             res.setHeader('Cache-Control', 'no-cache');
 
             res.send(Buffer.from(authResponse.data));
-            console.log('✅ Downloaded private file with authentication');
+            console.log('✅ Successfully downloaded private file');
             return;
           } catch (authError: any) {
-            console.error('❌ Failed to download private file:', authError.message);
+            console.error('❌ Failed to download private file:', authError);
+            console.error('Auth error status:', authError.response?.status);
+            console.error('Auth error data:', authError.response?.data);
+
             res.status(500).json({
               success: false,
               message: 'Error downloading private prescription file',
               error: authError.message,
+              status: authError.response?.status,
             });
             return;
           }

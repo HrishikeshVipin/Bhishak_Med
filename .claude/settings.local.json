@@ -70,7 +70,8 @@
       "Bash(npx tsc:*)",
       "Bash(where:*)",
       "Bash(set:*)",
-      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -d bhishakmed_local -c \"SELECT email, \"\"fullName\"\", role, \"\"isActive\"\" FROM \"\"Admin\"\";\")"
+      "Bash(\"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -d bhishakmed_local -c \"SELECT email, \"\"fullName\"\", role, \"\"isActive\"\" FROM \"\"Admin\"\";\")",
+      "Bash(npx next lint:*)"
     ]
   }
 }

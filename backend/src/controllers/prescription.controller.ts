@@ -257,6 +257,8 @@ async function generatePrescriptionPDF(
                 resource_type: 'raw',
                 public_id: `prescription_${prescription.id}_${Date.now()}`,
                 format: 'pdf',
+                access_mode: 'public', // Make PDF publicly accessible
+                type: 'upload',
               },
               (error, result) => {
                 if (error) rejectUpload(error);

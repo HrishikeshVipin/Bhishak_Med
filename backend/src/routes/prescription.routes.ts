@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { auth } from '../middleware/auth';
+import { auth, optionalAuth } from '../middleware/auth';
 import {
   createPrescription,
   getPrescription,
@@ -14,7 +14,7 @@ const router = Router();
 // Doctor routes
 router.post('/:consultationId', auth, prescriptionLimiter, createPrescription);
 router.get('/:consultationId', getPrescription);
-router.get('/:prescriptionId/download', downloadPrescription);
+router.get('/:prescriptionId/download', optionalAuth, downloadPrescription); // Optional auth to identify doctors
 router.get('/patient/:patientId/history', auth, getPatientConsultationHistory);
 router.get('/:prescriptionId/copy', auth, copyPrescriptionMedications);
 

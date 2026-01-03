@@ -418,6 +418,51 @@ export const checkTrialStatus = async (
   }
 };
 
+// Optional authentication - populates req.user if token present, but doesn't fail if not
+export const optionalAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Get token from cookie or Authorization header
+    let token: string | undefined;
+
+    if (req.cookies?.token) {
+      token = req.cookies.token;
+    } else if (req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    // If no token, continue without user
+    if (!token) {
+      next();
+      return;
+    }
+
+    // Verify token if present
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as {
+        id: string;
+        email: string;
+        role: 'DOCTOR' | 'ADMIN' | 'SUPER_ADMIN';
+        status?: string;
+      };
+
+      // Attach user info to request
+      req.user = decoded;
+    } catch (error) {
+      // Invalid token - continue without user (don't fail)
+      console.log('Optional auth: Invalid token, continuing without user');
+    }
+
+    next();
+  } catch (error: any) {
+    // On any error, continue without user
+    next();
+  }
+};
+
 // Combined middleware for doctor authentication (verify token + check is doctor)
 export const auth = [verifyToken, isDoctor];
 export const authenticateDoctor = auth; // Alias for clarity in routes

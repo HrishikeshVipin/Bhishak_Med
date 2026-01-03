@@ -266,7 +266,23 @@ async function generatePrescriptionPDF(
         reject(error);
       });
 
-      // App Header with Branding
+      // App Header with Logo and Branding
+      const logoPath = path.join(process.cwd(), 'assets', 'logo.png');
+
+      // Add logo if exists
+      if (fs.existsSync(logoPath)) {
+        const pageWidth = 600;
+        const logoWidth = 80;
+        const logoX = (pageWidth - logoWidth) / 2;
+
+        doc.image(logoPath, logoX, 50, {
+          width: logoWidth,
+          align: 'center'
+        });
+
+        doc.moveDown(5); // Space after logo
+      }
+
       doc
         .fillColor('#1e3a8a') // Navy blue
         .fontSize(24)
@@ -437,18 +453,18 @@ async function generatePrescriptionPDF(
           if (signatureBuffer) {
             // Use pre-fetched Cloudinary image
             doc
-              .moveDown(0.3)
-              .image(signatureBuffer, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
-              .moveDown(2.5);
+              .moveDown(0.5)
+              .image(signatureBuffer, 350, doc.y, { width: 180, height: 80, fit: [180, 80] })
+              .moveDown(3);
           } else {
             // Local path (backward compatibility)
             const signatureUrl = consultation.doctor.digitalSignature;
             const signaturePath = path.join(process.cwd(), signatureUrl);
             if (fs.existsSync(signaturePath)) {
               doc
-                .moveDown(0.3)
-                .image(signaturePath, 350, doc.y, { width: 150, height: 50, fit: [150, 50] })
-                .moveDown(2.5);
+                .moveDown(0.5)
+                .image(signaturePath, 350, doc.y, { width: 180, height: 80, fit: [180, 80] })
+                .moveDown(3);
             } else {
               // Fallback to line if file doesn't exist
               doc

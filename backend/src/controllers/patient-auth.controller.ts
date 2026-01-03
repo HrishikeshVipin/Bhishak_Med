@@ -658,7 +658,9 @@ export const getMyConsultations = async (req: PatientAuthRequest, res: Response)
           // Decrypt diagnosis, medications, and instructions
           const decryptedDiagnosis = decrypt(consultation.prescription.diagnosis);
           const decryptedMedications = decrypt(consultation.prescription.medications);
-          const decryptedInstructions = decrypt(consultation.prescription.instructions);
+          const decryptedInstructions = consultation.prescription.instructions
+            ? decrypt(consultation.prescription.instructions)
+            : null;
 
           return {
             ...consultation,

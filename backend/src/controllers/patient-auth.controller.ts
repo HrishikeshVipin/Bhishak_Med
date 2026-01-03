@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
 import { sendOtp as sendOtpSms, verifyOtp as verifyOtpSms } from '../services/sms.service';
 import { PatientAuthRequest } from '../middleware/patient-auth';
+import { decrypt } from '../utils/encryption';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production';
@@ -650,9 +651,36 @@ export const getMyConsultations = async (req: PatientAuthRequest, res: Response)
       orderBy: { startedAt: 'desc' },
     });
 
+    // Decrypt prescription data for patient viewing
+    const decryptedConsultations = consultations.map((consultation) => {
+      if (consultation.prescription) {
+        try {
+          // Decrypt diagnosis, medications, and instructions
+          const decryptedDiagnosis = decrypt(consultation.prescription.diagnosis);
+          const decryptedMedications = decrypt(consultation.prescription.medications);
+          const decryptedInstructions = decrypt(consultation.prescription.instructions);
+
+          return {
+            ...consultation,
+            prescription: {
+              ...consultation.prescription,
+              diagnosis: decryptedDiagnosis,
+              medications: JSON.parse(decryptedMedications),
+              instructions: decryptedInstructions,
+            },
+          };
+        } catch (error) {
+          console.error('Error decrypting prescription data:', error);
+          // Return consultation without prescription if decryption fails
+          return { ...consultation, prescription: null };
+        }
+      }
+      return consultation;
+    });
+
     res.json({
       success: true,
-      data: { consultations },
+      data: { consultations: decryptedConsultations },
     });
   } catch (error: any) {
     console.error('Get consultations error:', error);

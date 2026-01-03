@@ -54,6 +54,11 @@ export default function PatientAccessPage() {
   // Prescription notification modal
   const [showPrescriptionNotification, setShowPrescriptionNotification] = useState(false);
 
+  // History
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   useEffect(() => {
     if (token) {
       fetchConsultation();
@@ -93,6 +98,24 @@ export default function PatientAccessPage() {
       setError(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchHistory = async () => {
+    if (loadingHistory || history.length > 0) return; // Only fetch once
+
+    try {
+      setLoadingHistory(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/consultations/patient/${token}/history`);
+      const data = await response.json();
+
+      if (data.success) {
+        setHistory(data.data.consultations || []);
+      }
+    } catch (err) {
+      console.error('Error fetching history:', err);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -488,6 +511,95 @@ export default function PatientAccessPage() {
           </div>
         )}
 
+        {/* Past Consultations */}
+        <div className="mt-6 bg-white rounded-lg shadow">
+          <button
+            onClick={() => {
+              setShowHistory(!showHistory);
+              if (!showHistory) fetchHistory();
+            }}
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              📋 Past Consultations
+              {history.length > 0 && (
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  {history.length}
+                </span>
+              )}
+            </h3>
+            <svg
+              className={`w-5 h-5 text-gray-600 transition-transform ${showHistory ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showHistory && (
+            <div className="border-t border-gray-200 p-6">
+              {loadingHistory ? (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="text-sm text-gray-600 mt-2">Loading history...</p>
+                </div>
+              ) : history.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">No past consultations found</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {history.map((consult: any) => (
+                    <div key={consult.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="text-sm text-gray-600">
+                            {new Date(consult.completedAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                          {consult.prescription && (
+                            <p className="text-sm font-medium text-gray-900 mt-1">
+                              {consult.prescription.diagnosis}
+                            </p>
+                          )}
+                        </div>
+                        {consult.prescription?.pdfPath && consult.paymentConfirmation?.confirmedByDoctor && (
+                          <a
+                            href={`${process.env.NEXT_PUBLIC_API_URL}/prescriptions/${consult.prescription.id}/download`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                          >
+                            Download
+                          </a>
+                        )}
+                      </div>
+                      {consult.prescription?.medications && (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-500 mb-1">Medications:</p>
+                          <ul className="text-xs text-gray-700 space-y-1">
+                            {consult.prescription.medications.slice(0, 2).map((med: any, idx: number) => (
+                              <li key={idx}>• {med.name} - {med.dosage}</li>
+                            ))}
+                            {consult.prescription.medications.length > 2 && (
+                              <li className="text-gray-500">+ {consult.prescription.medications.length - 2} more</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Important Info */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="font-semibold text-blue-900 mb-2">📌 Important Information</h3>
@@ -495,7 +607,7 @@ export default function PatientAccessPage() {
             <li>• Save this link for future consultations</li>
             <li>• You can access this portal anytime using the same link</li>
             <li>• Your messages are securely stored</li>
-            <li>• If you accidentally deleted your prescription, you can download it again from the "Past Consultations" page in your patient dashboard</li>
+            <li>• View your past prescriptions in the "Past Consultations" section above</li>
             <li>• Contact your doctor directly for emergencies</li>
           </ul>
         </div>

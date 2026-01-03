@@ -62,7 +62,7 @@ export default function AdminFeedbackPage() {
         limit: 100,
       });
 
-      if (response.success) {
+      if (response.success && response.data) {
         setFeedback(response.data.feedback);
         setStats(response.data.stats);
       }
@@ -84,10 +84,11 @@ export default function AdminFeedbackPage() {
         adminResponse.trim() || undefined
       );
 
-      if (response.success) {
+      if (response.success && response.data) {
         // Update local state
+        const updatedFeedback = response.data.feedback;
         setFeedback((prev) =>
-          prev.map((f) => (f.id === selectedFeedback.id ? response.data.feedback : f))
+          prev.map((f) => (f.id === selectedFeedback.id ? updatedFeedback : f))
         );
         setShowResponseModal(false);
         setSelectedFeedback(null);

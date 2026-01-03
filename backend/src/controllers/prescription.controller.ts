@@ -257,8 +257,6 @@ async function generatePrescriptionPDF(
                 resource_type: 'raw',
                 public_id: `prescription_${prescription.id}_${Date.now()}`,
                 format: 'pdf',
-                access_mode: 'public', // Make PDF publicly accessible
-                type: 'upload',
               },
               (error, result) => {
                 if (error) rejectUpload(error);
@@ -570,9 +568,60 @@ export const downloadPrescription = async (req: Request, res: Response): Promise
     const isCloudinaryUrl = prescription.pdfPath.startsWith('http://') || prescription.pdfPath.startsWith('https://');
 
     if (isCloudinaryUrl) {
-      // Redirect to Cloudinary URL
-      res.redirect(prescription.pdfPath);
-      return;
+      try {
+        console.log('📄 Fetching PDF from Cloudinary:', prescription.pdfPath);
+
+        // Fetch the PDF from Cloudinary using our credentials
+        // This works for both private and authenticated files
+        const response = await axios.get(prescription.pdfPath, {
+          responseType: 'arraybuffer',
+          timeout: 30000, // 30 second timeout
+        });
+
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="prescription_${prescription.serialNumber || prescriptionId}.pdf"`);
+        res.setHeader('Content-Length', response.data.length);
+        res.setHeader('Cache-Control', 'no-cache');
+
+        // Send the PDF buffer to client
+        res.send(Buffer.from(response.data));
+
+        console.log('✅ PDF downloaded successfully');
+        return;
+      } catch (error: any) {
+        console.error('❌ Error fetching PDF from Cloudinary:', error.message);
+
+        // If it's a 401/403, the file might be private - try to generate signed URL
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          try {
+            // Extract public_id from URL
+            const urlParts = prescription.pdfPath.split('/');
+            const fileName = urlParts[urlParts.length - 1];
+            const publicId = `mediquory/prescriptions/${fileName.replace('.pdf', '')}`;
+
+            // Generate authenticated URL
+            const signedUrl = cloudinary.url(publicId, {
+              resource_type: 'raw',
+              sign_url: true,
+              secure: true,
+            });
+
+            console.log('🔄 Redirecting to signed URL');
+            res.redirect(signedUrl);
+            return;
+          } catch (signError: any) {
+            console.error('❌ Error generating signed URL:', signError.message);
+          }
+        }
+
+        res.status(500).json({
+          success: false,
+          message: 'Error downloading prescription from cloud storage',
+          error: error.message,
+        });
+        return;
+      }
     }
 
     // Legacy: Handle local filesystem (backward compatibility)

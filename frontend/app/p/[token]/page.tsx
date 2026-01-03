@@ -124,13 +124,18 @@ export default function PatientAccessPage() {
   };
 
   const handleDownloadPrescription = async () => {
-    if (!consultation?.prescription?.id) return;
+    if (!consultation?.prescription?.id) {
+      console.error('❌ No prescription ID found');
+      alert('Prescription not found. Please refresh the page.');
+      return;
+    }
 
     try {
       setDownloadingPrescription(true);
 
       // Download the prescription
       const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL}/prescriptions/${consultation.prescription.id}/download`;
+      console.log('📥 Downloading prescription from:', downloadUrl);
       window.open(downloadUrl, '_blank');
 
       // Wait a bit for download to start
@@ -143,7 +148,8 @@ export default function PatientAccessPage() {
         return { ...prev, status: 'COMPLETED' };
       });
     } catch (err) {
-      console.error('Error downloading prescription:', err);
+      console.error('❌ Error downloading prescription:', err);
+      alert('Error downloading prescription. Please try again.');
     } finally {
       setDownloadingPrescription(false);
     }
@@ -235,13 +241,16 @@ export default function PatientAccessPage() {
     });
 
     // Listen for payment confirmed by doctor
-    newSocket.on('payment-confirmed', (data: { payment: any; timestamp: string }) => {
+    newSocket.on('payment-confirmed', async (data: { payment: any; timestamp: string }) => {
       console.log('📡 Payment confirmed by doctor:', data.payment);
 
-      // Show download popup
+      // Refresh consultation first to ensure we have prescription data
+      await fetchConsultation();
+
+      // Then show download popup
       setShowDownloadPopup(true);
 
-      // Update consultation state
+      // Update consultation state to completed
       setConsultation((prev) => {
         if (!prev) return prev;
         return {
@@ -249,8 +258,6 @@ export default function PatientAccessPage() {
           status: 'COMPLETED',
         };
       });
-      // Refresh to show download prescription button
-      fetchConsultation();
     });
 
     // Listen for consultation completed
@@ -729,7 +736,8 @@ export default function PatientAccessPage() {
       )}
 
       {/* Download Prescription Popup - After Payment Confirmed */}
-      {showDownloadPopup && consultation?.prescription && (
+      {showDownloadPopup && (
+        consultation?.prescription ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-8 sm:p-10 max-w-lg w-full shadow-2xl">
             <div className="text-center">
@@ -789,6 +797,15 @@ export default function PatientAccessPage() {
             </div>
           </div>
         </div>
+        ) : (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-lg text-gray-700">Loading prescription...</p>
+              <p className="text-sm text-gray-500 mt-2">Please wait</p>
+            </div>
+          </div>
+        )
       )}
 
       {/* Incoming Video Call Modal - Senior Friendly */}

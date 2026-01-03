@@ -20,12 +20,18 @@ uploads/prescriptions/*
 uploads/qr-codes/*
 uploads/profile-photos/*
 uploads/signatures/*
+uploads/doctor-kyc/*
+uploads/payment-proofs/*
+uploads/medical-files/*
 !uploads/vitals/.gitkeep
 !uploads/reports/.gitkeep
 !uploads/prescriptions/.gitkeep
 !uploads/qr-codes/.gitkeep
 !uploads/profile-photos/.gitkeep
 !uploads/signatures/.gitkeep
+!uploads/doctor-kyc/.gitkeep
+!uploads/payment-proofs/.gitkeep
+!uploads/medical-files/.gitkeep
 
 # IDE
 .vscode/

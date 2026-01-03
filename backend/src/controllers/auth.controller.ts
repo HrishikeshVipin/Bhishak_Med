@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import path from 'path';
 import prisma from '../config/database';
 import { generateToken } from '../middleware/auth';
 import {
@@ -67,6 +68,11 @@ export const doctorSignup = async (req: Request, res: Response): Promise<void> =
     const encryptedAadhaar = encrypt(validatedData.aadhaarNumber);
     const encryptedUpiId = validatedData.upiId ? encrypt(validatedData.upiId) : null;
 
+    // Convert absolute file paths to relative paths for local storage
+    const convertToRelativePath = (absolutePath: string) => {
+      return path.relative(process.cwd(), absolutePath).replace(/\\/g, '/');
+    };
+
     // Create doctor record
     const doctor = await prisma.doctor.create({
       data: {
@@ -79,10 +85,10 @@ export const doctorSignup = async (req: Request, res: Response): Promise<void> =
         registrationNo: validatedData.registrationNo,
         registrationState: validatedData.registrationState || null,
         aadhaarNumber: encryptedAadhaar, // ENCRYPTED
-        registrationCertificate: files.registrationCertificate[0].path,
-        aadhaarFrontPhoto: files.aadhaarFrontPhoto[0].path,
-        aadhaarBackPhoto: files.aadhaarBackPhoto[0].path,
-        profilePhoto: files.profilePhoto[0].path,
+        registrationCertificate: convertToRelativePath(files.registrationCertificate[0].path),
+        aadhaarFrontPhoto: convertToRelativePath(files.aadhaarFrontPhoto[0].path),
+        aadhaarBackPhoto: convertToRelativePath(files.aadhaarBackPhoto[0].path),
+        profilePhoto: convertToRelativePath(files.profilePhoto[0].path),
         upiId: encryptedUpiId, // ENCRYPTED
         trialEndsAt,
         status: 'PENDING_VERIFICATION',

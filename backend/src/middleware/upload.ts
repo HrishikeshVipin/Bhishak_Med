@@ -19,29 +19,28 @@ const ensureUploadDir = (dirPath: string) => {
   }
 };
 
-// Cloudinary storage configuration for doctor KYC documents
-const doctorKYCStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
-    let folder = 'mediquory/doctor-kyc/';
+// Local disk storage for doctor KYC documents
+const doctorKYCStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    let subfolder = 'doctor-kyc';
 
     if (file.fieldname === 'registrationCertificate') {
-      folder += 'registration-certificates';
+      subfolder = 'doctor-kyc/registration-certificates';
     } else if (file.fieldname === 'aadhaarFrontPhoto' || file.fieldname === 'aadhaarBackPhoto') {
-      folder += 'aadhaar-photos';
+      subfolder = 'doctor-kyc/aadhaar-photos';
     } else if (file.fieldname === 'profilePhoto') {
-      folder += 'profile-photos';
+      subfolder = 'doctor-kyc/profile-photos';
     }
 
+    const uploadDir = path.join(process.cwd(), 'uploads', subfolder);
+    ensureUploadDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-
-    return {
-      folder: folder,
-      public_id: `${uniqueId}_${timestamp}`,
-      resource_type: 'auto', // Automatically detect if it's image or raw (PDF)
-      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-    };
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueId}_${timestamp}${ext}`);
   },
 });
 
@@ -126,19 +125,18 @@ export const uploadMedicalReport = multer({
   },
 }).single('medicalReport');
 
-// Cloudinary storage for payment proofs
-const paymentProofStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
+// Local disk storage for payment proofs
+const paymentProofStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'payment-proofs');
+    ensureUploadDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-
-    return {
-      folder: 'mediquory/payment-proofs',
-      public_id: `payment_${uniqueId}_${timestamp}`,
-      resource_type: 'image',
-      allowed_formats: ['jpg', 'jpeg', 'png'],
-    };
+    const ext = path.extname(file.originalname);
+    cb(null, `payment_${uniqueId}_${timestamp}${ext}`);
   },
 });
 
@@ -164,19 +162,18 @@ export const uploadPaymentProof = multer({
   },
 }).single('paymentProof');
 
-// Cloudinary storage for UPI QR codes
-const qrCodeStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
+// Local disk storage for UPI QR codes
+const qrCodeStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'qr-codes');
+    ensureUploadDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-
-    return {
-      folder: 'mediquory/qr-codes',
-      public_id: `qr_${uniqueId}_${timestamp}`,
-      resource_type: 'image',
-      allowed_formats: ['jpg', 'jpeg', 'png'],
-    };
+    const ext = path.extname(file.originalname);
+    cb(null, `qr_${uniqueId}_${timestamp}${ext}`);
   },
 });
 
@@ -195,19 +192,18 @@ export const uploadQRCode = multer({
   },
 }).single('qrCode');
 
-// Cloudinary storage for patient medical files
-const medicalFilesStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req: Request, file: Express.Multer.File) => {
+// Local disk storage for patient medical files
+const medicalFilesStorage = multer.diskStorage({
+  destination: (req: Request, file: Express.Multer.File, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'medical-files');
+    ensureUploadDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req: Request, file: Express.Multer.File, cb) => {
     const uniqueId = uuidv4();
     const timestamp = Date.now();
-
-    return {
-      folder: 'mediquory/medical-files',
-      public_id: `${uniqueId}_${timestamp}`,
-      resource_type: 'auto',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-    };
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueId}_${timestamp}${ext}`);
   },
 });
 

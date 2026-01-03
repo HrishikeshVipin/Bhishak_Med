@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import path from 'path';
 import prisma from '../config/database';
 import { socketService } from '../services/socket.service';
 import { createAuditLog } from '../middleware/audit.middleware';
@@ -22,17 +23,22 @@ export const uploadPaymentProof = async (req: Request, res: Response): Promise<v
       return;
     }
 
+    // Convert absolute file path to relative path for local storage
+    const proofImagePath = file
+      ? path.relative(process.cwd(), file.path).replace(/\\/g, '/')
+      : null;
+
     // Create or update payment confirmation
     const payment = await prisma.paymentConfirmation.upsert({
       where: { consultationId },
       update: {
         amount: parseFloat(amount),
-        proofImagePath: file?.path || null,
+        proofImagePath,
       },
       create: {
         consultationId,
         amount: parseFloat(amount),
-        proofImagePath: file?.path || null,
+        proofImagePath,
         confirmedByDoctor: false,
       },
     });

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import path from 'path';
 import prisma from '../config/database';
 
 // Create or update patient vitals
@@ -142,13 +143,13 @@ export const uploadMedicalFile = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Save all file info to database
+    // Save all file info to database (convert absolute paths to relative)
     const uploadedFiles = await Promise.all(
       files.map((file, index) =>
         prisma.medicalUpload.create({
           data: {
             patientId,
-            filePath: file.path,
+            filePath: path.relative(process.cwd(), file.path).replace(/\\/g, '/'),
             fileType: file.mimetype,
             fileName: file.originalname,
             description: description || `Medical record page ${index + 1}`,

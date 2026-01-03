@@ -384,6 +384,98 @@ export const getPatientConsultation = async (req: Request, res: Response): Promi
   }
 };
 
+// Get patient consultation history by access token (public - no auth required)
+export const getPatientConsultationHistory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { patientToken } = req.params;
+
+    // Find patient by token
+    const patient = await prisma.patient.findUnique({
+      where: { accessToken: patientToken },
+      select: { id: true, doctorId: true },
+    });
+
+    if (!patient) {
+      res.status(404).json({
+        success: false,
+        message: 'Invalid patient access token',
+      });
+      return;
+    }
+
+    // Get all COMPLETED consultations for this patient
+    const consultations = await prisma.consultation.findMany({
+      where: {
+        patientId: patient.id,
+        status: 'COMPLETED',
+      },
+      select: {
+        id: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        prescription: {
+          select: {
+            id: true,
+            diagnosis: true,
+            medications: true,
+            instructions: true,
+            pdfPath: true,
+            createdAt: true,
+          },
+        },
+        paymentConfirmation: {
+          select: {
+            amount: true,
+            confirmedByDoctor: true,
+            confirmedAt: true,
+          },
+        },
+      },
+      orderBy: { completedAt: 'desc' },
+    });
+
+    // Decrypt prescription data
+    const decryptedConsultations = consultations.map((consultation) => {
+      if (consultation.prescription) {
+        try {
+          const decryptedDiagnosis = decrypt(consultation.prescription.diagnosis);
+          const decryptedMedications = decrypt(consultation.prescription.medications);
+          const decryptedInstructions = consultation.prescription.instructions
+            ? decrypt(consultation.prescription.instructions)
+            : null;
+
+          return {
+            ...consultation,
+            prescription: {
+              ...consultation.prescription,
+              diagnosis: decryptedDiagnosis,
+              medications: JSON.parse(decryptedMedications),
+              instructions: decryptedInstructions,
+            },
+          };
+        } catch (error) {
+          console.error('Error decrypting prescription data:', error);
+          return { ...consultation, prescription: null };
+        }
+      }
+      return consultation;
+    });
+
+    res.json({
+      success: true,
+      data: { consultations: decryptedConsultations },
+    });
+  } catch (error: any) {
+    console.error('Get patient history error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching consultation history',
+      error: error.message,
+    });
+  }
+};
+
 // Update consultation duration in real-time (called every 30 seconds from frontend)
 // NOTE: This is for reference only - billing is based on video duration
 export const updateConsultationDuration = async (req: Request, res: Response): Promise<void> => {

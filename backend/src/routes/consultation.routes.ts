@@ -4,6 +4,7 @@ import {
   startConsultation,
   getConsultation,
   getPatientConsultation,
+  getPatientConsultationHistory,
   endConsultation,
   updateConsultationDuration,
   updateVideoDuration,
@@ -37,5 +38,6 @@ router.get('/:consultationId/messages', getChatHistory);
 
 // Patient routes (public - accessed via token in frontend)
 router.get('/patient/:patientToken', getPatientConsultation);
+router.get('/patient/:patientToken/history', getPatientConsultationHistory);
 
 export default router;

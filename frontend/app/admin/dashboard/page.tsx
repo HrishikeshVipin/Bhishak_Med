@@ -154,11 +154,14 @@ export default function AdminDashboard() {
             value={stats?.doctors.suspended || 0}
             color="orange"
           />
-          <StatsCard
-            title="Total Patients"
-            value={stats?.patients || 0}
-            color="indigo"
-          />
+          {/* Only show patient count to super admin */}
+          {isSuperAdmin() && stats?.patients !== undefined && (
+            <StatsCard
+              title="Total Patients"
+              value={stats.patients}
+              color="indigo"
+            />
+          )}
         </div>
 
         {/* Quick Actions */}

@@ -65,8 +65,8 @@ export interface PlatformStats {
     suspended: number;
     active: number;
   };
-  patients: number;
-  consultations: number;
+  patients?: number; // Only available to super admin
+  consultations?: number; // Only available to super admin
 }
 
 // API response types

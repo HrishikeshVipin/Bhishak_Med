@@ -6,6 +6,8 @@ import { notificationService } from '../services/notification.service';
 // Get platform statistics
 export const getPlatformStats = async (req: Request, res: Response): Promise<void> => {
   try {
+    const isSuperAdmin = req.user?.role === 'SUPER_ADMIN';
+
     const [
       totalDoctors,
       verifiedDoctors,
@@ -21,8 +23,9 @@ export const getPlatformStats = async (req: Request, res: Response): Promise<voi
       prisma.doctor.count({ where: { status: 'PENDING_VERIFICATION' } }),
       prisma.doctor.count({ where: { status: 'REJECTED' } }),
       prisma.doctor.count({ where: { status: 'SUSPENDED' } }),
-      prisma.patient.count(),
-      prisma.consultation.count(),
+      // Only fetch patient/consultation counts for super admin
+      isSuperAdmin ? prisma.patient.count() : Promise.resolve(0),
+      isSuperAdmin ? prisma.consultation.count() : Promise.resolve(0),
       prisma.doctor.count({
         where: {
           status: 'VERIFIED',
@@ -33,21 +36,27 @@ export const getPlatformStats = async (req: Request, res: Response): Promise<voi
       }),
     ]);
 
+    const stats: any = {
+      doctors: {
+        total: totalDoctors,
+        verified: verifiedDoctors,
+        pending: pendingDoctors,
+        rejected: rejectedDoctors,
+        suspended: suspendedDoctors,
+        active: activeDoctors,
+      },
+    };
+
+    // Only include patient and consultation data for super admin
+    if (isSuperAdmin) {
+      stats.patients = totalPatients;
+      stats.consultations = totalConsultations;
+    }
+
     res.status(200).json({
       success: true,
       data: {
-        stats: {
-          doctors: {
-            total: totalDoctors,
-            verified: verifiedDoctors,
-            pending: pendingDoctors,
-            rejected: rejectedDoctors,
-            suspended: suspendedDoctors,
-            active: activeDoctors,
-          },
-          patients: totalPatients,
-          consultations: totalConsultations,
-        },
+        stats,
       },
     });
   } catch (error: any) {
@@ -184,43 +193,50 @@ export const getPendingDoctors = async (req: Request, res: Response): Promise<vo
 export const getDoctorById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { doctorId } = req.params;
+    const isSuperAdmin = req.user?.role === 'SUPER_ADMIN';
+
+    const selectQuery: any = {
+      id: true,
+      email: true,
+      fullName: true,
+      phone: true,
+      specialization: true,
+      registrationType: true,
+      registrationNo: true,
+      registrationState: true,
+      aadhaarNumber: true,
+      registrationCertificate: true,
+      aadhaarFrontPhoto: true,
+      aadhaarBackPhoto: true,
+      profilePhoto: true,
+      status: true,
+      rejectionReason: true,
+      upiId: true,
+      qrCodeImage: true,
+      trialStartDate: true,
+      trialEndsAt: true,
+      patientsCreated: true,
+      subscriptionStatus: true,
+      subscriptionEndsAt: true,
+      razorpaySubscriptionId: true,
+      createdAt: true,
+      updatedAt: true,
+    };
+
+    // Only include patient/consultation/prescription counts for super admin
+    if (isSuperAdmin) {
+      selectQuery._count = {
+        select: {
+          patients: true,
+          consultations: true,
+          prescriptions: true,
+        },
+      };
+    }
 
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        phone: true,
-        specialization: true,
-        registrationType: true,
-        registrationNo: true,
-        registrationState: true,
-        aadhaarNumber: true,
-        registrationCertificate: true,
-        aadhaarFrontPhoto: true,
-        aadhaarBackPhoto: true,
-        profilePhoto: true,
-        status: true,
-        rejectionReason: true,
-        upiId: true,
-        qrCodeImage: true,
-        trialStartDate: true,
-        trialEndsAt: true,
-        patientsCreated: true,
-        subscriptionStatus: true,
-        subscriptionEndsAt: true,
-        razorpaySubscriptionId: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            patients: true,
-            consultations: true,
-            prescriptions: true,
-          },
-        },
-      },
+      select: selectQuery,
     });
 
     if (!doctor) {
